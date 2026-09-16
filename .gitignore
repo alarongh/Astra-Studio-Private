@@ -1,0 +1,16 @@
+__pycache__/
+build/
+dist/
+*.spec
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Local AI context export
+PROJECT_CONTEXT.md

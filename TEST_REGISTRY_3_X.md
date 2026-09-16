@@ -1,0 +1,662 @@
+# Astra Studio 3.x — Test Registry
+
+Этот файл — единый реестр тестов поколения 3.x. Он нужен, чтобы ни один автоматический или ручной тест не потерялся к финальному Windows-прогону поколения 3.x и post-gate патчам.
+
+Статусы ручных тестов:
+- `[ ]` — ещё не выполнялся владельцем;
+- `[x]` — выполнен;
+- `[DEFERRED]` — автоматический runtime-тест уже написан, но не может выполниться в текущем Linux sandbox без PySide6/Windows и остаётся обязательным для финального прогона.
+
+## Автоматические тесты, уже присутствующие в проекте
+
+- `tests/test_completion_shortcut_311.py::test_offline_completion_catalog_covers_major_astra_languages`
+- `tests/test_completion_shortcut_311.py::test_java_completion_library_includes_more_classes_and_chained_members`
+- `tests/test_completion_shortcut_311.py::test_tab_cycles_popup_without_inserting_and_space_commits_selection`
+- `tests/test_completion_shortcut_311.py::test_shortcut_icon_variants_are_bundled_windows_icons`
+- `tests/test_completion_shortcut_311.py::test_shortcut_script_creates_lnk_with_selected_angel_icon`
+- `tests/test_angel_404_theme.py::test_angel_404_assets_are_bundled_and_valid`
+- `tests/test_angel_404_theme.py::test_angel_404_theme_profile_and_wallpaper_are_wired`
+- `tests/test_angel_404_theme.py::test_minecraft_font_selection_is_global_and_persistent`
+- `tests/test_angel_404_theme.py::test_minecraft_font_loads_and_reaches_editor_document`
+- `tests/test_app_updates.py::test_release_versions_compare_numerically`
+- `tests/test_app_updates.py::test_update_manifest_requires_https_sha256_and_positive_size`
+- `tests/test_app_updates.py::test_update_manifest_rejects_oversized_payload`
+- `tests/test_app_updates.py::test_update_channel_uses_valid_environment_override`
+- `tests/test_app_updates.py::test_update_channel_is_disabled_until_publisher_sets_https_url`
+- `tests/test_final_integration_3x.py::test_final_release_identity_and_runtime_tree_has_no_dev_paths`
+- `tests/test_final_integration_3x.py::test_all_roadmap_scope_before_final_gate_is_closed`
+- `tests/test_final_integration_3x.py::test_every_supported_language_has_compile_and_run_route`
+- `tests/test_final_integration_3x.py::test_lsp_catalog_matches_all_supported_languages`
+- `tests/test_final_integration_3x.py::test_runtime_assets_scripts_and_build_inputs_exist`
+- `tests/test_final_integration_3x.py::test_windows_batch_wrappers_are_cmd_safe_crlf_ascii`
+- `tests/test_final_integration_3x.py::test_batch_and_git_command_safety_regression_guards`
+- `tests/test_final_integration_3x.py::test_shutdown_paths_cover_tasks_lsp_run_terminal_and_installer`
+- `tests/test_final_integration_3x.py::test_python_project_environment_does_not_adopt_unrelated_virtualenv`
+- `tests/test_final_integration_3x.py::test_python_mutation_ui_keeps_global_environment_guarded`
+- `tests/test_final_integration_3x.py::test_settings_loader_and_saver_keys_remain_symmetric`
+- `tests/test_final_integration_3x.py::test_legacy_settings_and_project_migration_paths_are_preserved`
+- `tests/test_final_integration_3x.py::test_test_registry_exactly_matches_pytest_collection`
+- `tests/test_final_integration_3x.py::test_final_docs_no_longer_claim_d3_is_next`
+- `tests/test_final_integration_3x.py::test_python_registry_json_records_full_parity`
+- `tests/test_final_integration_3x.py::test_runtime_classes_do_not_accidentally_redefine_methods`
+- `tests/test_final_integration_3x.py::test_owner_acceptance_registry_keeps_final_windows_checks_pending`
+- `tests/test_java_language.py::test_java_registration_and_lsp_language_id_are_consistent`
+- `tests/test_java_language.py::test_java_keyword_local_member_and_standard_class_completion`
+- `tests/test_java_language.py::test_java_completion_is_suppressed_in_comments_and_strings`
+- `tests/test_java_language.py::test_main_snippet_is_exact_and_keyword_prefix_is_not_hijacked`
+- `tests/test_java_language.py::test_editor_applies_standard_class_completion_and_import`
+- `tests/test_java_language.py::test_javac_diagnostics_include_line_column_severity_and_message`
+- `tests/test_java_language.py::test_java_runtime_discovery_pairs_java_with_javac`
+- `tests/test_java_language.py::test_missing_java_runtime_is_reported_only_when_pair_is_absent`
+- `tests/test_java_language.py::test_java_commands_force_utf8_for_source_stdout_and_stderr`
+- `tests/test_java_language.py::test_explicit_process_encoding_decodes_windows_cyrillic_without_mojibake`
+- `tests/test_java_language.py::test_javac_compile_error_updates_problems_without_opening_installer`
+- `tests/test_java_language.py::test_real_jdk_compiles_runs_and_reports_syntax_errors`
+- `tests/test_git_c3.py::GitIntegrationTests::test_branch_upstream_ahead_behind_headers_parse`
+- `tests/test_git_c3.py::GitIntegrationTests::test_local_bare_remote_pull_and_push_round_trip`
+- `tests/test_git_c3.py::GitIntegrationTests::test_pull_ff_only_refuses_diverged_history_without_merge_commit`
+- `tests/test_git_c3.py::GitIntegrationTests::test_rename_diff_and_unstage_include_both_paths`
+- `tests/test_git_c3.py::GitIntegrationTests::test_repository_probe_from_nested_directory`
+- `tests/test_git_c3.py::GitIntegrationTests::test_stage_all_and_unstage_all_preserve_worktree`
+- `tests/test_git_c3.py::GitIntegrationTests::test_stage_unstage_diff_and_commit_commands_change_only_expected_git_state`
+- `tests/test_git_c3.py::GitIntegrationTests::test_status_parser_handles_rename_original_path`
+- `tests/test_git_c3.py::GitIntegrationTests::test_status_parser_handles_staged_unstaged_untracked_and_unicode_paths`
+- `tests/test_git_c3.py::GitIntegrationTests::test_unstage_works_before_first_commit`
+- `tests/test_git_c3.py::GitCommandSafetyTests::test_commit_rejects_empty_message`
+- `tests/test_git_c3.py::GitCommandSafetyTests::test_paths_are_passed_after_double_dash_without_shell`
+- `tests/test_git_c3.py::GitCommandSafetyTests::test_pull_is_fast_forward_only`
+- `tests/test_git_c3.py::GitCommandSafetyTests::test_push_has_no_force_flags`
+- `tests/test_git_c3.py::MainGitIntegrationStaticTests::test_git_network_actions_disable_terminal_prompt_and_never_force_push`
+- `tests/test_git_c3.py::MainGitIntegrationStaticTests::test_git_source_control_ui_and_actions_are_wired`
+- `tests/test_git_c3.py::MainGitIntegrationStaticTests::test_pull_guard_requires_clean_tree_and_upstream`
+- `tests/test_git_c3_qt.py::GitTaskRuntimeTests::test_task_manager_preserves_nul_delimited_unicode_git_status`
+- `tests/test_lsp_b1.py::JsonRpcFramingTests::test_fragmented_and_back_to_back_messages`
+- `tests/test_lsp_b1.py::JsonRpcFramingTests::test_invalid_content_length_is_rejected`
+- `tests/test_lsp_b1.py::JsonRpcFramingTests::test_oversized_payload_is_rejected_before_body_allocation`
+- `tests/test_lsp_b1.py::LspRegistryTests::test_catalog_covers_every_astra_language`
+- `tests/test_lsp_b1.py::LspRegistryTests::test_invalid_override_types_do_not_poison_runtime_config`
+- `tests/test_lsp_b1.py::LspRegistryTests::test_key_language_configs_are_explicit`
+- `tests/test_lsp_b1.py::LspRegistryTests::test_project_local_node_bin_has_priority`
+- `tests/test_lsp_b1.py::LspRegistryTests::test_user_override_replaces_candidates_without_touching_defaults`
+- `tests/test_lsp_b1.py::LspProcessLifecycleTests::test_initialize_server_request_and_graceful_shutdown`
+- `tests/test_lsp_b1.py::LspProcessLifecycleTests::test_unexpected_exit_restarts_with_backoff`
+- `tests/test_lsp_b2.py::DocumentStoreTests::test_close_removes_document`
+- `tests/test_lsp_b2.py::DocumentStoreTests::test_document_versions_increase_on_change`
+- `tests/test_lsp_b2.py::DiagnosticNormalizationTests::test_publish_diagnostics_is_normalized`
+- `tests/test_lsp_b2.py::DiagnosticNormalizationTests::test_stale_versioned_diagnostics_are_ignored`
+- `tests/test_lsp_b2.py::UriConversionTests::test_file_uri_roundtrip`
+- `tests/test_lsp_b2.py::UriConversionTests::test_non_file_uri_is_not_converted`
+- `tests/test_lsp_b2.py::ExternalTcpRegistryTests::test_gdscript_resolves_to_external_tcp`
+- `tests/test_lsp_b2.py::StaticB2IntegrationTests::test_main_contains_problems_panel_and_document_sync_hooks`
+- `tests/test_lsp_b2.py::StaticB2IntegrationTests::test_transport_routes_publish_diagnostics`
+- `tests/test_lsp_b2.py::LspDocumentIntegrationTests::test_manager_syncs_documents_and_collects_diagnostics`
+- `tests/test_lsp_b2.py::LspTcpTransportTests::test_external_tcp_initialize_and_shutdown`
+- `tests/test_lsp_b3.py::CompletionNormalizationTests::test_completion_list_is_normalized_and_sorted`
+- `tests/test_lsp_b3.py::CompletionNormalizationTests::test_completion_text_edit_is_preserved`
+- `tests/test_lsp_b3.py::HoverSignatureTests::test_hover_markup_content_becomes_text`
+- `tests/test_lsp_b3.py::HoverSignatureTests::test_signature_help_contains_active_parameter`
+- `tests/test_lsp_b3.py::NavigationNormalizationTests::test_hierarchical_document_symbols_keep_depth`
+- `tests/test_lsp_b3.py::NavigationNormalizationTests::test_location_and_location_link_are_supported`
+- `tests/test_lsp_b3.py::WorkspaceEditTests::test_overlapping_text_edits_are_rejected`
+- `tests/test_lsp_b3.py::WorkspaceEditTests::test_resource_operations_are_detected_and_can_be_rejected_by_ui`
+- `tests/test_lsp_b3.py::WorkspaceEditTests::test_text_edit_positions_follow_utf16_lsp_columns`
+- `tests/test_lsp_b3.py::WorkspaceEditTests::test_text_edits_preserve_crlf_when_source_keeps_crlf`
+- `tests/test_lsp_b3.py::WorkspaceEditTests::test_workspace_edit_changes_and_document_changes_are_normalized`
+- `tests/test_lsp_b3.py::SafeInstallCatalogTests::test_gdscript_install_plan_is_external_not_auto_install`
+- `tests/test_lsp_b3.py::SafeInstallCatalogTests::test_staffedup_safe_install_plans_exist_for_core_servers`
+- `tests/test_lsp_b3.py::StaticB3IntegrationTests::test_client_capabilities_advertise_b3_features_without_snippets`
+- `tests/test_lsp_b3.py::StaticB3IntegrationTests::test_main_contains_all_b3_actions_and_shortcuts`
+- `tests/test_lsp_b3.py::StaticB3IntegrationTests::test_transport_routes_interactive_requests_with_tokens`
+- `tests/test_lsp_b3.py::LspInteractiveRuntimeTests::test_manager_routes_completion_hover_signature_navigation_rename_and_symbols`
+- `tests/test_quality_c1.py::test_c1_formatter_registry_required_languages`
+- `tests/test_quality_c1.py::test_c1_prettier_covers_web_formats`
+- `tests/test_quality_c1.py::test_c1_linter_registry`
+- `tests/test_quality_c1.py::test_c1_parse_ruff_json_positions`
+- `tests/test_quality_c1.py::test_c1_parse_eslint_json_severity_and_positions`
+- `tests/test_quality_c1.py::test_c1_invalid_linter_json_is_safe`
+- `tests/test_quality_c1.py::test_c1_resolve_project_local_node_tool`
+- `tests/test_quality_c1.py::test_c1_formatter_commands_use_stdin_filepath`
+- `tests/test_quality_c1.py::test_c1_linter_commands_machine_readable`
+- `tests/test_quality_c1.py::test_c1_node_quality_install_plans_are_project_local_and_exact`
+- `tests/test_quality_c1.py::test_c1_task_manager_has_stdin_support_source`
+- `tests/test_quality_c1.py::test_c1_main_has_quality_ui_and_problem_merge`
+- `tests/test_quality_c1_qt.py::QualityTaskRuntimeTests::test_task_manager_streams_stdin_to_formatter_process`
+- `tests/test_release_36_regressions.py::test_release_36_version_and_topmost_no_longer_uses_raw_setwindowpos`
+- `tests/test_release_36_regressions.py::test_release_36_startup_does_not_mutate_topmost_flags_when_disabled`
+- `tests/test_release_36_regressions.py::test_release_36_log_is_migrated_to_utf8_bom_for_windows_powershell`
+- `tests/test_release_36_regressions.py::test_release_36_log_migrates_bomless_utf8_and_appends_readable_russian`
+- `tests/test_release_36_regressions.py::test_release_36_log_migrates_legacy_cp1251_to_utf8_bom`
+- `tests/test_release_36_regressions.py::test_release_36_main_window_uses_native_caption_not_custom_close_wiring`
+- `tests/test_release_36_regressions.py::test_release_36_full_suite_bootstraps_qapplication_before_core_qt_tests`
+- `tests/test_release_36_regressions.py::test_release_36_acceptance_runner_rejects_native_windows_crash_codes`
+- `tests/test_release_36_regressions.py::test_release_36_pyinstaller_build_rejects_foreign_icu_and_uses_onedir`
+- `tests/test_release_36_regressions.py::test_release_36_application_update_feed_is_wired_without_implicit_download`
+- `tests/test_release_36_windows_runtime.py::Release36WindowRuntimeTests::test_topmost_transition_preserves_caption_flags_and_close`
+- `tests/test_release_36_windows_runtime.py::Release36WindowRuntimeTests::test_windows_native_close_command_reaches_close_event_after_topmost_toggle`
+- `tests/test_release_39_regressions.py::test_release_39_identity_is_current_runtime_version`
+- `tests/test_release_39_regressions.py::test_java_installer_uses_stderr_safe_version_probe_everywhere`
+- `tests/test_release_39_regressions.py::test_windows_powershell_probe_accepts_successful_stderr_version`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_astra_project_file_is_not_rojo`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_default_rojo_project_is_detected`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_maven_does_not_invent_exec_java`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_node_lockfile_commands`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_plain_pyproject_does_not_invent_pytest`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_pnpm_bun_godot_cmake_dotnet_command_matrix`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_pytest_config_enables_pytest_command`
+- `tests/test_release_3_2.py::ProjectCommandsTests::test_yarn_classic_and_berry_install_modes`
+- `tests/test_release_3_2.py::PythonEnvironmentTests::test_dependency_files_include_split_requirements`
+- `tests/test_release_3_2.py::PythonEnvironmentTests::test_external_virtual_env_is_not_mistaken_for_project_env`
+- `tests/test_release_3_2.py::PythonEnvironmentTests::test_project_environment_detection`
+- `tests/test_release_3_2.py::PythonRegistryTests::test_known_import_to_pip_mappings`
+- `tests/test_release_3_2.py::PythonRegistryTests::test_relative_imports_are_not_external_dependencies`
+- `tests/test_release_3_2.py::TaskManagerStaticTests::test_background_output_has_windows_fallback_decoding`
+- `tests/test_release_3_2.py::TaskManagerStaticTests::test_task_slot_is_reserved_until_terminal_signal_and_shutdown_can_wait`
+- `tests/test_release_3_2.py::MainStaticTests::test_all_languages_have_compile_and_run_branches`
+- `tests/test_release_3_2.py::MainStaticTests::test_embedded_installer_resolves_get_item_paths_and_uses_stable_shortcut_icon`
+- `tests/test_release_3_2.py::MainStaticTests::test_jsonc_parser_accepts_comments_urls_and_trailing_commas`
+- `tests/test_release_3_2.py::MainStaticTests::test_jsx_is_recognized_as_javascript`
+- `tests/test_release_3_2.py::MainStaticTests::test_no_temporary_23_release_identity`
+- `tests/test_release_3_2.py::MainStaticTests::test_project_python_mutations_guard_invalid_override`
+- `tests/test_release_3_2.py::MainStaticTests::test_release_number`
+- `tests/test_release_3_2.py::MainStaticTests::test_search_replace_rescans_and_preserves_legacy_encoding`
+- `tests/test_release_3_2.py::MainStaticTests::test_settings_load_save_key_parity`
+- `tests/test_release_3_2.py::LspIntegrationStaticTests::test_lsp_protocol_has_framing_safety_limits`
+- `tests/test_release_3_2.py::LspIntegrationStaticTests::test_lsp_transport_has_full_b1_lifecycle_and_restart_budget`
+- `tests/test_release_3_2.py::LspIntegrationStaticTests::test_main_owns_lsp_manager_and_shuts_it_down`
+- `tests/test_release_3_2.py::InstallerStaticTests::test_build_batch_stops_after_failed_steps`
+- `tests/test_release_3_2.py::InstallerStaticTests::test_common_installer_stops_on_powershell_errors`
+- `tests/test_release_3_2.py::InstallerStaticTests::test_existing_cpp_is_checked_before_winget`
+- `tests/test_release_3_2.py::InstallerStaticTests::test_existing_java_is_checked_before_winget`
+- `tests/test_release_3_2.py::InstallerStaticTests::test_existing_python_is_checked_before_winget`
+- `tests/test_release_3_2.py::InstallerStaticTests::test_shortcut_script_uses_stable_app_directory_icon`
+- `tests/test_release_3_2.py::InstallerStaticTests::test_standalone_installers_resolve_source_or_fullname`
+- `tests/test_release_3_5.py::test_release_3_5_identity`
+- `tests/test_release_3_5.py::test_settings_are_inline_in_tools_drawer_not_external_dialog`
+- `tests/test_release_3_5.py::test_editor_and_console_transparency_are_not_artificially_clamped_opaque`
+- `tests/test_release_3_5.py::test_integrated_console_replaces_separate_stdin_line_edits`
+- `tests/test_release_3_5.py::test_project_tree_cannot_restore_as_fully_collapsed`
+- `tests/test_release_3_5.py::test_python_manager_supports_arbitrary_pypi_and_unknown_import_fallback`
+- `tests/test_release_3_5.py::test_test_dependencies_and_one_click_acceptance_runner_are_bundled`
+- `tests/test_release_3_5.py::test_all_batch_files_remain_ascii_crlf_after_3_5_changes`
+- `tests/test_staffedup_d1.py::test_template_catalog_contains_all_staffedup_profiles`
+- `tests/test_staffedup_d1.py::test_russian_project_names_get_portable_slugs`
+- `tests/test_staffedup_d1.py::test_all_template_paths_are_relative_unique_and_rendered`
+- `tests/test_staffedup_d1.py::test_unknown_template_is_rejected`
+- `tests/test_staffedup_d1.py::test_create_refuses_non_empty_target_without_overwrite`
+- `tests/test_staffedup_d1.py::test_existing_empty_target_is_supported_and_staging_is_cleaned`
+- `tests/test_staffedup_d1.py::test_every_template_writes_portable_astra_config_and_staffedup_metadata`
+- `tests/test_staffedup_d1.py::test_web_typescript_template_has_build_test_and_env_boundaries`
+- `tests/test_staffedup_d1.py::test_yandex_games_template_keeps_platform_sdk_behind_adapter`
+- `tests/test_staffedup_d1.py::test_roblox_template_has_valid_rojo_mapping_and_boundaries`
+- `tests/test_staffedup_d1.py::test_godot_template_has_real_main_scene_and_script`
+- `tests/test_staffedup_d1.py::test_python_app_template_toml_and_real_smoke_commands_work`
+- `tests/test_staffedup_d1.py::test_telegram_template_never_places_real_token_in_tracked_files_and_tests_run_without_aiogram`
+- `tests/test_staffedup_d1.py::test_static_and_empty_templates_do_not_invent_package_dependencies`
+- `tests/test_staffedup_d1.py::test_generated_python_sources_compile_without_third_party_import_execution`
+- `tests/test_staffedup_d1.py::test_portable_project_paths_keep_repository_local_state_relative`
+- `tests/test_staffedup_d1.py::test_attached_folder_serialization_is_relative_only_inside_repository`
+- `tests/test_staffedup_d1.py::test_main_integrates_template_dialog_metadata_and_portable_project_paths`
+- `tests/test_staffedup_d2.py::test_all_staffedup_templates_have_health_reports_and_expected_profile`
+- `tests/test_staffedup_d2.py::test_non_staffedup_project_returns_no_profile_report`
+- `tests/test_staffedup_d2.py::test_unknown_template_is_reported_without_guessing`
+- `tests/test_staffedup_d2.py::test_missing_gitignore_is_fixable_and_recreated_without_touching_source`
+- `tests/test_staffedup_d2.py::test_gitignore_fix_appends_missing_patterns_and_preserves_custom_content_and_negation_order`
+- `tests/test_staffedup_d2.py::test_missing_support_files_are_recreated_but_missing_code_is_not`
+- `tests/test_staffedup_d2.py::test_missing_standard_command_is_restored_but_custom_command_is_preserved`
+- `tests/test_staffedup_d2.py::test_metadata_profile_and_tool_lists_are_repaired_without_forcing_old_template_version_upgrade`
+- `tests/test_staffedup_d2.py::test_missing_template_version_is_safe_fixable`
+- `tests/test_staffedup_d2.py::test_malformed_astra_config_is_reported_and_never_overwritten`
+- `tests/test_staffedup_d2.py::test_safe_fix_is_idempotent_on_healthy_support_files`
+- `tests/test_staffedup_d2.py::test_local_env_without_example_is_warned_but_not_auto_generated_when_profile_has_no_canonical_example`
+- `tests/test_staffedup_d2.py::test_node_dependency_state_reports_missing_node_modules_without_installing_anything`
+- `tests/test_staffedup_d2.py::test_required_structure_is_validated_but_never_recreated_by_safe_fix`
+- `tests/test_staffedup_d2.py::test_safe_fix_never_overwrites_existing_custom_support_files`
+- `tests/test_staffedup_d2.py::test_required_and_recommended_tool_severity_is_profile_aware`
+- `tests/test_staffedup_d2.py::test_main_integrates_staffedup_health_ui_and_safe_fix_boundary`
+- `tests/test_staffedup_d3.py::test_relative_path_label_for_main_and_attached_roots`
+- `tests/test_staffedup_d3.py::test_project_under_ancestor_named_build_is_not_false_positive_excluded`
+- `tests/test_staffedup_d3.py::test_read_context_file_normalizes_windows_crlf_to_lf`
+- `tests/test_staffedup_d3.py::test_path_outside_project_is_rejected`
+- `tests/test_staffedup_d3.py::test_sensitive_files_are_blocked_but_env_example_is_allowed`
+- `tests/test_staffedup_d3.py::test_read_context_file_supports_utf8_and_cp1251`
+- `tests/test_staffedup_d3.py::test_binary_and_oversized_files_are_rejected`
+- `tests/test_staffedup_d3.py::test_symlink_file_is_rejected_even_when_target_is_inside_project`
+- `tests/test_staffedup_d3.py::test_selection_export_preserves_real_line_numbers_and_language_fence`
+- `tests/test_staffedup_d3.py::test_qt_selected_text_export_handles_utf16_emoji_and_paragraph_separators_without_offset_math`
+- `tests/test_staffedup_d3.py::test_selection_export_rejects_empty_selection`
+- `tests/test_staffedup_d3.py::test_selection_export_uses_longer_fence_when_content_contains_backticks`
+- `tests/test_staffedup_d3.py::test_project_tree_excludes_generated_sensitive_context_and_symlinks`
+- `tests/test_staffedup_d3.py::test_project_tree_is_deterministic_and_directories_sort_before_files`
+- `tests/test_staffedup_d3.py::test_problem_export_has_relative_location_severity_source_and_code`
+- `tests/test_staffedup_d3.py::test_terminal_output_truncation_keeps_latest_output`
+- `tests/test_staffedup_d3.py::test_context_contains_only_explicitly_selected_files_and_no_absolute_paths`
+- `tests/test_staffedup_d3.py::test_context_optional_sections_are_opt_in`
+- `tests/test_staffedup_d3.py::test_context_rejects_sensitive_file_even_when_explicitly_selected`
+- `tests/test_staffedup_d3.py::test_context_requires_at_least_one_selected_file`
+- `tests/test_staffedup_d3.py::test_write_context_is_atomic_and_requires_explicit_overwrite`
+- `tests/test_staffedup_d3.py::test_all_staffedup_templates_gitignore_local_project_context_export`
+- `tests/test_staffedup_d3.py::test_staffedup_health_safe_fix_restores_context_gitignore_rule_without_touching_context_file`
+- `tests/test_staffedup_d3.py::test_main_integrates_d3_ai_context_ui_and_explicit_selection_boundary`
+- `tests/test_test_explorer_c2.py::AdapterDetectionTests::test_dotnet_adapter_detected`
+- `tests/test_test_explorer_c2.py::AdapterDetectionTests::test_pytest_detected_from_configuration`
+- `tests/test_test_explorer_c2.py::AdapterDetectionTests::test_unittest_detected_without_forcing_pytest`
+- `tests/test_test_explorer_c2.py::AdapterDetectionTests::test_vitest_jest_npm_adapter_detected_from_package_json`
+- `tests/test_test_explorer_c2.py::DiscoveryTests::test_discovery_ignores_generated_directories`
+- `tests/test_test_explorer_c2.py::DiscoveryTests::test_dotnet_discovery_finds_common_attributes`
+- `tests/test_test_explorer_c2.py::DiscoveryTests::test_js_discovery_finds_test_and_spec_files`
+- `tests/test_test_explorer_c2.py::DiscoveryTests::test_pytest_discovery_preserves_node_ids_and_lines`
+- `tests/test_test_explorer_c2.py::DiscoveryTests::test_unittest_discovery_builds_importable_test_ids`
+- `tests/test_test_explorer_c2.py::CommandTests::test_dotnet_command_uses_console_logger`
+- `tests/test_test_explorer_c2.py::CommandTests::test_npm_command_uses_existing_project_test_script`
+- `tests/test_test_explorer_c2.py::CommandTests::test_pytest_command_can_target_single_node`
+- `tests/test_test_explorer_c2.py::CommandTests::test_unittest_command_can_target_single_test_id`
+- `tests/test_test_explorer_c2.py::ResultParserTests::test_dotnet_output_parser`
+- `tests/test_test_explorer_c2.py::ResultParserTests::test_invalid_last_run_is_ignored`
+- `tests/test_test_explorer_c2.py::ResultParserTests::test_last_run_round_trip`
+- `tests/test_test_explorer_c2.py::ResultParserTests::test_pytest_verbose_output_updates_discovered_tree`
+- `tests/test_test_explorer_c2.py::ResultParserTests::test_unittest_output_parser`
+- `tests/test_test_explorer_c2.py::ResultParserTests::test_vitest_jest_output_parser_strips_ansi`
+- `tests/test_test_explorer_c2.py::RuntimeCommandTests::test_real_pytest_command_and_parser`
+- `tests/test_test_explorer_c2.py::RuntimeCommandTests::test_real_unittest_command_and_parser`
+- `tests/test_test_explorer_c2.py::MainIntegrationStaticTests::test_test_explorer_persists_last_run_in_project_payload`
+- `tests/test_test_explorer_c2.py::MainIntegrationStaticTests::test_test_explorer_ui_and_actions_present`
+- `tests/test_test_explorer_c2.py::MainIntegrationStaticTests::test_unsaved_project_files_block_external_test_run`
+
+## Runtime-тесты PySide6 / Windows
+
+Release 3.5 был реально прогнан на Windows: прежние B1–C3 Qt-тесты выполнились. Единственный Qt-runtime failure был переносимым CRLF assertion в C1 и исправлен в 3.6; остальные старые deferred Qt tests прошли.
+
+- [x] `test_git_c3_qt.py::GitTaskRuntimeTests.test_task_manager_preserves_nul_delimited_unicode_git_status` — PASS на Windows Release 3.5.
+- [x] `test_lsp_b1.py::LspProcessLifecycleTests.test_initialize_server_request_and_graceful_shutdown` — PASS на Windows Release 3.5.
+- [x] `test_lsp_b1.py::LspProcessLifecycleTests.test_unexpected_exit_restarts_with_backoff` — PASS на Windows Release 3.5.
+- [x] `test_lsp_b2.py::LspDocumentIntegrationTests.test_manager_syncs_documents_and_collects_diagnostics` — PASS на Windows Release 3.5.
+- [x] `test_lsp_b2.py::LspTcpTransportTests.test_external_tcp_initialize_and_shutdown` — PASS на Windows Release 3.5.
+- [x] `test_lsp_b3.py::LspInteractiveRuntimeTests.test_manager_routes_completion_hover_signature_navigation_rename_and_symbols` — PASS на Windows Release 3.5.
+- [RETEST 3.6] `test_quality_c1_qt.py::QualityTaskRuntimeTests.test_task_manager_streams_stdin_to_formatter_process` — Release 3.5 functionality succeeded but assertion was LF-only; 3.6 makes it CRLF/LF portable.
+- [DEFERRED 3.6] `test_release_36_windows_runtime.py::Release36WindowRuntimeTests.test_topmost_transition_preserves_caption_flags_and_close` — new native-window regression; requires PySide6/Windows acceptance run.
+- [DEFERRED 3.6] `test_release_36_windows_runtime.py::Release36WindowRuntimeTests.test_windows_native_close_command_reaches_close_event_after_topmost_toggle` — sends the real Windows native caption close command to the current HWND after topmost on/off and verifies that `closeEvent` receives it.
+
+# Ручной Windows test plan
+
+## 3.0 — Foundation
+
+- [ ] `A-START-01` Fresh launch on clean Windows installation
+- [ ] `A-START-02` Launch with existing user settings
+- [ ] `A-START-03` Launch after previous crash
+- [ ] `A-START-04` Close application with no active tasks
+- [ ] `A-START-05` Close application with active background task
+- [ ] `A-PROJ-01` Create new project
+- [ ] `A-PROJ-02` Open existing project
+- [ ] `A-PROJ-03` Reopen recent project
+- [ ] `A-PROJ-04` Project settings restore correctly
+- [ ] `A-PROJ-05` Deleted project folder is not silently recreated
+- [ ] `A-PROJ-06` Migration of project/settings from 2.x
+- [ ] `A-EDIT-01` Open multiple files
+- [ ] `A-EDIT-02` Save file
+- [ ] `A-EDIT-03` Save As success/failure rollback
+- [ ] `A-EDIT-04` UTF-8 open/save
+- [ ] `A-EDIT-05` CP1251 open/save
+- [ ] `A-EDIT-06` Large text file open
+- [ ] `A-EDIT-07` Undo/redo
+- [ ] `A-EDIT-08` Tab and indentation settings
+- [ ] `A-RUN-01` Python Run
+- [ ] `A-RUN-02` C++ Check/Build/Run
+- [ ] `A-RUN-03` Java Check/Run
+- [ ] `A-RUN-04` C# Check/Run
+- [ ] `A-RUN-05` JavaScript/TypeScript Run
+- [ ] `A-RUN-06` Project custom Run/Build/Test/Install commands
+
+## Python Environment Manager
+
+- [ ] `A-PYENV-01` Detect system Python
+- [ ] `A-PYENV-02` Detect project `.venv`
+- [ ] `A-PYENV-03` Create `.venv`
+- [ ] `A-PYENV-04` Select manual interpreter
+- [ ] `A-PYENV-05` Install package through pip
+- [ ] `A-PYENV-06` Install package through uv
+- [ ] `A-PYENV-07` Install `requirements.txt`
+- [ ] `A-PYENV-08` Install dependencies from `pyproject.toml`
+- [ ] `A-PYENV-09` Export `requirements.txt`
+- [ ] `A-PYENV-10` Detect missing imports
+- [ ] `A-PYENV-11` Mapping `sklearn -> scikit-learn`
+- [ ] `A-PYENV-12` Mapping `PIL -> Pillow`
+- [ ] `A-PYENV-13` Unknown package confirmation flow
+- [ ] `A-PYENV-14` Invalid project interpreter does not mutate global Python
+
+## Search / project tools
+
+- [ ] `A-SEARCH-01` Search in project
+- [ ] `A-SEARCH-02` Replace in project
+- [ ] `A-SEARCH-03` Regex search
+- [ ] `A-SEARCH-04` Regex replacement failure leaves all files untouched
+- [ ] `A-SEARCH-05` Search excludes generated folders
+- [ ] `A-SEARCH-06` Quick Open
+- [ ] `A-DOCTOR-01` Project Doctor
+
+## 3.1 B1 — LSP Transport
+
+- [ ] `B1-LSP-01` Start stdio language server
+- [ ] `B1-LSP-02` Initialize handshake
+- [ ] `B1-LSP-03` Graceful shutdown handshake
+- [ ] `B1-LSP-04` Unexpected server crash recovery
+- [ ] `B1-LSP-05` Restart budget is respected
+- [ ] `B1-LSP-06` Correct active project root is sent to server
+- [ ] `B1-LSP-07` Project-local `.venv` / `node_modules/.bin` server has priority
+- [ ] `B1-LSP-08` Closing Astra leaves no orphan language-server process
+
+## 3.1 B2 — Documents + Diagnostics
+
+- [ ] `B2-DOC-01` Opening a saved source file sends `didOpen`
+- [ ] `B2-DOC-02` Editing sends debounced `didChange` with increasing document version
+- [ ] `B2-DOC-03` Saving sends pending change first and then `didSave`
+- [ ] `B2-DOC-04` Closing a tab sends `didClose`
+- [ ] `B2-DOC-05` Save As closes the old URI and opens/saves the new URI
+- [ ] `B2-DOC-06` Language-server restart resends current open documents
+- [ ] `B2-DOC-07` Switching project clears old document state and does not sync unrelated old tabs
+- [ ] `B2-DOC-08` Missing LSP server does not cause connection/process retry on every keystroke
+- [ ] `B2-DIAG-01` Python diagnostics appear in Problems
+- [ ] `B2-DIAG-02` TypeScript diagnostics appear in Problems
+- [ ] `B2-DIAG-03` C++ diagnostics appear in Problems
+- [ ] `B2-DIAG-04` Luau diagnostics appear in Problems
+- [ ] `B2-DIAG-05` Fixing code clears obsolete diagnostics
+- [ ] `B2-DIAG-06` Stale versioned diagnostics do not replace newer diagnostics
+- [ ] `B2-DIAG-07` Error filter works
+- [ ] `B2-DIAG-08` Warning filter works
+- [ ] `B2-DIAG-09` Information/Hint filter works
+- [ ] `B2-DIAG-10` Current-file-only filter works
+- [ ] `B2-DIAG-11` Clicking a diagnostic opens the correct file/line/column
+- [ ] `B2-DIAG-12` Closing a document removes its diagnostics
+- [ ] `B2-GODOT-01` With Godot running, Astra connects to GDScript LSP on TCP 127.0.0.1:6005
+- [ ] `B2-GODOT-02` GDScript `initialize -> initialized` succeeds
+- [ ] `B2-GODOT-03` GDScript diagnostics appear in Problems
+- [ ] `B2-GODOT-04` Godot not running produces a controlled failure without freezing/crashing Astra
+- [ ] `B2-GODOT-05` Starting Godot later allows a subsequent explicit/normal retry to connect
+- [ ] `B2-GODOT-06` Closing Astra disconnects the TCP LSP cleanly
+
+## 3.1 B3 — Interactive editor intelligence
+
+- [ ] `B3-LSP-01` LSP status UI distinguishes ready / starting / missing / disabled / external server states
+- [ ] `B3-LSP-02` Safe install/update BasedPyright inside project Python environment
+- [ ] `B3-LSP-03` Safe npm install/update flow for TypeScript/HTML/CSS/JSON/YAML/Shell/PHP servers
+- [ ] `B3-LSP-03A` TypeScript Language Server install is blocked with a clear message when active Node.js is below 22.22.2
+- [ ] `B3-LSP-04` clangd/LLVM install/update flow through WinGet
+- [ ] `B3-LSP-05` csharp-ls install is blocked with a clear message when active .NET SDK is below 10
+- [ ] `B3-LSP-06` Failed LSP installation leaves Astra responsive and status remains accurate
+- [ ] `B3-LSP-07` GDScript status is shown as waiting for external Godot server until TCP connection is ready
+- [ ] `B3-LSP-08` Project switch clears queued interactive LSP requests from the old workspace
+- [ ] `B3-LSP-09` Updating an active owned language server stops it cleanly before package/tool replacement and can start it again afterward
+- [ ] `B3-COMP-01` `Ctrl+Space` shows LSP completion for current saved project file
+- [ ] `B3-COMP-02` Completion `textEdit` replaces the exact server-provided range
+- [ ] `B3-COMP-03` Stale completion response is ignored after document changes/tab switch
+- [ ] `B3-HOVER-01` `Ctrl+Shift+H` shows hover contents and handles empty hover
+- [ ] `B3-HOVER-02` Stale hover response is ignored after document changes/tab switch
+- [ ] `B3-SIG-01` `Ctrl+Shift+Space` shows signature and active parameter
+- [ ] `B3-SIG-02` Stale signature response is ignored after document changes/tab switch
+- [ ] `B3-DEF-01` `F12` navigates directly when exactly one definition is returned
+- [ ] `B3-DEF-02` Multiple definitions open a selection dialog and navigate correctly
+- [ ] `B3-DEF-03` Stale definition response is ignored after document changes/tab switch
+- [ ] `B3-REF-01` `Shift+F12` shows references and navigates to selected location
+- [ ] `B3-REF-02` Stale references response is ignored after document changes/tab switch
+- [ ] `B3-RENAME-01` `F2` renames symbol across open and closed project files
+- [ ] `B3-RENAME-02` Rename touching a file outside the active project is rejected atomically
+- [ ] `B3-RENAME-03` Rename containing Create/Rename/Delete resource operations is rejected atomically
+- [ ] `B3-RENAME-04` Rename preserves CP1251 encoding of closed legacy files
+- [ ] `B3-RENAME-05` Rename preserves CRLF line endings of closed files
+- [ ] `B3-RENAME-06` UTF-16 LSP positions remain correct when emoji/non-BMP characters precede the symbol
+- [ ] `B3-RENAME-07` Closed-file write failure rolls back already replaced files and leaves no `.astra-rename-*.tmp` files
+- [ ] `B3-RENAME-08` Open edited files remain unsaved so user-level Undo is available after rename
+- [ ] `B3-SYMBOL-01` `Ctrl+Shift+O` loads hierarchical Document Symbols into Outline
+- [ ] `B3-SYMBOL-02` Double-clicking Outline symbol navigates to correct line/column
+- [ ] `B3-SYMBOL-03` Stale Outline response is ignored after document changes/tab switch
+
+## 3.2 — Quality / Tests / Git
+
+- [ ] `C1-FMT-01` Python/Ruff formatter formats current editor buffer and respects project Ruff configuration
+- [ ] `C1-FMT-02` TypeScript/JavaScript Prettier formatter uses project-local `node_modules/.bin` and project configuration
+- [ ] `C1-FMT-03` C++ clang-format formats via stdin and resolves nearest `.clang-format` / fallback safely
+- [ ] `C1-FMT-04` Luau/Lua StyLua formats via stdin with real file path and project configuration
+- [ ] `C1-FMT-05` Format on Save persists formatted text without recursive save/format loop
+- [ ] `C1-FMT-06` Formatter result is discarded if editor text changed while formatter was running
+- [ ] `C1-FMT-07` Formatter failure leaves editor/source text unchanged and Astra responsive
+- [ ] `C1-FMT-08` Missing formatter never triggers an implicit internet download; installation requires explicit confirmation
+- [ ] `C1-FMT-09` Prettier also formats HTML/CSS/JSON/YAML/Markdown through the same safe local executable path
+- [ ] `C1-FMT-10` Formatting remains undoable in the editor after manual Format Document
+- [ ] `C1-LINT-01` Ruff diagnostics from the current Python buffer appear in Problems
+- [ ] `C1-LINT-02` ESLint diagnostics from JavaScript/TypeScript stdin appear in Problems with error/warning severity
+- [ ] `C1-LINT-03` Re-running a clean lint clears previous quality diagnostics for that file
+- [ ] `C1-LINT-04` Linter configuration/process failure does not silently clear older diagnostics
+- [ ] `C1-LINT-05` Linter diagnostics merge with LSP diagnostics and obey existing Problems filters/navigation
+- [ ] `C1-INSTALL-01` Explicit Ruff install/update uses active project Python environment when available
+- [ ] `C1-INSTALL-02` Explicit Prettier install uses local devDependency with `--save-exact` and never bare auto-downloading `npx`
+- [ ] `C1-INSTALL-03` Explicit ESLint/StyLua npm install requires `package.json`, stays project-local and stores an exact devDependency version
+- [ ] `C1-INSTALL-04` clang-format/LLVM installation is explicit and failure is reported without freezing Astra
+- [ ] `C1-TASK-01` TaskManager sends UTF-8 stdin and closes the write channel for formatter/linter processes
+- [ ] `C2-TEST-01` pytest adapter is detected from project configuration/dependencies
+- [ ] `C2-TEST-02` pytest discovery lists standard functions/classes with correct source lines
+- [ ] `C2-TEST-03` pytest Run All streams output and builds pass/fail tree
+- [ ] `C2-TEST-04` pytest Run Selected executes the selected node id only
+- [ ] `C2-TEST-05` unittest adapter is detected without falsely forcing pytest
+- [ ] `C2-TEST-06` unittest Run All and Run Selected produce correct statuses
+- [ ] `C2-TEST-07` npm/Vitest project test script is detected and executed through existing package manager
+- [ ] `C2-TEST-08` npm/Jest project test script is detected and executed through existing package manager
+- [ ] `C2-TEST-09` Node Test Explorer never uses implicit bare `npx` download
+- [ ] `C2-TEST-10` `dotnet test` adapter runs and parses Passed/Failed/Skipped console results
+- [ ] `C2-TEST-11` Multiple detected adapters in a polyglot project can be switched without mixing result state
+- [ ] `C2-TEST-12` Generated folders (`node_modules`, `.venv`, build/dist/bin/obj/target) are excluded from discovery
+- [ ] `C2-TEST-13` Test output remains visible in Astra console while result parser builds tree
+- [ ] `C2-TEST-14` Pass/fail/skip/error tree renders the last completed run
+- [ ] `C2-TEST-15` Double-clicking a test opens its source file at the stored line
+- [ ] `C2-TEST-16` Last test run persists in `astral.project.json` and restores after project reopen
+- [ ] `C2-TEST-17` Rerun Last uses the previously used adapter and current project
+- [ ] `C2-TEST-18` Unsaved modified project files block external test execution with a clear message
+- [ ] `C2-TEST-19` Missing Python/npm/dotnet runtime produces controlled unavailable state without freezing Astra
+- [ ] `C2-TEST-20` Cancel during a long test run stops the TaskManager process and restores Test Explorer controls
+- [ ] `C2-TEST-21` Dynamic/parameterized runtime cases not found statically can still appear from parsed runner output
+- [ ] `C2-TEST-22` Project switch does not show the previous project's discovered tests as current results
+- [ ] `C3-GIT-01` Git / Source Control detects a repository opened at its root
+- [ ] `C3-GIT-02` Repository root is detected when Astra project is a nested folder inside a parent repository
+- [ ] `C3-GIT-03` Non-repository project shows a controlled “repository not found” state
+- [ ] `C3-GIT-04` Missing Git CLI shows a controlled unavailable state and links naturally to Astra installer workflow
+- [ ] `C3-GIT-05` Branch, upstream, ahead and behind counters render correctly
+- [ ] `C3-GIT-06` Staged, unstaged and untracked files render with distinct states
+- [ ] `C3-GIT-07` Unicode paths, spaces and special characters survive status parsing/navigation
+- [ ] `C3-GIT-08` Merge conflicts render as conflict state and are counted in the summary
+- [ ] `C3-GIT-09` Working-tree diff renders the selected modified/deleted file
+- [ ] `C3-GIT-10` Staged diff renders the selected staged file
+- [ ] `C3-GIT-11` Staged rename diff shows the rename using both old and new path
+- [ ] `C3-GIT-12` Untracked file produces a clear no-diff message until it is staged
+- [ ] `C3-GIT-13` Stage Selected stages only the selected path
+- [ ] `C3-GIT-14` Unstage Selected preserves working-tree contents
+- [ ] `C3-GIT-15` Unstage of a staged rename handles both old/new paths instead of leaving a partial staged delete
+- [ ] `C3-GIT-16` Stage All requires confirmation and warns that a parent monorepo action affects the whole repository
+- [ ] `C3-GIT-17` Unstage All requires confirmation and preserves all working-tree files
+- [ ] `C3-GIT-18` Unstage works before the first commit in a newly initialized repository
+- [ ] `C3-GIT-19` Commit is unavailable with no staged changes
+- [ ] `C3-GIT-20` Empty commit message is rejected
+- [ ] `C3-GIT-21` Commit confirmation creates a commit containing staged changes only
+- [ ] `C3-GIT-22` Commit is blocked while unresolved conflicts exist
+- [ ] `C3-GIT-23` Successful stage/unstage/commit automatically refreshes Git status
+- [ ] `C3-GIT-24` Pull is blocked when working tree is dirty
+- [ ] `C3-GIT-25` Pull is blocked when current branch has no upstream
+- [ ] `C3-GIT-26` Pull is blocked in detached HEAD
+- [ ] `C3-GIT-27` Clean fast-forward Pull succeeds and refreshes branch/status
+- [ ] `C3-GIT-28` Diverged Pull fails because Astra uses `--ff-only` and does not create an automatic merge commit
+- [ ] `C3-GIT-29` Push requires explicit confirmation
+- [ ] `C3-GIT-30` Push is blocked when no upstream is configured
+- [ ] `C3-GIT-31` Push is blocked in detached HEAD
+- [ ] `C3-GIT-32` Push never uses force / force-with-lease flags
+- [ ] `C3-GIT-33` Credential/network failure returns control to Astra without freezing the UI
+- [ ] `C3-GIT-34` Long Git operation can be cancelled through the common TaskManager cancel button
+- [ ] `C3-GIT-35` Hidden terminal credential prompt is disabled for network Git operations
+- [ ] `C3-GIT-36` Double-clicking an existing changed file opens it in the editor
+- [ ] `C3-GIT-37` Double-clicking a deleted file is handled without crash
+- [ ] `C3-GIT-38` Switching project clears the previous repository status/diff state
+- [ ] `C3-GIT-39` Source Control controls disable appropriately while another background task is running
+- [ ] `C3-GIT-40` Qt `QProcess` preserves NUL-delimited Unicode status output end-to-end (also covered by deferred automated test)
+
+## 3.3 — StaffedUp Mode
+
+- [ ] `D1-TPL-01` Create Web/TypeScript template from the StaffedUp dialog and open `src/main.ts`
+- [ ] `D1-TPL-02` Create Roblox/Luau template and verify client/server/shared + `default.project.json` tree
+- [ ] `D1-TPL-03` Create Godot template and open `scripts/main.gd`; `project.godot` and main scene are visible in Project tree
+- [ ] `D1-TPL-04` Create Python App template, create `.venv`, Install Project, Run Project and Test Project
+- [ ] `D1-TPL-05` Create Telegram Bot template; `.env.example` exists while real `.env` remains ignored by Git
+- [ ] `D1-TPL-06` Create Static Website template and Run Project using local HTTP server
+- [ ] `D1-TPL-07` Create Empty Project and verify Astra does not invent runtime/package dependencies
+- [ ] `D1-TPL-08` Create Yandex Games/TypeScript template and verify local adapter works without Yandex SDK object
+- [ ] `D1-TPL-09` Template preview shows description, tools, commands and rendered file list before creation
+- [ ] `D1-TPL-10` Creating into an existing non-empty folder is refused and existing files remain byte-identical
+- [ ] `D1-TPL-11` Creating into an existing empty folder succeeds without leftover `.astra-project-*` staging directories
+- [ ] `D1-TPL-12` Project creation never starts npm/pip/uv/Rojo/Godot/network installation implicitly
+- [ ] `D1-TPL-13` Russian project name produces readable portable npm/package identifiers and valid generated files
+- [ ] `D1-TPL-14` Generated `astral.project.json` contains StaffedUp template/profile metadata and explicit project commands
+- [ ] `D1-TPL-15` Reopening a StaffedUp project preserves its `staffedUp` metadata after normal save/state updates
+- [ ] `D1-TPL-16` Project-local `mainFolder`, active/open files and internal attached folders persist as relative paths
+- [ ] `D1-TPL-17` External attached folder remains absolute and still opens after project reload
+- [ ] `D1-TPL-18` Copy/move the whole project repository to another Windows path and open `astral.project.json` successfully
+- [ ] `D1-TPL-19` `.env.example`, `.gitignore` and `project.godot` are visible/openable in the Astra project tree
+- [ ] `D1-TPL-20` Web template Install/Run/Build/Test commands operate through the project-local npm installation
+- [ ] `D1-TPL-21` Yandex template Build/Test works locally and browser bundle contains no committed private credentials
+- [ ] `D1-TPL-22` Roblox Run starts Rojo serve only after explicit user action; Build creates ignored `game.rbxlx`
+- [ ] `D1-TPL-23` Godot Run uses the current project folder and no export preset is invented automatically
+- [ ] `D1-TPL-24` Generated Python App can run/tests pass before adding third-party runtime dependencies
+- [ ] `D1-TPL-25` Telegram config tests run without starting Telegram network polling
+- [ ] `D1-TPL-26` Every non-empty StaffedUp template includes project documentation and a safe `.gitignore`
+- [ ] `D2-HEALTH-01` Project Doctor recognises the correct StaffedUp health profile for every D1 template
+- [ ] `D2-HEALTH-02` Required project structure is validated per profile without demanding irrelevant folders from another template
+- [ ] `D2-HEALTH-03` Missing source/code structure is reported but Safe Fix does not recreate or overwrite user code
+- [ ] `D2-HEALTH-04` Missing `.gitignore` is recreated from the canonical template profile only after explicit Safe Fix
+- [ ] `D2-HEALTH-05` Missing `.gitignore` patterns are appended while custom user patterns/comments remain intact
+- [ ] `D2-HEALTH-06` CP1251 + CRLF `.gitignore` remains readable and keeps its line-ending/encoding behaviour after Safe Fix
+- [ ] `D2-HEALTH-07` `.env.example` is recreated only for profiles with a canonical safe example and existing custom examples are never overwritten
+- [ ] `D2-HEALTH-08` A real `.env` without canonical example produces a manual warning; Astra does not copy secret values into `.env.example`
+- [ ] `D2-HEALTH-09` Missing README/profile docs can be recreated, while existing customized documentation remains byte/content intact
+- [ ] `D2-HEALTH-10` Required tools appear as errors when missing; recommended tools remain informational/non-blocking
+- [ ] `D2-HEALTH-11` Node projects show dependency-not-installed when `node_modules` is missing without starting `npm install`
+- [ ] `D2-HEALTH-12` Python dependency projects distinguish project-local `.venv`/`venv` from merely available global Python
+- [ ] `D2-HEALTH-13` Git repository health accepts the project root and a project nested inside a parent monorepo
+- [ ] `D2-HEALTH-14` Missing standard project command can be restored but a non-empty customized command is preserved
+- [ ] `D2-HEALTH-15` StaffedUp profile/tool metadata can be repaired without automatically migrating source files from an older template schema
+- [ ] `D2-HEALTH-16` Malformed `astral.project.json` is reported and remains byte-identical after attempted Safe Fix
+- [ ] `D2-HEALTH-17` Safe Fix is idempotent when project support files/config are already healthy
+- [ ] `D2-HEALTH-18` Safe Fix performs no package-manager, tool installation, Git init or network action
+- [ ] `D2-HEALTH-19` Unknown future StaffedUp template produces a controlled error and no guessed repair
+- [ ] `D2-HEALTH-20` Non-StaffedUp project still receives generic Project Doctor checks and the Safe Fix button is disabled
+- [ ] `D2-HEALTH-21` Project Health tree shows status, check, detail and safe-fix availability with no UI freeze
+- [ ] `D2-HEALTH-22` Clicking **Обновить** refreshes tool/dependency/structure state after external changes
+- [ ] `D2-HEALTH-23` Clicking **Исправить безопасное** refreshes Project tree and in-memory StaffedUp metadata/project commands
+- [ ] `D2-HEALTH-24` Safe Fix reports partial filesystem permission errors without crashing Astra or pretending everything was fixed
+- [ ] `D3-AI-01` AI Context dialog opens from the Project panel without network activity or UI freeze
+- [ ] `D3-AI-02` Copy relative path uses project-relative form for a file in the main project root and never copies the local absolute Windows path
+- [ ] `D3-AI-03` Copy relative path for an attached folder uses the `@alias/...` form and remains unambiguous
+- [ ] `D3-AI-04` Copy relative path refuses a selected path outside the active project roots
+- [ ] `D3-AI-05` Copy selection with line numbers requires an explicit editor selection
+- [ ] `D3-AI-06` Copy selection preserves the real source line numbers when the selection begins/ends in the middle of lines
+- [ ] `D3-AI-07` Copy selection handles Cyrillic/emoji and Markdown/backtick content without breaking its code fence
+- [ ] `D3-AI-08` Project tree export is deterministic and includes main + attached project roots
+- [ ] `D3-AI-09` Project tree omits `.git`, `.venv`, `node_modules`, build/cache folders, `PROJECT_CONTEXT.md`, symlinks and sensitive files
+- [ ] `D3-AI-10` Problems export includes LSP + linter diagnostics with relative file, line, column, severity, source and code
+- [ ] `D3-AI-11` Problems export with no current diagnostics returns a clear empty-state message
+- [ ] `D3-AI-12` Terminal export requires explicit confirmation warning that arbitrary console output may contain secrets
+- [ ] `D3-AI-13` Program/task-output export requires the same explicit secret-review confirmation
+- [ ] `D3-AI-14` Very long terminal/program output is bounded and keeps the latest output instead of freezing/copying unbounded text
+- [ ] `D3-AI-15` File list in PROJECT_CONTEXT dialog starts unchecked; Astra does not silently include project source files
+- [ ] `D3-AI-16` **Отметить открытые файлы** selects only currently open eligible project files and is itself an explicit user action
+- [ ] `D3-AI-17` Real `.env`, `.env.*`, private-key/certificate files and common credential files are disabled/blocked from PROJECT_CONTEXT
+- [ ] `D3-AI-18` `.env.example` / `.env.sample` remain selectable because they are intended public templates
+- [ ] `D3-AI-19` Binary, unsupported-encoding, symlink and oversized files are refused without partial context-file corruption
+- [ ] `D3-AI-20` PROJECT_CONTEXT generation requires at least one explicitly selected project file
+- [ ] `D3-AI-21` Generated PROJECT_CONTEXT embeds only checked file contents; an unchecked file's contents never appear
+- [ ] `D3-AI-22` Selected UTF-8 and CP1251 source files are decoded correctly in PROJECT_CONTEXT
+- [ ] `D3-AI-23` PROJECT_CONTEXT uses relative labels and does not embed developer-specific absolute project paths
+- [ ] `D3-AI-24` Project tree inclusion can be toggled independently from selected file contents
+- [ ] `D3-AI-25` Problems inclusion is opt-in and is absent when its checkbox is not selected
+- [ ] `D3-AI-26` Terminal output inclusion is opt-in, warns before inclusion and is absent by default
+- [ ] `D3-AI-27` Program/task output inclusion is opt-in, warns before inclusion and is absent by default
+- [ ] `D3-AI-28` Existing PROJECT_CONTEXT.md is never overwritten without explicit confirmation
+- [ ] `D3-AI-29` Regeneration is blocked while PROJECT_CONTEXT.md is open in Astra, preventing stale-editor/unsaved-text loss
+- [ ] `D3-AI-30` PROJECT_CONTEXT write is atomic and leaves no `.astra_context_*.tmp` file after success/failure
+- [ ] `D3-AI-31` After generation the Project tree refreshes and PROJECT_CONTEXT.md opens for review
+- [ ] `D3-AI-32` Generated context contains a clear local-only/review-before-sharing notice
+- [ ] `D3-AI-33` No D3 action sends clipboard/context data to a network service; all exports remain local until the user manually shares them
+- [ ] `D3-AI-34` Switching projects changes AI Context roots immediately and does not retain selectable files from the previous project
+- [ ] `D3-AI-35` Every StaffedUp template ignores `PROJECT_CONTEXT.md` by default so local exported context is not accidentally committed
+- [ ] `D3-AI-36` Project Health detects a missing `PROJECT_CONTEXT.md` ignore rule and Safe Fix restores only the rule without modifying the context file
+
+## Release 3.4 — Windows launcher hotfix regression
+
+- [ ] `R34-BAT-01` Extract the Release 3.4 TEST BUILD into a normal writable Windows folder and run `install_app.bat`; no batch-token fragments are reported as commands.
+- [ ] `R34-BAT-02` `install_app.bat` reaches the Python detection / `.venv` creation flow instead of failing in `cmd.exe` parsing.
+- [ ] `R34-BAT-03` After setup, `run.bat` launches Astra in a console and does not emit `cmd.exe` parser errors.
+- [ ] `R34-BAT-04` After setup, `run_astra.bat` launches Astra without a console parser failure.
+- [ ] `R34-BAT-05` `build_exe.bat` parses normally and reaches dependency/PyInstaller checks.
+- [ ] `R34-BAT-06` Run the Windows pytest gate; `test_windows_batch_wrappers_are_cmd_safe_crlf_ascii` passes.
+
+## Release 3.5 — Windows acceptance UX / package-manager regression
+
+- [ ] `R35-UX-01` Settings opens inside the Astra main window/tools drawer, not as a separate top-level dialog.
+- [ ] `R35-UX-02` Settings page remains scrollable and usable at common Windows scaling levels; wallpaper preview does not expand the page beyond usable bounds.
+- [ ] `R35-UX-03` Editor transparency slider visibly changes the editor background from nearly opaque to strongly transparent without making text itself transparent.
+- [ ] `R35-UX-04` Program-output console transparency slider visibly changes the console background.
+- [ ] `R35-UX-05` Terminal console transparency slider visibly changes the terminal background.
+- [ ] `R35-UX-06` Editor blur control changes Astra's shared backdrop/wallpaper blur contribution without freezing the UI.
+- [ ] `R35-UX-07` Console blur control changes the shared backdrop/wallpaper blur contribution without freezing the UI.
+- [ ] `R35-CONSOLE-01` A running Python program waiting on stdin accepts text typed directly at the end of **Вывод программы** and Enter submits it.
+- [ ] `R35-CONSOLE-02` Historical program output cannot be edited/backspaced over; it remains selectable/copyable.
+- [ ] `R35-CONSOLE-03` Program output arriving asynchronously while the user has typed partial stdin preserves the pending input buffer.
+- [ ] `R35-CONSOLE-04` Up/Down inside the live console input cycles submitted input history without modifying old output.
+- [ ] `R35-CONSOLE-05` Integrated terminal accepts commands directly in the terminal text area and old terminal output remains protected.
+- [ ] `R35-CONSOLE-06` Closing/cancelling a running program while text is pending does not leave the console in an editable-corrupted state.
+- [ ] `R35-TREE-01` Project/file pane is visible after a clean start with no old splitter settings.
+- [ ] `R35-TREE-02` Restoring legacy/small splitter sizes cannot collapse the project pane to zero width.
+- [ ] `R35-TREE-03` Opening a folder/project shows its real folder hierarchy so files in the same project are visibly grouped.
+- [ ] `R35-TREE-04` Attached folders remain visually distinct and do not make unrelated files look like one physical directory.
+- [ ] `R35-PIP-01` Python Libraries can install an arbitrary valid PyPI requirement such as `httpx` from the selected project environment.
+- [ ] `R35-PIP-02` Python Libraries can update an arbitrary valid PyPI package requirement without using the curated registry.
+- [ ] `R35-PIP-03` URL/file/direct-reference package specifications are rejected by the arbitrary-package field.
+- [ ] `R35-PIP-04` A missing known import still uses the curated import→distribution mapping before any same-name fallback.
+- [ ] `R35-PIP-05` A missing unknown import prompts for same-name PyPI install when unknown auto-install is disabled.
+- [ ] `R35-PIP-06` Enabling unknown-import auto-install explicitly allows same-name PyPI fallback; disabling it restores confirmation behavior.
+- [ ] `R35-PIP-07` Multiple missing approved dependencies are installed as one batch instead of requiring repeated Run cycles.
+- [ ] `R35-PIP-08` If a same-name distribution installs but the requested import still cannot be imported, Astra reports the mismatch and does not enter an auto-rerun loop.
+- [ ] `R35-PKG-01` Fresh `install_app.bat` installs both runtime and `requirements-test.txt` dependencies from the same archive.
+- [ ] `R35-PKG-02` `reinstall_app.bat` removes an existing `.venv`, rebuilds it and finishes through the same installer without manual file replacement.
+- [ ] `R35-PKG-03` `run_acceptance_tests.bat` runs pytest using `.venv` without any manual `pip install pytest` step.
+- [ ] `R35-PKG-04` All root `.bat` files still parse normally in Windows `cmd.exe` and preserve the Release 3.4 ASCII + CRLF regression guard.
+- [ ] `R35-RUN-01` Editing a file after a failed run leaves the previous traceback visible until the next Run; pressing Run again clears/updates output to the current editor content.
+
+## Release 3.6 — Windows runtime regression
+
+Автоматический Windows gate 2026-08-31 выполнил оба Qt caption теста, включая HWND/`SC_CLOSE`, а собранный EXE дополнительно закрыт реальной системной кнопкой X. Пункты ниже остаются ручной owner-матрицей и не отмечаются автоматически.
+
+- [ ] `R36-WIN-01` — native X closes Astra when no files are modified.
+- [ ] `R36-WIN-02` — native X opens the unsaved-file prompt when a tab is modified.
+- [ ] `R36-WIN-03` — Cancel in the unsaved-file prompt keeps Astra open.
+- [ ] `R36-WIN-04` — Yes/No in the unsaved-file prompt closes Astra according to the selected action.
+- [ ] `R36-WIN-05` — Alt+F4 and native X follow the same closeEvent path.
+- [ ] `R36-WIN-06` — toggling Always on Top on/off preserves minimize/maximize/close caption buttons.
+- [ ] `R36-WIN-07` — startup log has no Windows error 1400 from SetWindowPos.
+- [ ] `R36-WIN-08` — `Get-Content $env:LOCALAPPDATA\AstralStudio\astra_studio.log` displays Russian text without mojibake.
+- [ ] `R36-WIN-09` — TaskManager stdin formatter runtime accepts Windows CRLF output.
+- [ ] `R36-WIN-10` — AI context normalizes CRLF source to portable LF Markdown without altering source files.
+
+## Final Integration Gate — internal checks
+
+- [x] `FINAL-01` Every roadmap item is DONE or explicitly deferred
+- [x] `FINAL-02` Full Python compile/static suite
+- [x] `FINAL-03` Full automated test suite
+- [x] `FINAL-04` Registry/JSON parity
+- [x] `FINAL-05` Required assets/scripts complete
+- [x] `FINAL-06` No stale release strings or temporary paths
+- [x] `FINAL-07` Run/Build/Test matrix for every supported language
+- [x] `FINAL-08` Python global/project environment isolation
+- [x] `FINAL-09` Cancellation/shutdown lifecycle
+- [x] `FINAL-10` Settings migration from 2.x
+- [x] `FINAL-11` Clean release archive
+- [x] `FINAL-12` README/changelog/test registry match actual behavior
+## Owner Windows acceptance — pending
+
+- [ ] `FINAL-13` Install on clean Windows PC
+- [ ] `FINAL-14` Full workflow from an empty machine
+- [ ] `FINAL-15` No regression from 3.0 baseline
+- [ ] `FINAL-16` Owner acceptance test complete
