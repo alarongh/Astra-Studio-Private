@@ -14,7 +14,7 @@ PYINSTALLER_SPEC = ROOT / "astra_studio.spec"
 
 def test_release_36_version_and_topmost_no_longer_uses_raw_setwindowpos():
     text = MAIN.read_text(encoding="utf-8")
-    assert 'APP_VERSION = "Release 3.11"' in text
+    assert 'APP_VERSION = "Release 3.12"' in text
     assert "ctypes.windll.user32.SetWindowPos" not in text
     assert "def _apply_always_on_top_windows" not in text
     start = text.index("    def _apply_always_on_top_qt(self):")
@@ -87,10 +87,12 @@ def test_release_36_pyinstaller_build_rejects_foreign_icu_and_uses_onedir():
     assert "COLLECT(" in spec
 
 
-def test_release_36_application_update_feed_is_wired_without_implicit_download():
+def test_release_312_application_update_feed_downloads_verifies_and_installs():
     text = MAIN.read_text(encoding="utf-8")
     assert "self.btn_check_app_update.clicked.connect(self.check_app_update)" in text
     assert 'configured_manifest_url(resource_path("update_channel.json"))' in text
     assert "parse_update_manifest(payload)" in text
-    assert "QDesktopServices.openUrl(QUrl(manifest.download_url))" in text
+    assert "self._start_app_update_download(manifest)" in text
+    assert "verify_update_archive(archive_path, manifest)" in text
+    assert "windows_update_script()" in text
     assert "self.update_network.get(request)" in text

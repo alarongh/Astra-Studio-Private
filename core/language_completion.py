@@ -67,6 +67,7 @@ JAVA_STANDARD_CLASSES: dict[str, str] = {
     "BigDecimal": "java.math.BigDecimal",
     "BigInteger": "java.math.BigInteger",
     "BufferedReader": "java.io.BufferedReader",
+    "BufferedWriter": "java.io.BufferedWriter",
     "Collectors": "java.util.stream.Collectors",
     "Collections": "java.util.Collections",
     "Comparator": "java.util.Comparator",
@@ -75,6 +76,8 @@ JAVA_STANDARD_CLASSES: dict[str, str] = {
     "DateTimeFormatter": "java.time.format.DateTimeFormatter",
     "Deque": "java.util.Deque",
     "Duration": "java.time.Duration",
+    "ExecutorService": "java.util.concurrent.ExecutorService",
+    "Executors": "java.util.concurrent.Executors",
     "File": "java.io.File",
     "HashMap": "java.util.HashMap",
     "HashSet": "java.util.HashSet",
@@ -96,8 +99,10 @@ JAVA_STANDARD_CLASSES: dict[str, str] = {
     "PrintWriter": "java.io.PrintWriter",
     "Queue": "java.util.Queue",
     "Random": "java.util.Random",
+    "ScheduledExecutorService": "java.util.concurrent.ScheduledExecutorService",
     "Stream": "java.util.stream.Stream",
     "StringJoiner": "java.util.StringJoiner",
+    "StringTokenizer": "java.util.StringTokenizer",
     "TreeMap": "java.util.TreeMap",
     "TreeSet": "java.util.TreeSet",
     "UUID": "java.util.UUID",
@@ -117,25 +122,39 @@ JAVA_STANDARD_CLASSES: dict[str, str] = {
 
 JAVA_MEMBERS: dict[str, tuple[str, ...]] = {
     "String": (
-        "charAt()", "contains()", "endsWith()", "equals()", "indexOf()", "isBlank()", "isEmpty()",
-        "lastIndexOf()", "length()", "replace()", "split()", "startsWith()", "strip()", "substring()",
-        "toLowerCase()", "toUpperCase()", "trim()",
+        "charAt()", "chars()", "codePoints()", "compareTo()", "concat()", "contains()", "endsWith()",
+        "equals()", "equalsIgnoreCase()", "formatted()", "getBytes()", "indexOf()", "intern()", "isBlank()",
+        "isEmpty()", "lastIndexOf()", "length()", "lines()", "matches()", "regionMatches()", "repeat()",
+        "replace()", "replaceAll()", "replaceFirst()", "split()", "startsWith()", "strip()", "stripIndent()",
+        "substring()", "toCharArray()", "toLowerCase()", "toUpperCase()", "trim()",
     ),
-    "List": ("add()", "addAll()", "clear()", "contains()", "get()", "indexOf()", "isEmpty()", "remove()", "set()", "size()", "stream()"),
-    "ArrayList": ("add()", "addAll()", "clear()", "contains()", "ensureCapacity()", "get()", "isEmpty()", "remove()", "set()", "size()", "stream()"),
-    "Map": ("clear()", "containsKey()", "containsValue()", "entrySet()", "get()", "getOrDefault()", "isEmpty()", "keySet()", "put()", "remove()", "size()", "values()"),
-    "HashMap": ("clear()", "containsKey()", "containsValue()", "entrySet()", "get()", "getOrDefault()", "isEmpty()", "keySet()", "put()", "remove()", "size()", "values()"),
-    "Set": ("add()", "addAll()", "clear()", "contains()", "isEmpty()", "remove()", "size()", "stream()"),
+    "Array": ("length",),
+    "List": ("add()", "addAll()", "clear()", "contains()", "containsAll()", "forEach()", "get()", "indexOf()", "isEmpty()", "iterator()", "lastIndexOf()", "listIterator()", "remove()", "removeIf()", "replaceAll()", "set()", "size()", "sort()", "spliterator()", "stream()", "subList()", "toArray()"),
+    "ArrayList": ("add()", "addAll()", "clear()", "clone()", "contains()", "ensureCapacity()", "forEach()", "get()", "indexOf()", "isEmpty()", "iterator()", "remove()", "removeIf()", "replaceAll()", "set()", "size()", "sort()", "stream()", "subList()", "toArray()", "trimToSize()"),
+    "Map": ("clear()", "compute()", "computeIfAbsent()", "computeIfPresent()", "containsKey()", "containsValue()", "entrySet()", "forEach()", "get()", "getOrDefault()", "isEmpty()", "keySet()", "merge()", "put()", "putAll()", "putIfAbsent()", "remove()", "replace()", "replaceAll()", "size()", "values()"),
+    "HashMap": ("clear()", "clone()", "compute()", "computeIfAbsent()", "computeIfPresent()", "containsKey()", "containsValue()", "entrySet()", "forEach()", "get()", "getOrDefault()", "isEmpty()", "keySet()", "merge()", "put()", "putAll()", "putIfAbsent()", "remove()", "replace()", "replaceAll()", "size()", "values()"),
+    "Set": ("add()", "addAll()", "clear()", "contains()", "containsAll()", "forEach()", "isEmpty()", "iterator()", "remove()", "removeAll()", "removeIf()", "retainAll()", "size()", "spliterator()", "stream()", "toArray()"),
     "Scanner": ("close()", "hasNext()", "hasNextDouble()", "hasNextInt()", "next()", "nextBoolean()", "nextDouble()", "nextInt()", "nextLine()", "useDelimiter()"),
     "StringBuilder": ("append()", "charAt()", "delete()", "insert()", "length()", "replace()", "reverse()", "setCharAt()", "substring()", "toString()"),
     "Optional": ("filter()", "flatMap()", "get()", "ifPresent()", "isEmpty()", "isPresent()", "map()", "orElse()", "orElseGet()", "orElseThrow()"),
     "Path": ("getFileName()", "getName()", "getParent()", "isAbsolute()", "normalize()", "resolve()", "toAbsolutePath()", "toFile()", "toString()"),
     "LocalDate": ("atStartOfDay()", "compareTo()", "getDayOfMonth()", "getMonth()", "getYear()", "isAfter()", "isBefore()", "minusDays()", "plusDays()"),
+    "LocalDateTime": ("format()", "getDayOfMonth()", "getHour()", "getMinute()", "getMonth()", "getYear()", "isAfter()", "isBefore()", "minusDays()", "plusDays()", "toLocalDate()", "toLocalTime()"),
     "PrintStream": ("append()", "close()", "flush()", "format()", "print()", "printf()", "println()", "write()"),
     "Math": ("abs()", "ceil()", "clamp()", "cos()", "floor()", "max()", "min()", "pow()", "random()", "round()", "sin()", "sqrt()"),
     "Arrays": ("asList()", "binarySearch()", "copyOf()", "equals()", "fill()", "sort()", "stream()", "toString()"),
     "Collections": ("binarySearch()", "copy()", "frequency()", "max()", "min()", "reverse()", "shuffle()", "sort()", "unmodifiableList()"),
     "Files": ("copy()", "createDirectories()", "createFile()", "delete()", "exists()", "lines()", "move()", "readAllBytes()", "readString()", "writeString()"),
+    "Stream": ("allMatch()", "anyMatch()", "collect()", "count()", "distinct()", "dropWhile()", "filter()", "findAny()", "findFirst()", "flatMap()", "forEach()", "limit()", "map()", "max()", "min()", "noneMatch()", "peek()", "reduce()", "skip()", "sorted()", "takeWhile()", "toArray()", "toList()"),
+    "CompletableFuture": ("acceptEither()", "allOf()", "anyOf()", "cancel()", "complete()", "exceptionally()", "get()", "handle()", "isDone()", "join()", "runAsync()", "supplyAsync()", "thenAccept()", "thenApply()", "thenCombine()", "thenCompose()", "thenRun()", "whenComplete()"),
+    "ExecutorService": ("awaitTermination()", "close()", "invokeAll()", "invokeAny()", "isShutdown()", "isTerminated()", "shutdown()", "shutdownNow()", "submit()"),
+    "Pattern": ("compile()", "flags()", "matcher()", "matches()", "pattern()", "quote()", "split()"),
+    "Matcher": ("appendReplacement()", "appendTail()", "end()", "find()", "group()", "groupCount()", "lookingAt()", "matches()", "replaceAll()", "replaceFirst()", "reset()", "start()"),
+    "BigDecimal": ("abs()", "add()", "compareTo()", "divide()", "max()", "min()", "movePointLeft()", "movePointRight()", "multiply()", "negate()", "pow()", "remainder()", "round()", "scale()", "setScale()", "subtract()", "toBigInteger()", "toPlainString()"),
+    "Thread": ("getId()", "getName()", "getState()", "interrupt()", "isAlive()", "isInterrupted()", "join()", "run()", "setDaemon()", "setName()", "sleep()", "start()"),
+    "System": ("arraycopy()", "currentTimeMillis()", "exit()", "gc()", "getenv()", "getProperty()", "lineSeparator()", "nanoTime()", "setProperty()"),
+    "Objects": ("checkIndex()", "deepEquals()", "equals()", "hash()", "hashCode()", "isNull()", "nonNull()", "requireNonNull()", "toString()"),
+    "Executors": ("newCachedThreadPool()", "newFixedThreadPool()", "newScheduledThreadPool()", "newSingleThreadExecutor()", "newSingleThreadScheduledExecutor()", "newVirtualThreadPerTaskExecutor()"),
 }
 
 JAVA_STATIC_RECEIVERS = {
@@ -145,6 +164,11 @@ JAVA_STATIC_RECEIVERS = {
     "Arrays": "Arrays",
     "Collections": "Collections",
     "Files": "Files",
+    "Objects": "Objects",
+    "Pattern": "Pattern",
+    "CompletableFuture": "CompletableFuture",
+    "Executors": "Executors",
+    "System": "System",
 }
 
 
@@ -236,8 +260,15 @@ def _java_declared_symbols(text: str) -> tuple[dict[str, str], set[str]]:
     type_pattern = r"[A-Za-z_$][\w$]*(?:\s*<[^;={}()]+>)?(?:\s*\[\s*\])?"
     for match in re.finditer(rf"\b({type_pattern})\s+([a-zA-Z_$][\w$]*)\s*(?=[=;,:\)])", text):
         raw_type, name = match.groups()
+        is_array = bool(re.search(r"\[\s*\]\s*$", raw_type))
         base_type = re.sub(r"\s*<.*", "", raw_type).replace("[]", "").strip()
+        if is_array:
+            base_type += "[]"
         types[name] = base_type
+        symbols.add(name)
+    for match in re.finditer(r"\bvar\s+([a-zA-Z_$][\w$]*)\s*=\s*new\s+([A-Za-z_$][\w$]*)", text):
+        name, inferred_type = match.groups()
+        types[name] = inferred_type
         symbols.add(name)
     for pattern in (
         r"\b(?:class|interface|enum|record)\s+([A-Za-z_$][\w$]*)",
@@ -276,7 +307,20 @@ class JavaCompletionProvider:
             receiver = member_match.group(1)
             prefix = member_match.group(2) or ""
             member_type = JAVA_STATIC_RECEIVERS.get(receiver) or types.get(receiver)
+            if member_type and member_type.endswith("[]"):
+                member_type = "Array"
             members = JAVA_MEMBERS.get(member_type or "", ())
+            if receiver == "this":
+                methods = {
+                    match.group(1) + "()"
+                    for match in re.finditer(
+                        r"(?<![\w$])(?:(?:public|protected|private|static|final|abstract|synchronized|native)\s+)*"
+                        r"(?:[A-Za-z_$][\w$<>, ?\[\].]*\s+)+([a-zA-Z_$][\w$]*)\s*\(",
+                        text,
+                    )
+                    if match.group(1) not in {"if", "for", "while", "switch", "catch"}
+                }
+                members = tuple(dict.fromkeys((*members, *sorted(methods))))
             items = tuple(
                 CompletionItem(member, member, f"{member_type} member", "member")
                 for member in members if member.lower().startswith(prefix.lower())

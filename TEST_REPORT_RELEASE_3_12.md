@@ -1,8 +1,8 @@
-# Astra Studio Release 3.11 — Test Report
+# Astra Studio Release 3.12 — Test Report
 
 Status: **WINDOWS AUTOMATED GATE PASSED / PORTABLE BUILD VERIFIED**
 
-Date: **2026-09-16**  
+Date: **2026-09-22**
 Platform: **Windows, PySide6 6.11.2, PyInstaller 6.22.2, Python 3.12.14**
 
 ## Исправленные блокирующие дефекты
@@ -15,7 +15,8 @@ Platform: **Windows, PySide6 6.11.2, PyInstaller 6.22.2, Python 3.12.14**
 - Один `QApplication` на pytest-сессию: полный Windows suite больше не падает при смешении Qt Core/Widgets тестов.
 - Acceptance batch теперь считает отрицательный Windows exit code аварией, а не ложным успехом.
 - PyInstaller onedir-сборка исключает чужие ICU DLL из окружения сборки; устранён startup crash `QtCore: WinError 127`.
-- Добавлен безопасный HTTPS-канал обновлений Astra с проверкой версии, размера и SHA-256 до предложения загрузки.
+- Подключён безопасный GitHub stable-канал: загрузка, проверка размера/SHA-256/ZIP layout, внешний installer с backup/rollback и перезапуском.
+- Обои отвязаны от масштаба окна, глубина дерева исправлена, а строки/номера адаптированы к глобальному шрифту.
 
 ## Итоговый Windows gate
 
@@ -24,8 +25,8 @@ Platform: **Windows, PySide6 6.11.2, PyInstaller 6.22.2, Python 3.12.14**
 ```text
 compileall          PASS
 static smoke        PASS
-pytest collected    252
-passed              250
+pytest collected    259
+passed              257
 failed                0
 skipped               2
 subtests passed      88
@@ -54,19 +55,25 @@ subtests passed      88
 - Standalone shortcut script создал настоящий `.lnk` через Windows COM в изолированной папке и применил выбранный Angel 404 ICO.
 - Встроенный ярлык ищет Desktop через Windows SpecialFolder, registry, OneDrive и русские/английские имена папок.
 
+## Release 3.12 UI и updater
+
+- Обои сохраняют исходный размер изображения и центрируются; resize окна меняет только видимую область.
+- Дерево проекта отображает до 32 уровней и 5000 элементов, не сокращает подписи через elide и пересчитывает ширину колонки.
+- В интерфейсе видимы Java, Python, C++, JavaScript, HTML и CSS; остальные языки остаются зарегистрированными в коде.
+- В изолированной Windows-папке внешний updater реально дождался завершения процесса, заменил portable payload, запустил новый EXE и очистил backup после успеха.
+- ZIP validator проверен на корректном архиве и traversal-записи; неподписанный или структурно опасный payload отклоняется до закрытия приложения.
+
 ## Проверка настоящей сборки
 
 - Собран windowed onedir executable `dist\Astra Studio\Astra Studio.exe`.
 - В финальном payload отсутствуют конфликтующие `icuuc.dll` и `icudt78.dll`.
-- EXE запущен независимо от Python launcher; ожидаемое главное окно — `Astra Studio — Release 3.11`.
+- EXE запущен независимо от Python launcher; ожидаемое главное окно — `Astra Studio — Release 3.12`.
 - Системная кнопка X найдена как native caption control, нажата мышью и закрыла процесс.
 - Spec, update config и runtime assets входят в source release; portable archive сохраняет всю onedir-папку, потому переносить один EXE отдельно нельзя.
 
 ## Канал обновлений
 
-Клиентская часть готова и безопасно отключена по умолчанию. Для реальной онлайн-выдачи издатель должен указать HTTPS URL `latest.json` в `update_channel.json` перед сборкой либо задать `ASTRA_UPDATE_MANIFEST_URL`. Manifest генерируется `scripts/make_update_feed.py` и содержит версию, HTTPS download URL, размер и SHA-256 portable ZIP.
-
-Без предоставленного пользователем хостинга/домена нельзя честно активировать публичный feed или выдать постоянную ссылку. Это инфраструктурная настройка публикации, а не дефект собранного приложения.
+Клиент подключён к публичному `update/latest.json` в GitHub-репозитории. Manifest генерируется `scripts/make_update_feed.py` и содержит версию, HTTPS download URL, размер и SHA-256 portable ZIP. Кнопка устанавливает только проверенный архив; локальный source-mode ограничивается загрузкой и открытием папки.
 
 ## Область результата
 

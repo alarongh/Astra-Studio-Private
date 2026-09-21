@@ -160,7 +160,13 @@ from core.git_tools import (
     unstage_command,
 )
 from core.log_file import append_utf8_bom_log, ensure_utf8_bom_log
-from core.app_updates import configured_manifest_url, is_newer_release, parse_update_manifest
+from core.app_updates import (
+    configured_manifest_url,
+    is_newer_release,
+    parse_update_manifest,
+    verify_update_archive,
+    windows_update_script,
+)
 from core.python_library_registry import (
     LIBRARY_BUNDLES,
     PYTHON_IMPORT_TO_PACKAGE,
@@ -173,7 +179,7 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.11"
+APP_VERSION = "Release 3.12"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 DEFAULT_LANGUAGE = "Python"
@@ -185,7 +191,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.11 — красно-синий": "assets/astra.ico",
+    "Astra 3.12 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -754,6 +760,11 @@ LANGUAGES = {
     "Shell": {"extension": ".sh", "template": SHELL_TEMPLATE, "filters": "Shell (*.sh *.bash)", "extensions": [".sh", ".bash"]},
     "Dockerfile": {"extension": "", "template": DOCKERFILE_TEMPLATE, "filters": "Dockerfile (Dockerfile*)", "extensions": []},
 }
+
+# The other language implementations remain available internally and can still
+# open existing files. Release 3.12 intentionally exposes only the languages
+# being polished in the current acceptance cycle.
+VISIBLE_LANGUAGES = ("Java", "Python", "C++", "JavaScript", "HTML", "CSS")
 
 SPECIAL_FILENAMES_TO_LANGUAGE = {
     "dockerfile": "Dockerfile",
@@ -2035,7 +2046,10 @@ class CodeEditor(QPlainTextEdit):
 
     def line_number_area_width(self):
         digits = len(str(max(1, self.blockCount())))
-        return 18 + self.fontMetrics().horizontalAdvance("9") * digits
+        metrics = self.fontMetrics()
+        # Leave room for wide custom glyphs and high-DPI fonts. A too-narrow
+        # viewport margin was the reason leading digits appeared to disappear.
+        return max(36, metrics.horizontalAdvance("9" * digits) + metrics.horizontalAdvance("00"))
 
     def update_line_number_area_width(self, _):
         self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
@@ -2881,6 +2895,11 @@ class AstraStudio(QMainWindow):
         self.install_process = None
         self.update_network = QNetworkAccessManager(self)
         self._app_update_reply = None
+        self._app_download_reply = None
+        self._app_download_file = None
+        self._app_download_path = None
+        self._app_download_manifest = None
+        self._pending_update_command = None
         self.task_manager = TaskManager(self)
         self.active_task_context = {}
         self.untitled_counter = 1
@@ -3330,7 +3349,11 @@ class AstraStudio(QMainWindow):
         self.setCentralWidget(root)
         self.background_label = QLabel(root)
         self.background_label.setObjectName("BackgroundWallpaper")
-        self.background_label.setScaledContents(True)
+        # Keep wallpapers at their native pixel size. Resizing the IDE now only
+        # changes the centered crop and never rescales widgets or the image.
+        self.background_label.setScaledContents(False)
+        self.background_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.background_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.background_label.lower()
         self.wallpaper_dim_overlay = QWidget(root)
         self.wallpaper_dim_overlay.setObjectName("WallpaperDimOverlay")
@@ -3406,7 +3429,7 @@ class AstraStudio(QMainWindow):
         self.language_combo.setMinimumHeight(36)
         self.language_combo.setMinimumWidth(0)
         self.language_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.language_combo.addItems(LANGUAGES.keys())
+        self.language_combo.addItems(VISIBLE_LANGUAGES)
         self.language_combo.setCurrentText(self.current_language_name)
         language_layout.addWidget(self.language_title)
         language_layout.addWidget(self.language_combo)
@@ -3726,7 +3749,9 @@ class AstraStudio(QMainWindow):
         self.project_tree.setColumnCount(1)
         self.project_tree.setHeaderHidden(True)
         self.project_tree.setAnimated(True)
-        self.project_tree.setTextElideMode(Qt.TextElideMode.ElideMiddle)
+        self.project_tree.setUniformRowHeights(False)
+        self.project_tree.setTextElideMode(Qt.TextElideMode.ElideNone)
+        self.project_tree.setIndentation(20)
         self.project_tree.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.project_tree.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.project_tree.setToolTip("Проект: двойной клик открывает файл. Длинные пути доступны во всплывающей подсказке.")
@@ -11517,8 +11542,8 @@ class AstraStudio(QMainWindow):
     def _add_path_to_tree(self, parent_item: QTreeWidgetItem, path: Path, depth: int = 0, limit: list[int] | None = None):
         if limit is None:
             limit = [0]
-        if limit[0] > 700:
-            more = QTreeWidgetItem(["… слишком много файлов, откройте папку в проводнике"])
+        if limit[0] >= 5000:
+            more = QTreeWidgetItem(["… показаны первые 5000 элементов; откройте папку в проводнике"])
             parent_item.addChild(more)
             return
         try:
@@ -11554,7 +11579,10 @@ class AstraStudio(QMainWindow):
             item.setData(0, Qt.ItemDataRole.UserRole, {"path": str(child), "kind": "folder" if child.is_dir() else "file"})
             parent_item.addChild(item)
             limit[0] += 1
-            if child.is_dir() and depth < 4:
+            # The previous depth=4 cap produced folders that looked expandable
+            # but had no children. Keep a defensive ceiling for pathological
+            # trees while allowing normal Java/Gradle and web projects in full.
+            if child.is_dir() and depth < 32:
                 self._add_path_to_tree(item, child, depth + 1, limit)
 
     def refresh_project_tree(self):
@@ -11581,6 +11609,8 @@ class AstraStudio(QMainWindow):
         title_item.setExpanded(True)
         for i in range(title_item.childCount()):
             title_item.child(i).setExpanded(True)
+        self.project_tree.doItemsLayout()
+        self.project_tree.resizeColumnToContents(0)
         self.project_hint.setText("Двойной клик открывает файл · подключённые папки не удаляются с диска")
 
     def _selected_project_path(self) -> Path:
@@ -11980,8 +12010,10 @@ class AstraStudio(QMainWindow):
         language_label = QLabel("Язык файла")
         language_label.setObjectName("MiniLabel")
         language_combo = QComboBox()
-        language_combo.addItems(LANGUAGES.keys())
-        language_combo.setCurrentText(self.current_language_name)
+        language_combo.addItems(VISIBLE_LANGUAGES)
+        language_combo.setCurrentText(
+            self.current_language_name if self.current_language_name in VISIBLE_LANGUAGES else DEFAULT_LANGUAGE
+        )
 
         folder_label = QLabel("Папка проекта")
         folder_label.setObjectName("MiniLabel")
@@ -12422,8 +12454,11 @@ Write-Host "`nПроверка завершена. ✕ означает обяз
             self.installer_console.appendPlainText("\nℹ " + message + "\n")
             QMessageBox.information(self, "Обновления Astra Studio", message)
             return
-        if self._app_update_reply is not None and not self._app_update_reply.isFinished():
-            self.statusBar().showMessage("Проверка обновления уже выполняется", 2200)
+        if (
+            (self._app_update_reply is not None and not self._app_update_reply.isFinished())
+            or (self._app_download_reply is not None and not self._app_download_reply.isFinished())
+        ):
+            self.statusBar().showMessage("Проверка или загрузка обновления уже выполняется", 2200)
             return
 
         self.btn_check_app_update.setEnabled(False)
@@ -12431,6 +12466,13 @@ Write-Host "`nПроверка завершена. ✕ означает обяз
         self.installer_console.appendPlainText(f"\n▶ Проверка обновления Astra Studio: {manifest_url}\n")
         request = QNetworkRequest(QUrl(manifest_url))
         request.setRawHeader(b"User-Agent", f"Astra-Studio/{APP_VERSION.replace(' ', '-')}".encode("ascii"))
+        try:
+            request.setAttribute(
+                QNetworkRequest.Attribute.RedirectPolicyAttribute,
+                QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy,
+            )
+        except (AttributeError, TypeError):
+            pass
         reply = self.update_network.get(request)
         self._app_update_reply = reply
         reply.finished.connect(lambda current_reply=reply: self._finish_app_update(current_reply))
@@ -12455,12 +12497,12 @@ Write-Host "`nПроверка завершена. ✕ означает обяз
                     self,
                     "Обновление Astra Studio",
                     f"Доступно {manifest.version} ({size_mb:.1f} МБ).\n\n"
-                    f"SHA-256: {manifest.sha256}\n\nОткрыть страницу загрузки?",
+                    f"SHA-256: {manifest.sha256}\n\nСкачать, проверить и установить обновление?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.Yes,
                 )
                 if answer == QMessageBox.StandardButton.Yes:
-                    QDesktopServices.openUrl(QUrl(manifest.download_url))
+                    self._start_app_update_download(manifest)
             else:
                 self.app_update_status.setText(f"Astra Studio: {APP_VERSION} · обновлений нет")
                 self.installer_console.appendPlainText("✓ Установлена актуальная версия Astra Studio.\n")
@@ -12475,10 +12517,132 @@ Write-Host "`nПроверка завершена. ✕ означает обяз
             self.write_exception_log("Ошибка проверки обновления Astra Studio", exc)
             QMessageBox.warning(self, "Обновления Astra Studio", f"Не удалось проверить обновление:\n{exc}")
         finally:
-            self.btn_check_app_update.setEnabled(True)
+            self.btn_check_app_update.setEnabled(self._app_download_reply is None)
             if self._app_update_reply is reply:
                 self._app_update_reply = None
             reply.deleteLater()
+
+    def _start_app_update_download(self, manifest):
+        updates_dir = self.data_dir / "updates"
+        updates_dir.mkdir(parents=True, exist_ok=True)
+        safe_version = re.sub(r"[^0-9A-Za-z._-]+", "_", manifest.version).strip("_") or "update"
+        archive_path = updates_dir / f"Astra_Studio_{safe_version}.zip"
+        try:
+            handle = archive_path.open("wb")
+        except OSError as exc:
+            QMessageBox.warning(self, "Обновление Astra Studio", f"Не удалось создать файл обновления:\n{exc}")
+            return
+
+        request = QNetworkRequest(QUrl(manifest.download_url))
+        request.setRawHeader(b"User-Agent", f"Astra-Studio/{APP_VERSION.replace(' ', '-')}".encode("ascii"))
+        try:
+            request.setAttribute(
+                QNetworkRequest.Attribute.RedirectPolicyAttribute,
+                QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy,
+            )
+        except (AttributeError, TypeError):
+            pass
+        reply = self.update_network.get(request)
+        self._app_download_reply = reply
+        self._app_download_file = handle
+        self._app_download_path = archive_path
+        self._app_download_manifest = manifest
+        self.btn_check_app_update.setEnabled(False)
+        self.app_update_status.setText(f"Загрузка {manifest.version}: 0%")
+        self.installer_console.appendPlainText(f"▶ Загрузка проверенного обновления: {manifest.download_url}\n")
+        reply.readyRead.connect(lambda current_reply=reply: self._read_app_update_chunk(current_reply))
+        reply.downloadProgress.connect(self._show_app_update_download_progress)
+        reply.finished.connect(lambda current_reply=reply: self._finish_app_update_download(current_reply))
+
+    def _read_app_update_chunk(self, reply):
+        if reply is not self._app_download_reply or self._app_download_file is None:
+            return
+        chunk = bytes(reply.readAll())
+        if chunk:
+            self._app_download_file.write(chunk)
+
+    def _show_app_update_download_progress(self, received, total):
+        manifest = self._app_download_manifest
+        version = manifest.version if manifest is not None else "обновления"
+        expected = total if total and total > 0 else (manifest.size if manifest is not None else 0)
+        if expected > 0:
+            percent = max(0, min(100, int(received * 100 / expected)))
+            self.app_update_status.setText(f"Загрузка {version}: {percent}%")
+        else:
+            self.app_update_status.setText(f"Загрузка {version}: {received / (1024 * 1024):.1f} МБ")
+
+    def _finish_app_update_download(self, reply):
+        archive_path = self._app_download_path
+        manifest = self._app_download_manifest
+        handle = self._app_download_file
+        try:
+            self._read_app_update_chunk(reply)
+            if handle is not None:
+                handle.flush()
+                handle.close()
+            self._app_download_file = None
+            if reply.error() != QNetworkReply.NetworkError.NoError:
+                raise RuntimeError(reply.errorString())
+            if archive_path is None or manifest is None:
+                raise RuntimeError("Внутреннее состояние загрузки потеряно")
+            entry_count, unpacked_size = verify_update_archive(archive_path, manifest)
+            self.installer_console.appendPlainText(
+                f"✓ Архив проверен: {entry_count} файлов, {unpacked_size / (1024 * 1024):.1f} МБ после распаковки.\n"
+            )
+            self._queue_app_update_install(archive_path, manifest)
+        except Exception as exc:
+            if handle is not None and not handle.closed:
+                handle.close()
+            if archive_path is not None:
+                try:
+                    archive_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            self.app_update_status.setText(f"Astra Studio: {APP_VERSION} · ошибка загрузки")
+            self.installer_console.appendPlainText(f"✕ Обновление не установлено: {exc}\n")
+            self.write_exception_log("Ошибка загрузки обновления Astra Studio", exc)
+            QMessageBox.warning(self, "Обновление Astra Studio", f"Обновление не установлено:\n{exc}")
+        finally:
+            if self._app_download_reply is reply:
+                self._app_download_reply = None
+            self._app_download_file = None
+            self._app_download_path = None
+            self._app_download_manifest = None
+            self.btn_check_app_update.setEnabled(True)
+            reply.deleteLater()
+
+    def _queue_app_update_install(self, archive_path: Path, manifest):
+        if os.name != "nt" or not getattr(sys, "frozen", False):
+            self.app_update_status.setText(f"{manifest.version} загружено и проверено")
+            QMessageBox.information(
+                self,
+                "Обновление Astra Studio",
+                "Архив загружен и проверен. Автоматическая замена выполняется только в portable EXE.\n\n"
+                f"Файл: {archive_path}",
+            )
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(archive_path.parent)))
+            return
+        target_dir = Path(sys.executable).resolve().parent
+        if target_dir.name.casefold() != "astra studio":
+            raise RuntimeError(f"Небезопасная папка установки: {target_dir}")
+        script_path = self.data_dir / "updates" / "install_verified_update.ps1"
+        log_path = self.data_dir / "logs" / "update-install.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        script_path.write_text(windows_update_script(), encoding="utf-8-sig")
+        args = [
+            "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
+            "-File", str(script_path), "-Archive", str(archive_path),
+            "-TargetDirectory", str(target_dir), "-ParentPid", str(os.getpid()),
+            "-LogPath", str(log_path),
+        ]
+        self._pending_update_command = ("powershell.exe", args)
+        self.app_update_status.setText(f"{manifest.version} проверено · перезапуск для установки")
+        QMessageBox.information(
+            self,
+            "Обновление Astra Studio",
+            f"{manifest.version} скачано и проверено. Astra Studio сейчас закроется, установит обновление и запустится снова.",
+        )
+        self.close()
 
     def check_tool_updates(self):
         # Run potentially slow WinGet/pacman queries outside the GUI thread.
@@ -12656,7 +12820,7 @@ Refresh-KnownPaths
         common = self._installer_common_script()
         app_dir = str(project_root_dir())
         shortcut_icon_relative = "assets/astra.ico"
-        shortcut_icon_label = "Astra 3.11 — красно-синий"
+        shortcut_icon_label = "Astra 3.12 — красно-синий"
         if hasattr(self, "shortcut_icon_combo"):
             shortcut_icon_relative = str(self.shortcut_icon_combo.currentData() or shortcut_icon_relative)
             shortcut_icon_label = self.shortcut_icon_combo.currentText() or shortcut_icon_label
@@ -13306,6 +13470,20 @@ Astra-Progress 100
             self._stop_process_safely(self.run_process, "запуск программы")
             self._stop_process_safely(self.terminal_process, "терминал")
             self._stop_process_safely(self.install_process, "установщик")
+            if self._pending_update_command is not None:
+                program, args = self._pending_update_command
+                started = QProcess.startDetached(program, args)
+                started_ok = started[0] if isinstance(started, tuple) else bool(started)
+                if not started_ok:
+                    self._pending_update_command = None
+                    event.ignore()
+                    QMessageBox.warning(
+                        self,
+                        "Обновление Astra Studio",
+                        "Не удалось запустить проверенный установщик обновления. Приложение оставлено открытым.",
+                    )
+                    return
+                self._pending_update_command = None
             event.accept()
             self.write_log("Astra Studio закрыта корректно")
         except Exception as exc:

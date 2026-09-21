@@ -1,6 +1,6 @@
 # Публикация обновлений Astra Studio
 
-Клиент обновлений не скачивает и не запускает код автоматически. Он читает ограниченный по размеру HTTPS JSON manifest, строго валидирует данные и предлагает пользователю открыть HTTPS download URL.
+Клиент обновлений читает ограниченный по размеру HTTPS JSON manifest и только после подтверждения пользователя скачивает ZIP. До установки он проверяет размер, SHA-256 и безопасную структуру архива; непроверенный архив никогда не заменяет приложение.
 
 ## 1. Подготовить portable ZIP
 
@@ -13,9 +13,10 @@
 ```powershell
 .\.venv\Scripts\python.exe scripts\make_update_feed.py `
   "<путь-к-portable.zip>" `
-  --version "Release 3.11" `
-  --download-url "https://downloads.example.com/Astra_Studio_Release_3_11_PORTABLE_WINDOWS.zip" `
-  --output latest.json
+  --version "Release 3.12" `
+  --download-url "https://github.com/alarongh/Astra-Studio-Private/releases/download/v3.12/Astra_Studio_Release_3_12.zip" `
+  --notes-url "https://github.com/alarongh/Astra-Studio-Private/releases/tag/v3.12" `
+  --output update/latest.json
 ```
 
 Скрипт вычисляет SHA-256 и фактический размер архива. Не редактируйте эти поля вручную.
@@ -30,8 +31,8 @@
 {
   "schema_version": 1,
   "channel": "stable",
-  "version": "Release 3.11",
-  "download_url": "https://downloads.example.com/Astra_Studio_Release_3_11_PORTABLE_WINDOWS.zip",
+  "version": "Release 3.12",
+  "download_url": "https://github.com/alarongh/Astra-Studio-Private/releases/download/v3.12/Astra_Studio_Release_3_12.zip",
   "sha256": "64 lowercase hex symbols",
   "size": 123456789
 }
@@ -45,7 +46,7 @@
 {
   "schema_version": 1,
   "channel": "stable",
-  "manifest_url": "https://downloads.example.com/latest.json"
+  "manifest_url": "https://raw.githubusercontent.com/alarongh/Astra-Studio-Private/main/update/latest.json"
 }
 ```
 

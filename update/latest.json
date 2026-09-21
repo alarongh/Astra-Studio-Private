@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "version": "Release 3.12",
+  "channel": "stable",
+  "published_at": "2026-09-21T22:49:13Z",
+  "download_url": "https://github.com/alarongh/Astra-Studio-Private/releases/download/v3.12/Astra_Studio_Release_3_12.zip",
+  "notes_url": "https://github.com/alarongh/Astra-Studio-Private/releases/tag/v3.12",
+  "sha256": "05a304aa93ce75253efbf006928d4fc110b895efc89ba70209bcded37c5ac2e8",
+  "size": 79738387
+}

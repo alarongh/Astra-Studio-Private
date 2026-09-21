@@ -11,6 +11,9 @@
 
 - `tests/test_completion_shortcut_311.py::test_offline_completion_catalog_covers_major_astra_languages`
 - `tests/test_completion_shortcut_311.py::test_java_completion_library_includes_more_classes_and_chained_members`
+- `tests/test_completion_shortcut_311.py::test_java_completion_covers_arrays_var_streams_maps_and_document_methods`
+- `tests/test_completion_shortcut_311.py::test_release_312_hides_deferred_languages_without_deleting_registry`
+- `tests/test_completion_shortcut_311.py::test_release_312_wallpaper_and_project_tree_are_scale_safe_and_complete`
 - `tests/test_completion_shortcut_311.py::test_tab_cycles_popup_without_inserting_and_space_commits_selection`
 - `tests/test_completion_shortcut_311.py::test_shortcut_icon_variants_are_bundled_windows_icons`
 - `tests/test_completion_shortcut_311.py::test_shortcut_script_creates_lnk_with_selected_angel_icon`
@@ -22,7 +25,11 @@
 - `tests/test_app_updates.py::test_update_manifest_requires_https_sha256_and_positive_size`
 - `tests/test_app_updates.py::test_update_manifest_rejects_oversized_payload`
 - `tests/test_app_updates.py::test_update_channel_uses_valid_environment_override`
-- `tests/test_app_updates.py::test_update_channel_is_disabled_until_publisher_sets_https_url`
+- `tests/test_app_updates.py::test_update_channel_accepts_published_https_url`
+- `tests/test_app_updates.py::test_update_archive_verifies_hash_size_layout_and_rejects_traversal`
+- `tests/test_app_updates.py::test_windows_updater_has_wait_backup_rollback_and_restart_steps`
+- `tests/test_app_updates.py::test_release_312_bundles_public_github_channel_and_valid_latest_manifest`
+- `tests/test_app_updates.py::test_windows_updater_replaces_portable_folder_in_isolated_directory`
 - `tests/test_final_integration_3x.py::test_final_release_identity_and_runtime_tree_has_no_dev_paths`
 - `tests/test_final_integration_3x.py::test_all_roadmap_scope_before_final_gate_is_closed`
 - `tests/test_final_integration_3x.py::test_every_supported_language_has_compile_and_run_route`
@@ -130,7 +137,7 @@
 - `tests/test_release_36_regressions.py::test_release_36_full_suite_bootstraps_qapplication_before_core_qt_tests`
 - `tests/test_release_36_regressions.py::test_release_36_acceptance_runner_rejects_native_windows_crash_codes`
 - `tests/test_release_36_regressions.py::test_release_36_pyinstaller_build_rejects_foreign_icu_and_uses_onedir`
-- `tests/test_release_36_regressions.py::test_release_36_application_update_feed_is_wired_without_implicit_download`
+- `tests/test_release_36_regressions.py::test_release_312_application_update_feed_downloads_verifies_and_installs`
 - `tests/test_release_36_windows_runtime.py::Release36WindowRuntimeTests::test_topmost_transition_preserves_caption_flags_and_close`
 - `tests/test_release_36_windows_runtime.py::Release36WindowRuntimeTests::test_windows_native_close_command_reaches_close_event_after_topmost_toggle`
 - `tests/test_release_39_regressions.py::test_release_39_identity_is_current_runtime_version`

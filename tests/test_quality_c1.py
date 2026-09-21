@@ -143,7 +143,7 @@ def test_c1_task_manager_has_stdin_support_source():
 
 def test_c1_main_has_quality_ui_and_problem_merge():
     source = (Path(__file__).parents[1] / "main.py").read_text(encoding="utf-8")
-    assert 'APP_VERSION = "Release 3.11"' in source
+    assert 'APP_VERSION = "Release 3.12"' in source
     assert 'QPushButton("↹  Форматировать   Shift+Alt+F")' in source
     assert 'QCheckBox("Форматировать при сохранении")' in source
     assert 'def lint_current_file' in source

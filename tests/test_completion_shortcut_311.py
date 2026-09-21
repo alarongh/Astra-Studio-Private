@@ -46,6 +46,37 @@ def test_java_completion_library_includes_more_classes_and_chained_members():
     assert "append()" in _labels("Java", "StringBuilder builder = new StringBuilder(); builder.ap")
 
 
+def test_java_completion_covers_arrays_var_streams_maps_and_document_methods():
+    assert "length" in _labels("Java", "String[] names = {}; names.le")
+    assert "ensureCapacity()" in _labels("Java", "var values = new ArrayList<String>(); values.ens")
+    assert {"computeIfAbsent()", "merge()", "putIfAbsent()"}.issubset(
+        _labels("Java", "Map<String, Integer> counts = new HashMap<>(); counts.")
+    )
+    assert {"filter()", "flatMap()", "toList()"}.issubset(
+        _labels("Java", "Stream<String> stream = Stream.empty(); stream.")
+    )
+    source = "class Demo { void refresh() {} void run() { this.ref"
+    assert "refresh()" in _labels("Java", source)
+
+
+def test_release_312_hides_deferred_languages_without_deleting_registry():
+    pytest.importorskip("PySide6")
+    from main import LANGUAGES, VISIBLE_LANGUAGES
+
+    assert VISIBLE_LANGUAGES == ("Java", "Python", "C++", "JavaScript", "HTML", "CSS")
+    assert {"TypeScript", "C#", "PHP", "Luau", "GDScript"}.issubset(LANGUAGES)
+
+
+def test_release_312_wallpaper_and_project_tree_are_scale_safe_and_complete():
+    source = (ROOT / "main.py").read_text(encoding="utf-8")
+    assert "self.background_label.setScaledContents(False)" in source
+    assert "self.background_label.setAlignment(Qt.AlignmentFlag.AlignCenter)" in source
+    assert "self.project_tree.setTextElideMode(Qt.TextElideMode.ElideNone)" in source
+    assert "self.project_tree.setUniformRowHeights(False)" in source
+    assert "if child.is_dir() and depth < 32:" in source
+    assert "if limit[0] >= 5000:" in source
+
+
 def test_tab_cycles_popup_without_inserting_and_space_commits_selection():
     pytest.importorskip("PySide6")
     from main import ACCENTS, CodeEditor, DEFAULT_ACCENT, DEFAULT_THEME, THEMES
@@ -87,7 +118,7 @@ def test_shortcut_icon_variants_are_bundled_windows_icons():
     from main import SHORTCUT_ICON_OPTIONS
 
     assert set(SHORTCUT_ICON_OPTIONS) == {
-        "Astra 3.11 — красно-синий",
+        "Astra 3.12 — красно-синий",
         "Angel 404 — фиолетовый неон",
         "Astra Legacy — тёмная корона",
     }

@@ -201,7 +201,7 @@ Release 3.6 also normalizes exported AI-context text to LF and writes/migrates t
 
 ## Final Windows closure — 2026-08-31
 
-The Release 3.11 Windows gate collects **252 tests** and finishes with **250 PASS / 2 SKIPPED / 0 FAILED**, plus **88 passing subtests**. The two skips are explicitly platform/permission scoped: the POSIX executable-bit case and symlink creation unavailable to the current Windows account. Both Qt caption tests execute, including the native HWND/`SC_CLOSE` regression.
+The Release 3.12 Windows gate collects **259 tests** and finishes with **257 PASS / 2 SKIPPED / 0 FAILED**, plus **88 passing subtests**. The two skips are explicitly platform/permission scoped: the POSIX executable-bit case and symlink creation unavailable to the current Windows account. Both Qt caption tests execute, including the native HWND/`SC_CLOSE` regression. Release 3.12 also executes a real isolated portable-folder replacement through the external updater.
 
 ## Release 3.9 installer correction
 

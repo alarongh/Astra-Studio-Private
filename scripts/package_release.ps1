@@ -1,5 +1,6 @@
 param(
-    [string]$Version = "3.11"
+    [string]$Version = "3.12",
+    [switch]$SourceOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,10 +59,14 @@ $portableDirectory = Join-Path $projectRoot "dist\Astra Studio"
 if (-not (Test-Path -LiteralPath (Join-Path $portableDirectory "Astra Studio.exe"))) {
     throw "Portable executable is missing. Build PyInstaller output first."
 }
-Compress-Archive -LiteralPath $portableDirectory -DestinationPath $portableZip -CompressionLevel Optimal -Force
+if (-not $SourceOnly) {
+    Compress-Archive -LiteralPath $portableDirectory -DestinationPath $portableZip -CompressionLevel Optimal -Force
+} elseif (-not (Test-Path -LiteralPath $portableZip -PathType Leaf)) {
+    throw "SourceOnly requires an existing portable ZIP: $portableZip"
+}
 Compress-Archive -LiteralPath $stagingFull -DestinationPath $sourceZip -CompressionLevel Optimal -Force
 
-foreach ($document in @("TEST_REPORT_RELEASE_3_11.md", "PORTABLE_README.md", "UPDATE_DISTRIBUTION.md")) {
+foreach ($document in @("TEST_REPORT_RELEASE_3_12.md", "PORTABLE_README.md", "UPDATE_DISTRIBUTION.md")) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $document) -Destination $outputDirectory -Force
 }
 $checksumLines = foreach ($artifact in @($portableZip, $sourceZip)) {
