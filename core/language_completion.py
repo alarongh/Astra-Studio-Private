@@ -172,6 +172,101 @@ JAVA_STATIC_RECEIVERS = {
 }
 
 
+CPP_KEYWORDS = (
+    "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break",
+    "case", "catch", "char", "char8_t", "char16_t", "char32_t", "class", "co_await", "co_return",
+    "co_yield", "compl", "concept", "const", "consteval", "constexpr", "constinit", "const_cast",
+    "continue", "decltype", "default", "delete", "do", "double", "dynamic_cast", "else", "enum",
+    "explicit", "export", "extern", "false", "float", "for", "friend", "goto", "if", "inline", "int",
+    "long", "module", "mutable", "namespace", "new", "noexcept", "not", "not_eq", "nullptr", "operator",
+    "or", "or_eq", "private", "protected", "public", "register", "reinterpret_cast", "requires", "return",
+    "short", "signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch", "template",
+    "this", "thread_local", "throw", "true", "try", "typedef", "typeid", "typename", "union", "unsigned",
+    "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq",
+)
+
+CPP_STANDARD_SYMBOLS: dict[str, tuple[str, str]] = {
+    "array": ("array", "array"),
+    "deque": ("deque", "deque"),
+    "forward_list": ("forward_list", "forward_list"),
+    "list": ("list", "list"),
+    "map": ("map", "map"),
+    "multimap": ("multimap", "map"),
+    "multiset": ("multiset", "set"),
+    "priority_queue": ("priority_queue", "queue"),
+    "queue": ("queue", "queue"),
+    "set": ("set", "set"),
+    "stack": ("stack", "stack"),
+    "unordered_map": ("unordered_map", "unordered_map"),
+    "unordered_set": ("unordered_set", "unordered_set"),
+    "vector": ("vector", "vector"),
+    "string": ("string", "string"),
+    "string_view": ("string_view", "string_view"),
+    "stringstream": ("stringstream", "sstream"),
+    "ifstream": ("ifstream", "fstream"),
+    "ofstream": ("ofstream", "fstream"),
+    "fstream": ("fstream", "fstream"),
+    "optional": ("optional", "optional"),
+    "variant": ("variant", "variant"),
+    "tuple": ("tuple", "tuple"),
+    "pair": ("pair", "utility"),
+    "unique_ptr": ("unique_ptr", "memory"),
+    "shared_ptr": ("shared_ptr", "memory"),
+    "weak_ptr": ("weak_ptr", "memory"),
+    "make_unique": ("make_unique", "memory"),
+    "make_shared": ("make_shared", "memory"),
+    "function": ("function", "functional"),
+    "filesystem": ("filesystem", "filesystem"),
+    "thread": ("thread", "thread"),
+    "mutex": ("mutex", "mutex"),
+    "lock_guard": ("lock_guard", "mutex"),
+    "future": ("future", "future"),
+    "async": ("async", "future"),
+    "sort": ("sort", "algorithm"),
+    "stable_sort": ("stable_sort", "algorithm"),
+    "find": ("find", "algorithm"),
+    "find_if": ("find_if", "algorithm"),
+    "transform": ("transform", "algorithm"),
+    "accumulate": ("accumulate", "numeric"),
+    "move": ("move", "utility"),
+    "cout": ("cout", "iostream"),
+    "cerr": ("cerr", "iostream"),
+    "cin": ("cin", "iostream"),
+    "endl": ("endl", "ostream"),
+}
+
+CPP_MEMBERS: dict[str, tuple[str, ...]] = {
+    "string": ("append()", "at()", "back()", "begin()", "capacity()", "clear()", "compare()", "contains()", "data()", "empty()", "end()", "erase()", "find()", "find_first_of()", "find_last_of()", "front()", "insert()", "length()", "push_back()", "replace()", "reserve()", "resize()", "rfind()", "shrink_to_fit()", "size()", "starts_with()", "substr()", "swap()"),
+    "string_view": ("at()", "back()", "begin()", "contains()", "data()", "empty()", "end()", "find()", "front()", "length()", "remove_prefix()", "remove_suffix()", "rfind()", "size()", "starts_with()", "substr()"),
+    "vector": ("at()", "back()", "begin()", "capacity()", "cbegin()", "cend()", "clear()", "data()", "emplace()", "emplace_back()", "empty()", "end()", "erase()", "front()", "insert()", "pop_back()", "push_back()", "reserve()", "resize()", "shrink_to_fit()", "size()", "swap()"),
+    "array": ("at()", "back()", "begin()", "cbegin()", "cend()", "data()", "empty()", "end()", "fill()", "front()", "size()", "swap()"),
+    "deque": ("at()", "back()", "begin()", "clear()", "emplace_back()", "emplace_front()", "empty()", "end()", "erase()", "front()", "insert()", "pop_back()", "pop_front()", "push_back()", "push_front()", "resize()", "size()", "swap()"),
+    "list": ("back()", "begin()", "clear()", "emplace_back()", "emplace_front()", "empty()", "end()", "erase()", "front()", "merge()", "pop_back()", "pop_front()", "push_back()", "push_front()", "remove()", "remove_if()", "reverse()", "size()", "sort()", "splice()", "unique()"),
+    "map": ("at()", "begin()", "clear()", "contains()", "count()", "emplace()", "empty()", "end()", "erase()", "extract()", "find()", "insert()", "insert_or_assign()", "lower_bound()", "merge()", "size()", "swap()", "try_emplace()", "upper_bound()"),
+    "unordered_map": ("at()", "begin()", "bucket_count()", "clear()", "contains()", "count()", "emplace()", "empty()", "end()", "erase()", "extract()", "find()", "insert()", "insert_or_assign()", "load_factor()", "merge()", "rehash()", "reserve()", "size()", "try_emplace()"),
+    "set": ("begin()", "clear()", "contains()", "count()", "emplace()", "empty()", "end()", "erase()", "extract()", "find()", "insert()", "lower_bound()", "merge()", "size()", "upper_bound()"),
+    "unordered_set": ("begin()", "bucket_count()", "clear()", "contains()", "count()", "emplace()", "empty()", "end()", "erase()", "extract()", "find()", "insert()", "load_factor()", "merge()", "rehash()", "reserve()", "size()"),
+    "optional": ("and_then()", "emplace()", "has_value()", "or_else()", "reset()", "swap()", "transform()", "value()", "value_or()"),
+    "unique_ptr": ("get()", "release()", "reset()", "swap()"),
+    "shared_ptr": ("get()", "owner_before()", "reset()", "swap()", "unique()", "use_count()"),
+    "weak_ptr": ("expired()", "lock()", "owner_before()", "reset()", "swap()", "use_count()"),
+    "ifstream": ("close()", "eof()", "fail()", "good()", "is_open()", "open()", "peek()", "read()", "seekg()", "tellg()"),
+    "ofstream": ("close()", "fail()", "flush()", "good()", "is_open()", "open()", "put()", "seekp()", "tellp()", "write()"),
+    "stringstream": ("clear()", "eof()", "fail()", "good()", "str()", "swap()"),
+    "path": ("append()", "clear()", "concat()", "empty()", "extension()", "filename()", "generic_string()", "has_extension()", "is_absolute()", "lexically_normal()", "parent_path()", "remove_filename()", "replace_extension()", "root_path()", "stem()", "string()"),
+    "thread": ("detach()", "get_id()", "hardware_concurrency()", "join()", "joinable()", "native_handle()", "swap()"),
+    "future": ("get()", "share()", "valid()", "wait()", "wait_for()", "wait_until()"),
+    "ostream": ("flush()", "good()", "put()", "seekp()", "tellp()", "write()"),
+    "istream": ("eof()", "fail()", "get()", "getline()", "good()", "ignore()", "peek()", "read()", "seekg()", "tellg()"),
+}
+
+CPP_STATIC_RECEIVERS = {
+    "std::cout": "ostream", "std::cerr": "ostream", "std::clog": "ostream",
+    "cout": "ostream", "cerr": "ostream", "clog": "ostream",
+    "std::cin": "istream", "cin": "istream",
+}
+
+
 CATALOG_COMPLETIONS: dict[str, tuple[str, ...]] = {
     "Python": (
         "and", "as", "assert", "async", "await", "break", "case", "class", "continue", "def", "del", "elif", "else", "except", "False", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "match", "None", "nonlocal", "not", "or", "pass", "raise", "return", "True", "try", "while", "with", "yield", "abs", "all", "any", "bool", "dict", "enumerate", "filter", "float", "input", "int", "len", "list", "map", "max", "min", "open", "print", "range", "reversed", "set", "sorted", "str", "sum", "super", "tuple", "type", "zip",
@@ -356,6 +451,120 @@ class JavaCompletionProvider:
         return CompletionQuery(token_match.start(), cursor_offset, prefix, tuple(items[:80])) if items else None
 
 
+def _cpp_normalize_type(raw_type: str) -> str:
+    value = re.sub(r"\b(?:const|volatile|typename)\b", "", raw_type)
+    value = re.sub(r"[&*]+", "", value)
+    value = re.sub(r"<.*", "", value).strip()
+    value = value.removeprefix("std::")
+    return value.rsplit("::", 1)[-1].strip()
+
+
+def _cpp_declared_symbols(text: str) -> tuple[dict[str, str], set[str]]:
+    types: dict[str, str] = {}
+    symbols: set[str] = set()
+    declaration = re.compile(
+        r"\b((?:(?:const|volatile)\s+)*(?:(?:std::)?[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)"
+        r"(?:\s*<[^;={}()]+>)?\s*[*&]*)\s+([A-Za-z_]\w*)\s*(?=[=;,):{])"
+    )
+    for match in declaration.finditer(text):
+        raw_type, name = match.groups()
+        normalized = _cpp_normalize_type(raw_type)
+        if normalized not in CPP_KEYWORDS or normalized in {"auto", "bool", "char", "double", "float", "int", "long", "short", "unsigned"}:
+            types[name] = normalized
+            symbols.add(name)
+    for match in re.finditer(
+        r"\bauto\s+([A-Za-z_]\w*)\s*=\s*(?:std::)?(make_unique|make_shared)\s*<",
+        text,
+    ):
+        name, factory = match.groups()
+        types[name] = "unique_ptr" if factory == "make_unique" else "shared_ptr"
+        symbols.add(name)
+    for match in re.finditer(r"\b(?:class|struct|enum(?:\s+class)?)\s+([A-Za-z_]\w*)", text):
+        symbols.add(match.group(1))
+    for match in re.finditer(
+        r"(?<![\w:])(?:[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*(?:\s*<[^;{}()]+>)?[&*\s]+)+([A-Za-z_]\w*)\s*\(",
+        text,
+    ):
+        if match.group(1) not in {"if", "for", "while", "switch", "catch"}:
+            symbols.add(match.group(1))
+    return types, symbols
+
+
+def _cpp_include_edit(text: str, header: str) -> tuple[CompletionTextEdit, ...]:
+    statement = f"#include <{header}>"
+    if re.search(rf"(?m)^\s*#\s*include\s*[<\"]{re.escape(header)}[>\"]", text):
+        return ()
+    includes = list(re.finditer(r"(?m)^\s*#\s*include\s*[<\"][^>\"\r\n]+[>\"]\s*(?:\r?\n)?", text))
+    if includes:
+        offset = includes[-1].end()
+        prefix = "" if offset == 0 or text[offset - 1] in "\r\n" else "\n"
+        return (CompletionTextEdit(offset, offset, prefix + statement + "\n"),)
+    return (CompletionTextEdit(0, 0, statement + "\n\n"),)
+
+
+class CppCompletionProvider:
+    """Type-aware, offline C++20/23 completion with safe standard includes."""
+
+    def complete(self, text: str, cursor_offset: int) -> CompletionQuery | None:
+        if not _java_code_context(text, cursor_offset):
+            return None
+        before = text[:cursor_offset]
+        types, symbols = _cpp_declared_symbols(text)
+        member_match = re.search(
+            r"((?:std::)?[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)(?:\.|->)([A-Za-z_]\w*)?$",
+            before,
+        )
+        if member_match:
+            receiver = member_match.group(1)
+            prefix = member_match.group(2) or ""
+            member_type = CPP_STATIC_RECEIVERS.get(receiver) or types.get(receiver)
+            members = CPP_MEMBERS.get(member_type or "", ())
+            if receiver in {"this", "std::this"}:
+                document_methods = {
+                    match.group(1) + "()"
+                    for match in re.finditer(
+                        r"(?<![\w:])(?:[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*(?:\s*<[^;{}()]+>)?[&*\s]+)+"
+                        r"([A-Za-z_]\w*)\s*\(",
+                        text,
+                    )
+                    if match.group(1) not in {"if", "for", "while", "switch", "catch"}
+                }
+                members = tuple(dict.fromkeys((*members, *sorted(document_methods))))
+            items = tuple(
+                CompletionItem(member, member, f"C++ {member_type or 'document'} member", "member")
+                for member in members
+                if member.casefold().startswith(prefix.casefold())
+            )
+            return CompletionQuery(cursor_offset - len(prefix), cursor_offset, prefix, items) if items else None
+
+        token_match = re.search(r"[A-Za-z_]\w*$", before)
+        if token_match is None:
+            return None
+        prefix = token_match.group(0)
+        if len(prefix) < 2:
+            return None
+        lower_prefix = prefix.casefold()
+        qualified = before[:token_match.start()].endswith("std::")
+        using_std = bool(re.search(r"(?m)^\s*using\s+namespace\s+std\s*;", text))
+        items: list[CompletionItem] = []
+        if not qualified:
+            for keyword in CPP_KEYWORDS:
+                if keyword.casefold().startswith(lower_prefix) and keyword != prefix:
+                    items.append(CompletionItem(keyword, keyword, "C++20/23 keyword", "keyword"))
+            for name in sorted(symbols, key=str.casefold):
+                if name.casefold().startswith(lower_prefix) and name != prefix:
+                    detail = f"local symbol · {types[name]}" if name in types else "document symbol"
+                    items.append(CompletionItem(name, name, detail, "symbol"))
+        for name, (_insert_name, header) in CPP_STANDARD_SYMBOLS.items():
+            if not name.casefold().startswith(lower_prefix) or name == prefix:
+                continue
+            insert_text = name if qualified or using_std or re.search(rf"\busing\s+std::{re.escape(name)}\s*;", text) else f"std::{name}"
+            items.append(CompletionItem(name, insert_text, f"std::{name} · <{header}>", "standard", _cpp_include_edit(text, header)))
+        kind_order = {"symbol": 0, "keyword": 1, "standard": 2}
+        items.sort(key=lambda item: (kind_order.get(item.kind, 9), item.label.casefold()))
+        return CompletionQuery(token_match.start(), cursor_offset, prefix, tuple(items[:100])) if items else None
+
+
 def _generic_code_context(language: str, text: str, cursor_offset: int) -> bool:
     before = text[:cursor_offset]
     if language in {"C++", "JavaScript", "TypeScript", "C#", "PHP", "CSS", "Luau"}:
@@ -414,7 +623,10 @@ class CatalogCompletionProvider:
 
 DEFAULT_COMPLETION_REGISTRY = CompletionRegistry()
 DEFAULT_COMPLETION_REGISTRY.register("Java", JavaCompletionProvider())
+DEFAULT_COMPLETION_REGISTRY.register("C++", CppCompletionProvider())
 for _language, _words in CATALOG_COMPLETIONS.items():
+    if _language in {"Java", "C++"}:
+        continue
     DEFAULT_COMPLETION_REGISTRY.register(_language, CatalogCompletionProvider(_language, _words))
 
 

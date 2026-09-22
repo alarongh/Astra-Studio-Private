@@ -179,7 +179,7 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.12"
+APP_VERSION = "Release 3.13"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 DEFAULT_LANGUAGE = "Python"
@@ -191,7 +191,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.12 — красно-синий": "assets/astra.ico",
+    "Astra 3.13 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -762,7 +762,7 @@ LANGUAGES = {
 }
 
 # The other language implementations remain available internally and can still
-# open existing files. Release 3.12 intentionally exposes only the languages
+# open existing files. Release 3.13 intentionally exposes only the languages
 # being polished in the current acceptance cycle.
 VISIBLE_LANGUAGES = ("Java", "Python", "C++", "JavaScript", "HTML", "CSS")
 
@@ -795,11 +795,18 @@ SNIPPETS = {
         {"language": "cpp", "trigger": "if", "label": "if", "insertText": "if (condition) {\n    §CURSOR§\n}", "description": "Условный оператор", "cursorTarget": "condition"},
         {"language": "cpp", "trigger": "ife", "label": "if / else", "insertText": "if (condition) {\n    §CURSOR§\n} else {\n    \n}", "description": "Условие с альтернативой", "cursorTarget": "condition"},
         {"language": "cpp", "trigger": "for", "label": "for", "insertText": "for (int i = 0; i < n; i++) {\n    §CURSOR§\n}", "description": "Индексный цикл", "cursorTarget": "n"},
+        {"language": "cpp", "trigger": "forr", "label": "range-based for", "insertText": "for (const auto& item : items) {\n    §CURSOR§\n}", "description": "Цикл по контейнеру", "cursorTarget": "item"},
         {"language": "cpp", "trigger": "while", "label": "while", "insertText": "while (condition) {\n    §CURSOR§\n}", "description": "Цикл с условием", "cursorTarget": "condition"},
         {"language": "cpp", "trigger": "switch", "label": "switch", "insertText": "switch (value) {\n    case 1:\n        §CURSOR§\n        break;\n    default:\n        break;\n}", "description": "Выбор по значению", "cursorTarget": "value"},
         {"language": "cpp", "trigger": "try", "label": "try / catch", "insertText": "try {\n    §CURSOR§\n} catch (const std::exception& e) {\n    std::cerr << e.what() << std::endl;\n}", "description": "Обработка ошибок", "cursorTarget": ""},
         {"language": "cpp", "trigger": "class", "label": "class", "insertText": "class ClassName {\npublic:\n    ClassName() = default;\n\nprivate:\n    §CURSOR§\n};", "description": "Класс", "cursorTarget": "ClassName"},
         {"language": "cpp", "trigger": "struct", "label": "struct", "insertText": "struct StructName {\n    §CURSOR§\n};", "description": "Структура", "cursorTarget": "StructName"},
+        {"language": "cpp", "trigger": "func", "label": "function", "insertText": "ReturnType functionName() {\n    §CURSOR§\n}", "description": "Определение функции", "cursorTarget": "functionName"},
+        {"language": "cpp", "trigger": "lambda", "label": "lambda", "insertText": "[&](auto value) {\n    §CURSOR§\n}", "description": "Лямбда-функция", "cursorTarget": "value"},
+        {"language": "cpp", "trigger": "vector", "label": "std::vector", "insertText": "std::vector<Type> values;§CURSOR§", "description": "Динамический массив", "cursorTarget": "Type"},
+        {"language": "cpp", "trigger": "unique", "label": "std::make_unique", "insertText": "auto value = std::make_unique<Type>(§CURSOR§);", "description": "Уникальный smart pointer", "cursorTarget": "Type"},
+        {"language": "cpp", "trigger": "shared", "label": "std::make_shared", "insertText": "auto value = std::make_shared<Type>(§CURSOR§);", "description": "Разделяемый smart pointer", "cursorTarget": "Type"},
+        {"language": "cpp", "trigger": "namespace", "label": "namespace", "insertText": "namespace name {\n    §CURSOR§\n}", "description": "Пространство имён", "cursorTarget": "name"},
         {"language": "cpp", "trigger": "return", "label": "return", "insertText": "return §CURSOR§;", "description": "Возврат значения", "cursorTarget": ""},
     ],
     "Python": [
@@ -12820,7 +12827,7 @@ Refresh-KnownPaths
         common = self._installer_common_script()
         app_dir = str(project_root_dir())
         shortcut_icon_relative = "assets/astra.ico"
-        shortcut_icon_label = "Astra 3.12 — красно-синий"
+        shortcut_icon_label = "Astra 3.13 — красно-синий"
         if hasattr(self, "shortcut_icon_combo"):
             shortcut_icon_relative = str(self.shortcut_icon_combo.currentData() or shortcut_icon_relative)
             shortcut_icon_label = self.shortcut_icon_combo.currentText() or shortcut_icon_label

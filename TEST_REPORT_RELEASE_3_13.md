@@ -1,4 +1,4 @@
-# Astra Studio Release 3.12 — Test Report
+# Astra Studio Release 3.13 — Test Report
 
 Status: **WINDOWS AUTOMATED GATE PASSED / PORTABLE BUILD VERIFIED**
 
@@ -25,8 +25,8 @@ Platform: **Windows, PySide6 6.11.2, PyInstaller 6.22.2, Python 3.12.14**
 ```text
 compileall          PASS
 static smoke        PASS
-pytest collected    259
-passed              257
+pytest collected    267
+passed              265
 failed                0
 skipped               2
 subtests passed      88
@@ -63,11 +63,20 @@ subtests passed      88
 - В изолированной Windows-папке внешний updater реально дождался завершения процесса, заменил portable payload, запустил новый EXE и очистил backup после успеха.
 - ZIP validator проверен на корректном архиве и traversal-записи; неподписанный или структурно опасный payload отклоняется до закрытия приложения.
 
+## Release 3.13 C++ и Python libraries
+
+- Type-aware C++ provider проверен на C++20/23 keywords, `std::`/неполных именах, добавлении и дедупликации `#include`.
+- Проверены members для string, vector, unordered_map, streams и unique/shared pointers после `.` и `->`.
+- Репрезентативная программа с vector, map, algorithm, numeric и unique_ptr реально скомпилирована через `g++ -std=c++23` и вернула `ASTRA_CPP_OK=6`.
+- Python registry содержит 67 imports, 61 safe и 6 unsafe/experimental записей; структурная проверка не нашла дубликатов, неверных bundles или пустых metadata.
+- Все 67 package names проверены через официальный PyPI JSON API; canonical names и опубликованные версии существуют.
+- Python/JSON registry полностью совпадают и воспроизводимо генерируются отдельным exporter script.
+
 ## Проверка настоящей сборки
 
 - Собран windowed onedir executable `dist\Astra Studio\Astra Studio.exe`.
 - В финальном payload отсутствуют конфликтующие `icuuc.dll` и `icudt78.dll`.
-- EXE запущен независимо от Python launcher; ожидаемое главное окно — `Astra Studio — Release 3.12`.
+- EXE запущен независимо от Python launcher; ожидаемое главное окно — `Astra Studio — Release 3.13`.
 - Системная кнопка X найдена как native caption control, нажата мышью и закрыла процесс.
 - Spec, update config и runtime assets входят в source release; portable archive сохраняет всю onedir-папку, потому переносить один EXE отдельно нельзя.
 

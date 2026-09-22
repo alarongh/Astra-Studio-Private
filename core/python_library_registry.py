@@ -45,8 +45,13 @@ _LIBRARY_DEFINITIONS: list[PythonLibrary] = [
     PythonLibrary("PyInstaller", "pyinstaller", "PyInstaller", "Сборка EXE", "Сборка Python-скриптов в EXE.", warning="Создаёт исполняемые файлы. Собирайте только свой код."),
     PythonLibrary("PySide6", "PySide6", "PySide6", "GUI", "Оконные приложения на Qt.", size="large"),
     PythonLibrary("pytest", "pytest", "pytest", "Тестирование", "Запуск тестов Python-кода."),
+    PythonLibrary("hypothesis", "hypothesis", "Hypothesis", "Тестирование", "Генеративное тестирование на основе свойств."),
+    PythonLibrary("pytest_cov", "pytest-cov", "pytest-cov", "Тестирование", "Измерение покрытия pytest-тестов.", aliases=("pytest-cov",)),
     PythonLibrary("colorama", "colorama", "colorama", "Учебные", "Цветной вывод в консоли."),
     PythonLibrary("sqlalchemy", "SQLAlchemy", "SQLAlchemy", "Базы данных", "Работа с базами данных через ORM."),
+    PythonLibrary("pymongo", "pymongo", "PyMongo", "Базы данных", "Официальный Python-драйвер MongoDB.", aliases=("bson", "gridfs")),
+    PythonLibrary("redis", "redis", "redis-py", "Базы данных", "Клиент Redis для синхронного и асинхронного кода."),
+    PythonLibrary("duckdb", "duckdb", "DuckDB", "Базы данных", "Встраиваемая аналитическая SQL-база данных."),
 
     # Data Science / math
     PythonLibrary("numpy", "numpy", "NumPy", "Math / Data Science", "Массивы, матрицы и численные вычисления."),
@@ -56,6 +61,8 @@ _LIBRARY_DEFINITIONS: list[PythonLibrary] = [
     PythonLibrary("statsmodels", "statsmodels", "Statsmodels", "Data Science", "Статистические модели и эконометрика."),
     PythonLibrary("sympy", "sympy", "SymPy", "Math / Data Science", "Символьная математика."),
     PythonLibrary("joblib", "joblib", "joblib", "Machine Learning", "Кэширование и параллельные вычисления, часто используется вместе со scikit-learn."),
+    PythonLibrary("networkx", "networkx", "NetworkX", "Math / Data Science", "Графы, сети и алгоритмы на графах."),
+    PythonLibrary("polars", "polars", "Polars", "Data Science", "Быстрые DataFrame и ленивые вычисления.", size="large"),
 
     # Visualization
     PythonLibrary("matplotlib", "matplotlib", "Matplotlib", "Visualization", "Графики и визуализация данных."),
@@ -68,6 +75,10 @@ _LIBRARY_DEFINITIONS: list[PythonLibrary] = [
 
     # Web / parsing
     PythonLibrary("requests", "requests", "Requests", "Web / парсинг", "HTTP-запросы."),
+    PythonLibrary("httpx", "httpx", "HTTPX", "Web / API", "Современный синхронный и асинхронный HTTP-клиент."),
+    PythonLibrary("aiohttp", "aiohttp", "aiohttp", "Web / API", "Асинхронные HTTP-клиент и сервер."),
+    PythonLibrary("websockets", "websockets", "websockets", "Web / API", "Клиент и сервер WebSocket на asyncio."),
+    PythonLibrary("aiofiles", "aiofiles", "aiofiles", "Web / API", "Асинхронная работа с файлами."),
     PythonLibrary("bs4", "beautifulsoup4", "BeautifulSoup4", "Web / парсинг", "Парсинг HTML/XML.", aliases=("beautifulsoup4", "beautifulsoup")),
     PythonLibrary("lxml", "lxml", "lxml", "Web / парсинг", "Быстрый XML/HTML-парсер."),
     PythonLibrary("html5lib", "html5lib", "html5lib", "Web / парсинг", "HTML5-парсер."),
@@ -78,17 +89,34 @@ _LIBRARY_DEFINITIONS: list[PythonLibrary] = [
     PythonLibrary("pptx", "python-pptx", "python-pptx", "Документы / Excel", "Создание и редактирование PowerPoint .pptx.", aliases=("python_pptx", "python-pptx")),
     PythonLibrary("reportlab", "reportlab", "ReportLab", "Документы / Excel", "Генерация PDF-отчётов."),
     PythonLibrary("fpdf", "fpdf2", "fpdf2", "Документы / Excel", "Простая генерация PDF.", aliases=("fpdf2",)),
+    PythonLibrary("pypdf", "pypdf", "pypdf", "Документы / Excel", "Чтение, объединение и преобразование PDF."),
+    PythonLibrary("xlsxwriter", "XlsxWriter", "XlsxWriter", "Документы / Excel", "Создание Excel .xlsx с диаграммами и форматированием."),
+    PythonLibrary("markdown", "Markdown", "Python-Markdown", "Документы / Excel", "Преобразование Markdown в HTML."),
 
     # Automation / GUI
     PythonLibrary("pyperclip", "pyperclip", "pyperclip", "Автоматизация", "Работа с буфером обмена."),
     PythonLibrary("pynput", "pynput", "pynput", "Автоматизация", "Управление клавиатурой и мышью.", warning="Может имитировать нажатия клавиш."),
     PythonLibrary("pyautogui", "pyautogui", "PyAutoGUI", "Автоматизация", "Автоматизация мыши, клавиатуры и скриншотов.", warning="Может управлять мышью и клавиатурой."),
+    PythonLibrary("watchdog", "watchdog", "watchdog", "Автоматизация", "Отслеживание изменений файлов и каталогов."),
+    PythonLibrary("psutil", "psutil", "psutil", "Системные инструменты", "Информация о процессах, памяти, дисках и сети."),
 
     # Games / web apps
     PythonLibrary("pygame", "pygame", "pygame", "Игры / учебные проекты", "2D-игры и мультимедиа."),
     PythonLibrary("flask", "flask", "Flask", "Web-приложения", "Лёгкий web-фреймворк."),
     PythonLibrary("fastapi", "fastapi", "FastAPI", "Web-приложения", "Современный web/API-фреймворк."),
     PythonLibrary("uvicorn", "uvicorn", "Uvicorn", "Web-приложения", "ASGI-сервер для FastAPI и других приложений."),
+    PythonLibrary("django", "Django", "Django", "Web-приложения", "Полнофункциональный web-фреймворк."),
+    PythonLibrary("pydantic", "pydantic", "Pydantic", "Web-приложения", "Валидация данных и модели на type hints."),
+    PythonLibrary("jinja2", "Jinja2", "Jinja2", "Web-приложения", "Шаблонизатор HTML и текстовых документов."),
+
+    # CLI / developer experience
+    PythonLibrary("rich", "rich", "Rich", "CLI / утилиты", "Форматированный терминальный вывод, таблицы и progress bars."),
+    PythonLibrary("typer", "typer", "Typer", "CLI / утилиты", "Типизированные консольные приложения."),
+    PythonLibrary("tqdm", "tqdm", "tqdm", "CLI / утилиты", "Компактные индикаторы прогресса."),
+
+    # Security / APIs
+    PythonLibrary("cryptography", "cryptography", "cryptography", "Безопасность", "Криптографические примитивы и сертификаты."),
+    PythonLibrary("openai", "openai", "OpenAI Python", "API / AI", "Клиент API OpenAI.", warning="Для запросов нужен собственный API-ключ; Astra не хранит ключ в реестре."),
 
     # Configs / env
     PythonLibrary("dotenv", "python-dotenv", "python-dotenv", "Конфиги / env", "Загрузка переменных окружения из .env.", aliases=("python_dotenv", "python-dotenv")),
@@ -103,6 +131,8 @@ _LIBRARY_DEFINITIONS: list[PythonLibrary] = [
     PythonLibrary("tensorflow", "tensorflow", "TensorFlow", "Экспериментальные / тяжёлые", "Глубокое обучение. Очень крупный пакет.", safe=False, size="large", experimental=True, warning="Не устанавливается автоматически. Используйте только при понимании требований."),
     PythonLibrary("jax", "jax", "JAX", "Экспериментальные / тяжёлые", "Численные вычисления и ML на ускорителях.", safe=False, size="large", experimental=True, warning="Не устанавливается автоматически. Используйте только при понимании требований."),
     PythonLibrary("transformers", "transformers", "Transformers", "Экспериментальные / тяжёлые", "Модели NLP/LLM. Может тянуть крупные зависимости.", safe=False, size="large", experimental=True, warning="Не устанавливается автоматически. Используйте только при понимании требований."),
+    PythonLibrary("selenium", "selenium", "Selenium", "Автоматизация браузера", "Управление настоящим браузером через WebDriver.", safe=False, experimental=True, warning="Не устанавливается автоматически: управляет браузером и может потребовать отдельный driver."),
+    PythonLibrary("playwright", "playwright", "Playwright", "Автоматизация браузера", "Автоматизация Chromium, Firefox и WebKit.", safe=False, size="large", experimental=True, warning="Не устанавливается автоматически: после пакета требуется отдельная установка браузеров Playwright."),
 ]
 
 PYTHON_LIBRARY_REGISTRY: list[dict] = [library.as_record() for library in _LIBRARY_DEFINITIONS]
@@ -113,6 +143,7 @@ def _normalize_key(name: str) -> str:
 
 
 PYTHON_IMPORT_TO_PACKAGE: dict[str, dict] = {}
+_PYTHON_ALIAS_OWNERS: dict[str, str] = {}
 for item in PYTHON_LIBRARY_REGISTRY:
     keys = {
         item["import_name"],
@@ -125,8 +156,14 @@ for item in PYTHON_LIBRARY_REGISTRY:
     }
     for key in keys:
         if key:
-            PYTHON_IMPORT_TO_PACKAGE[_normalize_key(key)] = item
-            PYTHON_IMPORT_TO_PACKAGE[key.strip().lower()] = item
+            for normalized_key in {_normalize_key(key), key.strip().lower()}:
+                owner = _PYTHON_ALIAS_OWNERS.get(normalized_key)
+                if owner is not None and owner != item["import_name"]:
+                    raise RuntimeError(
+                        f"Python library alias {key!r} is shared by {owner!r} and {item['import_name']!r}"
+                    )
+                _PYTHON_ALIAS_OWNERS[normalized_key] = item["import_name"]
+                PYTHON_IMPORT_TO_PACKAGE[normalized_key] = item
 
 EXPLICIT_STDLIB_MODULES = {
     "os", "sys", "math", "random", "time", "datetime", "json", "csv", "pathlib", "subprocess",
@@ -147,7 +184,50 @@ LIBRARY_BUNDLES: dict[str, list[str]] = {
     "Документы и Excel": ["openpyxl", "docx", "pptx", "reportlab"],
     "Парсинг сайтов": ["requests", "bs4", "lxml", "html5lib"],
     "Автоматизация": ["pyperclip", "pynput", "pyautogui"],
+    "Web / API": ["httpx", "aiohttp", "pydantic", "jinja2", "fastapi", "uvicorn"],
+    "Async Python": ["httpx", "aiohttp", "websockets", "aiofiles"],
+    "CLI / утилиты": ["rich", "typer", "tqdm"],
+    "PDF / Excel / Markdown": ["pypdf", "openpyxl", "xlsxwriter", "docx", "markdown"],
+    "Базы данных": ["sqlalchemy", "pymongo", "redis", "duckdb"],
+    "Тестирование": ["pytest", "hypothesis", "pytest_cov"],
 }
+
+
+def validate_library_registry() -> list[str]:
+    """Return deterministic quality errors for the curated install registry."""
+    errors: list[str] = []
+    required = {"import_name", "pip_name", "display_name", "category", "description"}
+    import_names: set[str] = set()
+    pip_pattern = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    for index, record in enumerate(PYTHON_LIBRARY_REGISTRY):
+        missing = sorted(field for field in required if not str(record.get(field) or "").strip())
+        if missing:
+            errors.append(f"record {index} has empty fields: {', '.join(missing)}")
+        import_name = str(record.get("import_name") or "")
+        if import_name in import_names:
+            errors.append(f"duplicate import_name: {import_name}")
+        import_names.add(import_name)
+        pip_name = str(record.get("pip_name") or "")
+        if pip_name and not pip_pattern.fullmatch(pip_name):
+            errors.append(f"invalid pip_name for {import_name}: {pip_name}")
+        if record.get("size") not in {"normal", "large"}:
+            errors.append(f"invalid size for {import_name}: {record.get('size')}")
+        if not record.get("safe", True) and not record.get("warning"):
+            errors.append(f"unsafe package lacks warning: {import_name}")
+        if not record.get("safe", True) and not record.get("experimental"):
+            errors.append(f"unsafe package must be explicitly experimental: {import_name}")
+    for bundle_name, entries in LIBRARY_BUNDLES.items():
+        seen: set[str] = set()
+        for entry in entries:
+            if entry in seen:
+                errors.append(f"bundle {bundle_name!r} repeats {entry!r}")
+            seen.add(entry)
+            record = package_record(entry)
+            if record is None:
+                errors.append(f"bundle {bundle_name!r} references unknown package {entry!r}")
+            elif not record.get("safe", True):
+                errors.append(f"bundle {bundle_name!r} contains unsafe package {entry!r}")
+    return errors
 
 
 def is_standard_module(module_name: str) -> bool:

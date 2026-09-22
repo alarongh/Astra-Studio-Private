@@ -22,7 +22,7 @@ def test_release_3_5_identity():
         if isinstance(node, ast.Assign)
         and any(isinstance(t, ast.Name) and t.id == "APP_VERSION" for t in node.targets)
     )
-    assert ast.literal_eval(assignment.value) == "Release 3.12"
+    assert ast.literal_eval(assignment.value) == "Release 3.13"
 
 
 def test_settings_are_inline_in_tools_drawer_not_external_dialog():

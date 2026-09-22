@@ -1,5 +1,14 @@
 # Astra Studio 3.x — Test Registry
 
+- `tests/test_release_313_cpp_python.py::test_cpp_completion_covers_cpp20_keywords_standard_symbols_and_includes`
+- `tests/test_release_313_cpp_python.py::test_cpp_completion_does_not_duplicate_existing_include`
+- `tests/test_release_313_cpp_python.py::test_cpp_completion_infers_container_stream_and_smart_pointer_members`
+- `tests/test_release_313_cpp_python.py::test_cpp_completion_is_suppressed_in_comments_and_strings`
+- `tests/test_release_313_cpp_python.py::test_cpp23_representative_standard_library_program_compiles_and_runs`
+- `tests/test_release_313_cpp_python.py::test_python_registry_quality_and_curated_growth`
+- `tests/test_release_313_cpp_python.py::test_python_browser_automation_is_visible_but_never_auto_installed`
+- `tests/test_release_313_cpp_python.py::test_python_registry_json_and_exporter_match_runtime_registry`
+
 Этот файл — единый реестр тестов поколения 3.x. Он нужен, чтобы ни один автоматический или ручной тест не потерялся к финальному Windows-прогону поколения 3.x и post-gate патчам.
 
 Статусы ручных тестов:
@@ -28,7 +37,7 @@
 - `tests/test_app_updates.py::test_update_channel_accepts_published_https_url`
 - `tests/test_app_updates.py::test_update_archive_verifies_hash_size_layout_and_rejects_traversal`
 - `tests/test_app_updates.py::test_windows_updater_has_wait_backup_rollback_and_restart_steps`
-- `tests/test_app_updates.py::test_release_312_bundles_public_github_channel_and_valid_latest_manifest`
+- `tests/test_app_updates.py::test_release_313_bundles_public_github_channel_and_valid_latest_manifest`
 - `tests/test_app_updates.py::test_windows_updater_replaces_portable_folder_in_isolated_directory`
 - `tests/test_final_integration_3x.py::test_final_release_identity_and_runtime_tree_has_no_dev_paths`
 - `tests/test_final_integration_3x.py::test_all_roadmap_scope_before_final_gate_is_closed`

@@ -243,7 +243,9 @@ D3 gate: `compileall` + static smoke pass; full sandbox suite collects **185 tes
 - [x] Release 3.11 completion/shortcut patch: cyclic Tab selection, Space commit, multi-language offline catalogs and three verified desktop shortcut icon variants.
 - [x] Release 3.12 Windows gate: 259 collected / 257 passed / 2 platform-permission skips / 0 failed, plus 88 passing subtests.
 - [x] Release 3.12 layout/update patch: native-size wallpaper, complete project tree, six-language UI focus, expanded Java completion and verified GitHub updater replacement flow.
+- [x] Release 3.13 Windows gate: 267 collected / 265 passed / 2 platform-permission skips / 0 failed, plus 88 passing subtests.
+- [x] Release 3.13 C++/Python patch: type-aware C++20/23 completion, automatic standard headers, real g++ gate, 67 verified Python libraries and 12 safe curated bundles.
 - [ ] POST-GATE: after stable manual sign-off, begin planning Release 4.0.
 
 
-**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.12, which includes all 3.4–3.11 repairs plus the layout, Java completion and public-update fixes; Release 4.0 planning remains blocked until 3.x owner sign-off.**
+**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.13, which includes all 3.4–3.12 repairs plus expanded C++ and audited Python libraries; Release 4.0 planning remains blocked until 3.x owner sign-off.**

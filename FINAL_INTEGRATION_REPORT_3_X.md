@@ -203,6 +203,8 @@ Release 3.6 also normalizes exported AI-context text to LF and writes/migrates t
 
 The Release 3.12 Windows gate collects **259 tests** and finishes with **257 PASS / 2 SKIPPED / 0 FAILED**, plus **88 passing subtests**. The two skips are explicitly platform/permission scoped: the POSIX executable-bit case and symlink creation unavailable to the current Windows account. Both Qt caption tests execute, including the native HWND/`SC_CLOSE` regression. Release 3.12 also executes a real isolated portable-folder replacement through the external updater.
 
+The Release 3.13 Windows gate collects **267 tests** and finishes with **265 PASS / 2 SKIPPED / 0 FAILED**, plus **88 passing subtests**. It adds real C++23 compile/run coverage, type-aware standard-library completion checks, deterministic Python registry validation and verified Python/JSON parity. All 67 curated distribution names were separately resolved through the official PyPI JSON API.
+
 ## Release 3.9 installer correction
 
 Owner runtime output confirmed that Temurin JDK 21 and `javac` were already healthy, but Windows PowerShell converted the normal stderr output of `java -version` into a terminating `NativeCommandError` because the installer uses `$ErrorActionPreference = "Stop"`. Release 3.9 runs version probes through `System.Diagnostics.Process` with separately redirected stdout/stderr and decides success from the child exit code. The complete Java installer has been rerun against Temurin 21.0.11 and exits successfully.

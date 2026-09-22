@@ -1,4 +1,22 @@
-# Astra Studio — Release 3.12
+# Astra Studio — Release 3.13
+
+## C++
+
+- Плоский каталог заменён type-aware offline provider для C++20/23.
+- Распознаются локальные `string`, STL containers, file streams, `optional`, smart pointers, threads и futures; completion работает после `.` и `->`.
+- Предложения `std::vector`, algorithms, streams и других стандартных символов автоматически добавляют нужный `#include`, но не дублируют существующий.
+- Добавлены современные keywords (`concept`, `requires`, coroutines, `consteval`, `constinit`) и новые snippets для range-for, функций, lambda, vector, smart pointers и namespace.
+- Реальная C++23 программа с vector/map/algorithm/numeric/smart pointer проходит компиляцию `g++ -std=c++23` и запуск.
+
+## Python libraries
+
+- Реестр проверен по текущему PyPI JSON API и расширен с 41 до 67 тщательно сопоставленных import/package записей.
+- Добавлены HTTPX, aiohttp, Pydantic, Django, Jinja2, WebSockets, aiofiles, pypdf, XlsxWriter, Markdown, PyMongo, Redis, DuckDB, Polars, NetworkX, Rich, Typer, tqdm, cryptography, OpenAI client, psutil, watchdog, Hypothesis и pytest-cov.
+- Количество готовых наборов увеличено с 6 до 12: Web/API, async, CLI, документы, базы данных и тестирование.
+- Selenium и Playwright видимы в каталоге, но помечены unsafe/experimental и никогда не ставятся автоматически.
+- Добавлены детерминированная проверка качества registry и генератор `data/python_libraries.json`, исключающий рассинхронизацию Python/JSON.
+
+## Сохранено из Release 3.12
 
 ## Интерфейс и дерево проекта
 
@@ -46,12 +64,12 @@
 
 - Включены профиль Angel 404, приложенные обои и глобальный `Minecraft Rus` из предыдущего кандидата.
 - Выбранный шрифт применяется к Qt application, контролам, вкладкам, редактору, документу редактора и консолям.
-- Добавлен новый Angel 404 icon и выбор из трёх оформлений ярлыка: Astra 3.12, Angel 404 и Astra Legacy.
+- Добавлен новый Angel 404 icon и выбор из трёх оформлений ярлыка: Astra 3.13, Angel 404 и Astra Legacy.
 - Создание ярлыка исправлено для обычного, русскоязычного и OneDrive Desktop; отдельная кнопка создаёт настоящий `.lnk` и проверяет результат.
 
 ## Проверка
 
 - Реальный Temurin JDK 21.0.11 прошёл полный `install_java.ps1` в Windows PowerShell с кодом 0.
-- Добавлены Release 3.12 regressions для identity, updater verification, tree/layout, visibility policy и расширенного Java workflow.
+- Добавлены Release 3.13 regressions для C++ provider, настоящей C++23 сборки, Python registry и сохранённых 3.12 исправлений.
 - Windows gate: `250 passed, 2 skipped`, плюс `88 subtests passed`; реальная компиляция/запуск русской строки, циклический completion и Windows `.lnk` выполнены на целевой системе.
 - Публичный update feed подключён к GitHub Releases; отдельный домен можно добавить позже без пересборки логики updater.

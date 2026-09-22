@@ -118,7 +118,7 @@ def test_shortcut_icon_variants_are_bundled_windows_icons():
     from main import SHORTCUT_ICON_OPTIONS
 
     assert set(SHORTCUT_ICON_OPTIONS) == {
-        "Astra 3.12 — красно-синий",
+        "Astra 3.13 — красно-синий",
         "Angel 404 — фиолетовый неон",
         "Astra Legacy — тёмная корона",
     }
