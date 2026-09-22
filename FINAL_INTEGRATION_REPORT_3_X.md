@@ -205,6 +205,10 @@ The Release 3.12 Windows gate collects **259 tests** and finishes with **257 PAS
 
 The Release 3.13 Windows gate collects **267 tests** and finishes with **265 PASS / 2 SKIPPED / 0 FAILED**, plus **88 passing subtests**. It adds real C++23 compile/run coverage, type-aware standard-library completion checks, deterministic Python registry validation and verified Python/JSON parity. All 67 curated distribution names were separately resolved through the official PyPI JSON API.
 
+Release 3.14 adds an updater regression that starts PowerShell from inside the portable `Astra Studio` directory, verifies that the updater leaves the native working directory before replacement, and requires visible recovery on failure. It also limits the visible language and installer scope to Java, Python and C++ without deleting deferred implementations, and moves the public update identity to `Astra-Studio-Releases`.
+
+The Release 3.14 Windows gate collects **271 tests** and finishes with **269 PASS / 2 SKIPPED / 0 FAILED**, plus **88 passing subtests**.
+
 ## Release 3.9 installer correction
 
 Owner runtime output confirmed that Temurin JDK 21 and `javac` were already healthy, but Windows PowerShell converted the normal stderr output of `java -version` into a terminating `NativeCommandError` because the installer uses `$ErrorActionPreference = "Stop"`. Release 3.9 runs version probes through `System.Diagnostics.Process` with separately redirected stdout/stderr and decides success from the child exit code. The complete Java installer has been rerun against Temurin 21.0.11 and exits successfully.

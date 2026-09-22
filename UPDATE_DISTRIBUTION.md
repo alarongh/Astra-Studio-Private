@@ -13,9 +13,9 @@
 ```powershell
 .\.venv\Scripts\python.exe scripts\make_update_feed.py `
   "<путь-к-portable.zip>" `
-  --version "Release 3.13" `
-  --download-url "https://github.com/alarongh/Astra-Studio-Private/releases/download/v3.13/Astra_Studio_Release_3_13.zip" `
-  --notes-url "https://github.com/alarongh/Astra-Studio-Private/releases/tag/v3.13" `
+  --version "Release 3.14" `
+  --download-url "https://github.com/alarongh/Astra-Studio-Releases/releases/download/v3.14/Astra_Studio_Release_3_14.zip" `
+  --notes-url "https://github.com/alarongh/Astra-Studio-Releases/releases/tag/v3.14" `
   --output update/latest.json
 ```
 
@@ -31,8 +31,8 @@
 {
   "schema_version": 1,
   "channel": "stable",
-  "version": "Release 3.13",
-  "download_url": "https://github.com/alarongh/Astra-Studio-Private/releases/download/v3.13/Astra_Studio_Release_3_13.zip",
+  "version": "Release 3.14",
+  "download_url": "https://github.com/alarongh/Astra-Studio-Releases/releases/download/v3.14/Astra_Studio_Release_3_14.zip",
   "sha256": "64 lowercase hex symbols",
   "size": 123456789
 }
@@ -46,7 +46,7 @@
 {
   "schema_version": 1,
   "channel": "stable",
-  "manifest_url": "https://raw.githubusercontent.com/alarongh/Astra-Studio-Private/main/update/latest.json"
+  "manifest_url": "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
 }
 ```
 

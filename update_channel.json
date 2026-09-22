@@ -1,5 +1,5 @@
 {
   "schema_version": 1,
   "channel": "stable",
-  "manifest_url": "https://raw.githubusercontent.com/alarongh/Astra-Studio-Private/main/update/latest.json"
+  "manifest_url": "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
 }

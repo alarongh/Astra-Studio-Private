@@ -71,7 +71,7 @@ def test_update_channel_uses_valid_environment_override(tmp_path: Path):
 
 def test_update_channel_accepts_published_https_url(tmp_path: Path):
     channel = tmp_path / "update_channel.json"
-    url = "https://raw.githubusercontent.com/alarongh/Astra-Studio-Private/main/update/latest.json"
+    url = "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
     channel.write_text('{"schema_version": 1, "manifest_url": "' + url + '"}', encoding="utf-8")
     assert configured_manifest_url(channel, {}) == url
 
@@ -104,21 +104,24 @@ def test_update_archive_verifies_hash_size_layout_and_rejects_traversal(tmp_path
 def test_windows_updater_has_wait_backup_rollback_and_restart_steps():
     script = windows_update_script()
     for required in (
+        "Set-Location -LiteralPath $updatesRoot",
+        "[Environment]::CurrentDirectory = $updatesRoot",
         "Wait-Process -Id $ParentPid",
         "Move-Item -LiteralPath $targetPath -Destination $backupPath",
         "Move-Item -LiteralPath $backupPath -Destination $targetPath",
         "Start-Process -FilePath $installedExecutable",
+        "Astra Studio не удалось установить обновление",
     ):
         assert required in script
 
 
-def test_release_313_bundles_public_github_channel_and_valid_latest_manifest():
+def test_release_314_bundles_public_github_channel_and_valid_latest_manifest():
     channel_url = configured_manifest_url(ROOT / "update_channel.json", {})
-    assert channel_url == "https://raw.githubusercontent.com/alarongh/Astra-Studio-Private/main/update/latest.json"
+    assert channel_url == "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
     manifest = parse_update_manifest((ROOT / "update" / "latest.json").read_bytes())
-    assert manifest.version == "Release 3.13"
-    assert manifest.download_url.endswith("/v3.13/Astra_Studio_Release_3_13.zip")
-    assert manifest.notes_url.endswith("/releases/tag/v3.13")
+    assert manifest.version == "Release 3.14"
+    assert manifest.download_url.endswith("/v3.14/Astra_Studio_Release_3_14.zip")
+    assert manifest.notes_url.endswith("/releases/tag/v3.14")
 
 
 @pytest.mark.skipif(os.name != "nt" or shutil.which("powershell.exe") is None, reason="Windows updater integration")
@@ -150,6 +153,7 @@ def test_windows_updater_replaces_portable_folder_in_isolated_directory(tmp_path
         text=True,
         encoding="utf-8",
         errors="replace",
+        cwd=target,
         timeout=30,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr + log.read_text(encoding="utf-8-sig")

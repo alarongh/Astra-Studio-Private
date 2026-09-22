@@ -248,4 +248,9 @@ D3 gate: `compileall` + static smoke pass; full sandbox suite collects **185 tes
 - [ ] POST-GATE: after stable manual sign-off, begin planning Release 4.0.
 
 
-**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.13, which includes all 3.4–3.12 repairs plus expanded C++ and audited Python libraries; Release 4.0 planning remains blocked until 3.x owner sign-off.**
+- [x] Release 3.14 update recovery: updater leaves the portable working directory, relaunches the current build on failure and reports the log path.
+- [x] Release 3.14 visible scope: only Java, Python and C++ remain in language selection and installer actions; other implementations stay in source.
+- [x] Public release identity moved from the misleading `Astra-Studio-Private` name to `Astra-Studio-Releases`.
+- [x] Release 3.14 Windows gate: 271 collected / 269 passed / 2 platform-permission skips / 0 failed, plus 88 passing subtests.
+
+**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.14, which includes all 3.4–3.13 repairs plus updater recovery and strict three-language visibility; Release 4.0 planning remains blocked until 3.x owner sign-off.**

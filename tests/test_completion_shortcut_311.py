@@ -59,12 +59,12 @@ def test_java_completion_covers_arrays_var_streams_maps_and_document_methods():
     assert "refresh()" in _labels("Java", source)
 
 
-def test_release_312_hides_deferred_languages_without_deleting_registry():
+def test_release_314_exposes_only_java_python_cpp_without_deleting_registry():
     pytest.importorskip("PySide6")
     from main import LANGUAGES, VISIBLE_LANGUAGES
 
-    assert VISIBLE_LANGUAGES == ("Java", "Python", "C++", "JavaScript", "HTML", "CSS")
-    assert {"TypeScript", "C#", "PHP", "Luau", "GDScript"}.issubset(LANGUAGES)
+    assert VISIBLE_LANGUAGES == ("Java", "Python", "C++")
+    assert {"JavaScript", "HTML", "CSS", "TypeScript", "C#", "PHP", "Luau", "GDScript"}.issubset(LANGUAGES)
 
 
 def test_release_312_wallpaper_and_project_tree_are_scale_safe_and_complete():
@@ -118,7 +118,7 @@ def test_shortcut_icon_variants_are_bundled_windows_icons():
     from main import SHORTCUT_ICON_OPTIONS
 
     assert set(SHORTCUT_ICON_OPTIONS) == {
-        "Astra 3.13 — красно-синий",
+        "Astra 3.14 — красно-синий",
         "Angel 404 — фиолетовый неон",
         "Astra Legacy — тёмная корона",
     }

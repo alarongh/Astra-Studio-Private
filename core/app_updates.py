@@ -181,12 +181,18 @@ try {
     if (-not (Test-Path -LiteralPath $archivePath -PathType Leaf)) { throw "Update archive is missing: $archivePath" }
     if (-not (Test-Path -LiteralPath (Join-Path $targetPath "Astra Studio.exe") -PathType Leaf)) { throw "Current Astra Studio executable is missing" }
 
+    # A detached process inherits Astra's current directory by default. Windows
+    # refuses to rename the application folder while the updater itself is
+    # standing inside that folder, so leave it before waiting for Astra to exit.
+    $updatesRoot = Split-Path -Parent $archivePath
+    Set-Location -LiteralPath $updatesRoot
+    [Environment]::CurrentDirectory = $updatesRoot
+
     Write-UpdateLog "Waiting for Astra Studio process $ParentPid"
     try { Wait-Process -Id $ParentPid -Timeout 90 -ErrorAction Stop } catch {
         if (Get-Process -Id $ParentPid -ErrorAction SilentlyContinue) { throw "Astra Studio did not exit in time" }
     }
 
-    $updatesRoot = Split-Path -Parent $archivePath
     $stagePath = Join-Path $updatesRoot ("stage-" + [guid]::NewGuid().ToString("N"))
     $backupPath = $targetPath + ".previous-" + (Get-Date -Format "yyyyMMddHHmmss")
     New-Item -ItemType Directory -Path $stagePath -Force | Out-Null
@@ -214,7 +220,23 @@ try {
     if (Test-Path -LiteralPath $archivePath) { Remove-Item -LiteralPath $archivePath -Force }
     Write-UpdateLog "Update installed successfully"
 } catch {
-    Write-UpdateLog ("UPDATE FAILED: " + $_.Exception.Message)
+    $failureMessage = $_.Exception.Message
+    Write-UpdateLog ("UPDATE FAILED: " + $failureMessage)
+    # Never leave the user with an application that merely disappeared. The
+    # existing or rolled-back build is started again and the failure is shown.
+    try {
+        $currentExecutable = Join-Path $targetPath "Astra Studio.exe"
+        if (Test-Path -LiteralPath $currentExecutable -PathType Leaf) {
+            Start-Process -FilePath $currentExecutable -WorkingDirectory $targetPath
+        }
+    } catch { Write-UpdateLog ("RECOVERY START FAILED: " + $_.Exception.Message) }
+    try {
+        Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
+        [System.Windows.MessageBox]::Show(
+            "Astra Studio не удалось установить обновление.`n`n$failureMessage`n`nПодробности: $LogPath",
+            "Обновление Astra Studio"
+        ) | Out-Null
+    } catch { Write-UpdateLog ("FAILURE DIALOG FAILED: " + $_.Exception.Message) }
     exit 1
 }
 '''

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "Release 3.13",
+  "version": "Release 3.14",
   "channel": "stable",
-  "published_at": "2026-09-22T09:09:17Z",
-  "download_url": "https://github.com/alarongh/Astra-Studio-Private/releases/download/v3.13/Astra_Studio_Release_3_13.zip",
-  "notes_url": "https://github.com/alarongh/Astra-Studio-Private/releases/tag/v3.13",
-  "sha256": "71192223a2cf97caae64e0fbb4b44d9af84a5f849f4595504573b1d2196816bd",
-  "size": 79747427
+  "published_at": "2026-09-22T09:44:54Z",
+  "download_url": "https://github.com/alarongh/Astra-Studio-Releases/releases/download/v3.14/Astra_Studio_Release_3_14.zip",
+  "notes_url": "https://github.com/alarongh/Astra-Studio-Releases/releases/tag/v3.14",
+  "sha256": "722fdc5e90df87771394ee55680a69694902993b2d6e414ad8f24b5c40aa3abe",
+  "size": 79747556
 }

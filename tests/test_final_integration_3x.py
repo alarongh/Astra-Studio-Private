@@ -59,7 +59,7 @@ def _function_language_branches(tree: ast.Module, name: str) -> set[str]:
 
 def test_final_release_identity_and_runtime_tree_has_no_dev_paths():
     tree = _main_tree()
-    assert _literal_assignment(tree, "APP_VERSION") == "Release 3.13"
+    assert _literal_assignment(tree, "APP_VERSION") == "Release 3.14"
     runtime_files = [MAIN, *sorted(CORE.glob("*.py")), *sorted(SCRIPTS.glob("*.ps1")), *sorted(ROOT.glob("*.bat")), *sorted(ROOT.glob("*.vbs"))]
     forbidden = ("/mnt/data", "Astra_Studio_Release_2_3", "Astra_Studio_Release_3_3_pre_", "Release 2.3")
     for path in runtime_files:
@@ -249,7 +249,7 @@ def test_final_docs_no_longer_claim_d3_is_next():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     changelog = (ROOT / "CHANGELOG_RELEASE_3_3.md").read_text(encoding="utf-8")
     assert "D3 AI-adjacent workflow NEXT" not in readme
-    assert "Release 3.13" in readme
+    assert "Release 3.14" in readme
     assert "Final Integration Gate" in readme
     assert "D1–D3" in changelog
 

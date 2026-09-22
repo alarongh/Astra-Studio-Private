@@ -179,7 +179,7 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.13"
+APP_VERSION = "Release 3.14"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 DEFAULT_LANGUAGE = "Python"
@@ -191,7 +191,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.13 — красно-синий": "assets/astra.ico",
+    "Astra 3.14 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -762,9 +762,9 @@ LANGUAGES = {
 }
 
 # The other language implementations remain available internally and can still
-# open existing files. Release 3.13 intentionally exposes only the languages
+# open existing files. The current acceptance cycle intentionally exposes only
 # being polished in the current acceptance cycle.
-VISIBLE_LANGUAGES = ("Java", "Python", "C++", "JavaScript", "HTML", "CSS")
+VISIBLE_LANGUAGES = ("Java", "Python", "C++")
 
 SPECIAL_FILENAMES_TO_LANGUAGE = {
     "dockerfile": "Dockerfile",
@@ -3155,7 +3155,7 @@ class AstraStudio(QMainWindow):
             self.current_theme_name = theme
         if accent in ACCENTS:
             self.current_accent_name = accent
-        if language in LANGUAGES:
+        if language in VISIBLE_LANGUAGES:
             self.current_language_name = language
         if isinstance(transparency_enabled, bool):
             self.transparency_enabled = transparency_enabled
@@ -3864,8 +3864,9 @@ class AstraStudio(QMainWindow):
         installer_layout.setSpacing(8)
 
         self.installer_hint = QLabel(
-            "Автоустановщик работает через WinGet: может поставить Python, C++ toolchain через MSYS2 и JDK для Java. "
-            "После установки Astra сама подхватит стандартные пути без ручной настройки PATH."
+            "Текущий набор языков: Java, Python и C++. Автоустановщик работает через WinGet: "
+            "может поставить Python, C++ toolchain через MSYS2 и JDK для Java. "
+            "Остальные языковые реализации сохранены внутри Astra, но временно скрыты из интерфейса."
         )
         self.installer_hint.setObjectName("Muted")
         self.installer_hint.setWordWrap(True)
@@ -3906,13 +3907,17 @@ class AstraStudio(QMainWindow):
         self.btn_install_godot = QPushButton("Установить Godot")
         self.btn_install_php = QPushButton("Установить PHP 8.4")
         self.btn_install_powershell = QPushButton("Установить PowerShell 7")
-        self.btn_install_all.setText("Установить основной набор StaffedUp")
-        for button in [
+        self.btn_install_all.setText("Установить Java + Python + C++")
+        visible_installer_buttons = [
             self.btn_check_tools, self.btn_check_updates, self.btn_install_all, self.btn_update_all,
             self.btn_desktop_shortcut, self.btn_install_python, self.btn_install_cpp, self.btn_install_java,
-            self.btn_install_node, self.btn_install_git, self.btn_install_godot, self.btn_install_php,
-            self.btn_install_powershell,
+        ]
+        for hidden_button in [
+            self.btn_install_node, self.btn_install_git, self.btn_install_godot,
+            self.btn_install_php, self.btn_install_powershell,
         ]:
+            hidden_button.setVisible(False)
+        for button in visible_installer_buttons:
             button.setCursor(Qt.CursorShape.PointingHandCursor)
             button.setMinimumHeight(34)
             button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -12412,36 +12417,8 @@ function Tool-Version($name, $args) {
 
 $uv = Tool-Version "uv" @("--version")
 if ($uv) { Write-Host "$($(if($uv.Ok){'✓'}else{'⚠'})) uv: $($uv.Path) | $($uv.Version)" } else { Write-Host "ℹ uv: не найден (pip/venv fallback доступен)" }
-P 78
-$node = Tool-Version "node" @("--version")
-$npm = Tool-Version "npm" @("--version")
-$tsc = Tool-Version "tsc" @("--version")
-$tsx = Tool-Version "tsx" @("--version")
-if ($node) { Write-Host "$($(if($node.Ok){'✓'}else{'⚠'})) Node.js: $($node.Path) | $($node.Version)" } else { Write-Host "✕ Node.js: не найден" }
-if ($npm) { Write-Host "$($(if($npm.Ok){'✓'}else{'⚠'})) npm: $($npm.Path) | $($npm.Version)" } else { Write-Host "✕ npm: не найден" }
-if ($tsc) { Write-Host "$($(if($tsc.Ok){'✓'}else{'⚠'})) TypeScript: $($tsc.Path) | $($tsc.Version)" } else { Write-Host "ℹ TypeScript compiler: не найден" }
-if ($tsx) { Write-Host "$($(if($tsx.Ok){'✓'}else{'⚠'})) tsx: $($tsx.Path) | $($tsx.Version)" } else { Write-Host "ℹ tsx: не найден" }
-P 84
-$git = Tool-Version "git" @("--version")
-if ($git) { Write-Host "$($(if($git.Ok){'✓'}else{'⚠'})) Git: $($git.Path) | $($git.Version)" } else { Write-Host "✕ Git: не найден" }
-$pwsh = Tool-Version "pwsh" @("-NoProfile", "-Command", '$PSVersionTable.PSVersion.ToString()')
-if ($pwsh) { Write-Host "$($(if($pwsh.Ok){'✓'}else{'⚠'})) PowerShell 7: $($pwsh.Path) | $($pwsh.Version)" } else { Write-Host "ℹ PowerShell 7: не найден; Windows PowerShell остаётся fallback" }
-P 89
-$godot = Tool-Version "godot" @("--version")
-if ($godot) { Write-Host "$($(if($godot.Ok){'✓'}else{'⚠'})) Godot: $($godot.Path) | $($godot.Version)" } else { Write-Host "ℹ Godot: не найден" }
-$php = Tool-Version "php" @("--version")
-if ($php) { Write-Host "$($(if($php.Ok){'✓'}else{'⚠'})) PHP: $($php.Path) | $($php.Version)" } else { Write-Host "ℹ PHP: не найден" }
-P 94
-$bashTool = Tool-Version "bash" @("--version")
-if ($bashTool) { Write-Host "$($(if($bashTool.Ok){'✓'}else{'⚠'})) Bash: $($bashTool.Path) | $($bashTool.Version)" } else { Write-Host "ℹ Bash: не найден" }
-$luau = Tool-Version "luau" @("--version")
-$luauAnalyze = Tool-Version "luau-analyze" @("--version")
-$rojo = Tool-Version "rojo" @("--version")
-if ($luau) { Write-Host "$($(if($luau.Ok){'✓'}else{'⚠'})) Luau CLI: $($luau.Path) | $($luau.Version)" } else { Write-Host "ℹ Luau CLI: не найден" }
-if ($luauAnalyze) { Write-Host "$($(if($luauAnalyze.Ok){'✓'}else{'⚠'})) Luau analyzer: $($luauAnalyze.Path) | $($luauAnalyze.Version)" } else { Write-Host "ℹ luau-analyze: не найден" }
-if ($rojo) { Write-Host "$($(if($rojo.Ok){'✓'}else{'⚠'})) Rojo: $($rojo.Path) | $($rojo.Version)" } else { Write-Host "ℹ Rojo: не найден" }
 P 100
-Write-Host "`nПроверка завершена. ✕ означает обязательный инструмент базового набора; ℹ — опциональный/проектный инструмент."
+Write-Host "`nПроверка Java, Python и C++ завершена. Скрытые языки и их инструменты не проверялись."
 '''
         self._start_installer_diagnostic_task("tool_check", "Проверка инструментов", script, "tool_check")
 
@@ -12642,7 +12619,10 @@ Write-Host "`nПроверка завершена. ✕ означает обяз
             "-TargetDirectory", str(target_dir), "-ParentPid", str(os.getpid()),
             "-LogPath", str(log_path),
         ]
-        self._pending_update_command = ("powershell.exe", args)
+        # Start outside the portable application directory. On Windows a
+        # process whose current directory is inside "Astra Studio" prevents the
+        # updater from renaming that directory after the GUI exits.
+        self._pending_update_command = ("powershell.exe", args, str(script_path.parent))
         self.app_update_status.setText(f"{manifest.version} проверено · перезапуск для установки")
         QMessageBox.information(
             self,
@@ -12657,20 +12637,15 @@ Write-Host "`nПроверка завершена. ✕ означает обяз
 $ErrorActionPreference = "Continue"
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 function P($value) { Write-Host "ASTRA_PROGRESS:$value" }
-Write-Host "Проверка доступных обновлений языков и инструментов...`n"
+Write-Host "Проверка обновлений Java, Python и C++...`n"
 P 5
 $winget = Get-Command winget -ErrorAction SilentlyContinue
 if ($winget) {
     $checks = @(
         @{ Name = "Python 3.14"; Id = "Python.Python.3.14" },
         @{ Name = "uv"; Id = "astral-sh.uv" },
-        @{ Name = "Node.js LTS"; Id = "OpenJS.NodeJS.LTS" },
-        @{ Name = "Git"; Id = "Git.Git" },
         @{ Name = "MSYS2 / C++"; Id = "MSYS2.MSYS2" },
-        @{ Name = "Java JDK"; Id = "EclipseAdoptium.Temurin.21.JDK" },
-        @{ Name = "PowerShell 7"; Id = "Microsoft.PowerShell" },
-        @{ Name = "Godot"; Id = "GodotEngine.GodotEngine" },
-        @{ Name = "PHP 8.4"; Id = "PHP.PHP.8.4" }
+        @{ Name = "Java JDK"; Id = "EclipseAdoptium.Temurin.21.JDK" }
     )
     $progress = 10
     $step = [Math]::Max(1, [int](70 / $checks.Count))
@@ -12692,7 +12667,7 @@ if (Test-Path $bash) {
     Write-Host "`nℹ MSYS2 не найден в C:\msys64 — проверка pacman пропущена."
 }
 P 100
-Write-Host "`nПроверка обновлений завершена."
+Write-Host "`nПроверка обновлений Java, Python и C++ завершена."
 '''
         self._start_installer_diagnostic_task("update_check", "Проверка обновлений", script, "update_check")
 
@@ -12827,7 +12802,7 @@ Refresh-KnownPaths
         common = self._installer_common_script()
         app_dir = str(project_root_dir())
         shortcut_icon_relative = "assets/astra.ico"
-        shortcut_icon_label = "Astra 3.13 — красно-синий"
+        shortcut_icon_label = "Astra 3.14 — красно-синий"
         if hasattr(self, "shortcut_icon_combo"):
             shortcut_icon_relative = str(self.shortcut_icon_combo.currentData() or shortcut_icon_relative)
             shortcut_icon_label = self.shortcut_icon_combo.currentText() or shortcut_icon_label
@@ -13178,13 +13153,8 @@ Ensure-Winget | Out-Null
 $ids = @(
     "Python.Python.3.14",
     "astral-sh.uv",
-    "OpenJS.NodeJS.LTS",
-    "Git.Git",
-    "Microsoft.PowerShell",
     "MSYS2.MSYS2",
-    "EclipseAdoptium.Temurin.21.JDK",
-    "GodotEngine.GodotEngine",
-    "PHP.PHP.8.4"
+    "EclipseAdoptium.Temurin.21.JDK"
 )
 $progress = 8
 foreach ($id in $ids) {
@@ -13199,14 +13169,6 @@ foreach ($id in $ids) {
     Astra-Progress $progress
 }
 Refresh-KnownPaths
-$npm = Get-Command npm -ErrorAction SilentlyContinue
-if ($npm) {
-    Write-Step "Обновление TypeScript tooling"
-    $npmPath = Resolve-ToolPath $npm
-    if (-not $npmPath) { throw "Не удалось получить путь к npm." }
-    & $npmPath install --global typescript@latest tsx@latest
-    if ($LASTEXITCODE -ne 0) { Write-Warning "npm не смог обновить TypeScript/tsx." }
-}
 Astra-Progress 78
 $bash = "C:\msys64\usr\bin\bash.exe"
 if (Test-Path $bash) {
@@ -13242,8 +13204,9 @@ Astra-Progress 100
         if kind == "update_all":
             return common + update_script
         if kind == "all":
-            # Core StaffedUp workstation set. Godot/PHP stay explicit because they are role-specific.
-            return common + python_script + uv_script + node_script + git_script + powershell_script + cpp_script + java_script + shortcut_script + "Astra-Progress 100\n"
+            # Only the three languages currently exposed in the UI are part of
+            # the main set. Hidden implementations remain available in source.
+            return common + python_script + uv_script + cpp_script + java_script + shortcut_script + "Astra-Progress 100\n"
         return common + "Write-Host 'Неизвестная задача установщика.'\n"
 
     def install_toolchain(self, kind: str):
@@ -13478,8 +13441,8 @@ Astra-Progress 100
             self._stop_process_safely(self.terminal_process, "терминал")
             self._stop_process_safely(self.install_process, "установщик")
             if self._pending_update_command is not None:
-                program, args = self._pending_update_command
-                started = QProcess.startDetached(program, args)
+                program, args, working_directory = self._pending_update_command
+                started = QProcess.startDetached(program, args, working_directory)
                 started_ok = started[0] if isinstance(started, tuple) else bool(started)
                 if not started_ok:
                     self._pending_update_command = None
