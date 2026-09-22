@@ -1,4 +1,4 @@
-# Astra Studio Release 3.14 — portable Windows
+# Astra Studio Release 3.15 — portable Windows
 
 ## Запуск
 

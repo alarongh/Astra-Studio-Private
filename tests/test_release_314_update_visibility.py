@@ -19,6 +19,10 @@ def test_release_314_exposes_only_current_three_languages_and_preserves_hidden_i
     tree = ast.parse(source)
     assert _assignment(tree, "VISIBLE_LANGUAGES") == ("Java", "Python", "C++")
     assert 'if language in VISIBLE_LANGUAGES:' in source
+    assert "if editor.language_name in VISIBLE_LANGUAGES:" in source
+    assert "if get_project_template(template_id).default_language in VISIBLE_LANGUAGES:" in source
+    assert "[language for language in registry.supported_languages() if language in VISIBLE_LANGUAGES]" in source
+    assert 'LANGUAGES[language]["filters"] for language in VISIBLE_LANGUAGES' in source
     for hidden in ("JavaScript", "HTML", "CSS", "TypeScript", "C#", "PHP", "Luau", "GDScript"):
         assert f'"{hidden}":' in source
 

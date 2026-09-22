@@ -41,7 +41,7 @@
 - `tests/test_app_updates.py::test_update_channel_accepts_published_https_url`
 - `tests/test_app_updates.py::test_update_archive_verifies_hash_size_layout_and_rejects_traversal`
 - `tests/test_app_updates.py::test_windows_updater_has_wait_backup_rollback_and_restart_steps`
-- `tests/test_app_updates.py::test_release_314_bundles_public_github_channel_and_valid_latest_manifest`
+- `tests/test_app_updates.py::test_release_315_bundles_public_github_channel_and_valid_latest_manifest`
 - `tests/test_app_updates.py::test_windows_updater_replaces_portable_folder_in_isolated_directory`
 - `tests/test_final_integration_3x.py::test_final_release_identity_and_runtime_tree_has_no_dev_paths`
 - `tests/test_final_integration_3x.py::test_all_roadmap_scope_before_final_gate_is_closed`

@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "3.14",
+    [string]$Version = "3.15",
     [switch]$SourceOnly
 )
 
@@ -66,7 +66,7 @@ if (-not $SourceOnly) {
 }
 Compress-Archive -LiteralPath $stagingFull -DestinationPath $sourceZip -CompressionLevel Optimal -Force
 
-foreach ($document in @("TEST_REPORT_RELEASE_3_14.md", "PORTABLE_README.md", "UPDATE_DISTRIBUTION.md")) {
+foreach ($document in @("TEST_REPORT_RELEASE_3_15.md", "PORTABLE_README.md", "UPDATE_DISTRIBUTION.md")) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $document) -Destination $outputDirectory -Force
 }
 $checksumLines = foreach ($artifact in @($portableZip, $sourceZip)) {

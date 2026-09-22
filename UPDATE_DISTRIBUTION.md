@@ -13,9 +13,9 @@
 ```powershell
 .\.venv\Scripts\python.exe scripts\make_update_feed.py `
   "<путь-к-portable.zip>" `
-  --version "Release 3.14" `
-  --download-url "https://github.com/alarongh/Astra-Studio-Releases/releases/download/v3.14/Astra_Studio_Release_3_14.zip" `
-  --notes-url "https://github.com/alarongh/Astra-Studio-Releases/releases/tag/v3.14" `
+  --version "Release 3.15" `
+  --download-url "https://github.com/alarongh/Astra-Studio-Releases/releases/download/v3.15/Astra_Studio_Release_3_15.zip" `
+  --notes-url "https://github.com/alarongh/Astra-Studio-Releases/releases/tag/v3.15" `
   --output update/latest.json
 ```
 
@@ -31,8 +31,8 @@
 {
   "schema_version": 1,
   "channel": "stable",
-  "version": "Release 3.14",
-  "download_url": "https://github.com/alarongh/Astra-Studio-Releases/releases/download/v3.14/Astra_Studio_Release_3_14.zip",
+  "version": "Release 3.15",
+  "download_url": "https://github.com/alarongh/Astra-Studio-Releases/releases/download/v3.15/Astra_Studio_Release_3_15.zip",
   "sha256": "64 lowercase hex symbols",
   "size": 123456789
 }

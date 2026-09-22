@@ -209,6 +209,8 @@ Release 3.14 adds an updater regression that starts PowerShell from inside the p
 
 The Release 3.14 Windows gate collects **271 tests** and finishes with **269 PASS / 2 SKIPPED / 0 FAILED**, plus **88 passing subtests**.
 
+Release 3.15 extends the visibility gate beyond the main language selector: LSP rows, new-file filters and project-template choices are now limited to Java, Python and C++, while existing hidden-language files remain openable and their implementations stay in source.
+
 ## Release 3.9 installer correction
 
 Owner runtime output confirmed that Temurin JDK 21 and `javac` were already healthy, but Windows PowerShell converted the normal stderr output of `java -version` into a terminating `NativeCommandError` because the installer uses `$ErrorActionPreference = "Stop"`. Release 3.9 runs version probes through `System.Diagnostics.Process` with separately redirected stdout/stderr and decides success from the child exit code. The complete Java installer has been rerun against Temurin 21.0.11 and exits successfully.

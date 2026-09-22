@@ -1,13 +1,13 @@
 # Astra Studio
 
-Версия: **Release 3.14 — Windows verified portable build**
+Версия: **Release 3.15 — Windows verified portable build**
 
 Astra Studio — лёгкая локальная IDE, которая развивается как среда разработки для задач StaffedUp: web, Python, Roblox/Luau, Godot, Windows-скрипты и небольшие приложения. Цель 3.x — сохранить простой интерфейс Astra, но добавить проектные инструменты, окружения, диагностику и IDE-функции без необходимости превращать программу в копию VS Code.
 
 
-## Статус Release 3.14
+## Статус Release 3.15
 
-Release 3.0–3.3 остаются замороженным функциональным baseline. Патчи 3.4–3.13 закрыли Windows launcher/runtime, Java, C++, Python libraries, шрифт, ярлык и layout defects. **Release 3.14** исправляет установку обновления после закрытия GUI, возвращает прежнюю версию и показывает ошибку при неудаче, переносит публичный feed в однозначно названный репозиторий `Astra-Studio-Releases` и оставляет в интерфейсе только Java, Python и C++. Реализации остальных языков сохранены внутри проекта и не удалены.
+Release 3.0–3.3 остаются замороженным функциональным baseline. Патчи 3.4–3.13 закрыли Windows launcher/runtime, Java, C++, Python libraries, шрифт, ярлык и layout defects. **Release 3.15** исправляет установку обновления после закрытия GUI, возвращает прежнюю версию и показывает ошибку при неудаче, использует публичный репозиторий `Astra-Studio-Releases` и оставляет только Java, Python и C++ во всех пользовательских языковых списках, LSP-таблице, установщике, файловых фильтрах и мастере проектов. Реализации остальных языков сохранены внутри проекта и не удалены.
 
 Тестовые зависимости теперь входят в единый установочный поток: `install_app.bat` устанавливает `requirements-test.txt`, `reinstall_app.bat` пересоздаёт `.venv` целиком, а `run_acceptance_tests.bat` запускает Windows acceptance suite без ручной докачки `pytest`.
 
@@ -59,26 +59,8 @@ Release 3.0–3.3 остаются замороженным функционал
 - Python
 - C++
 - Java
-- JavaScript
-- TypeScript
-- Luau / Lua
-- GDScript
-- PHP
-- PowerShell
-- C#
-- SQL
-- HTML
-- CSS
 
-Конфигурация и документация:
-
-- JSON / JSONC
-- YAML
-- Markdown
-- TOML
-- XML
-- Shell
-- Dockerfile
+JavaScript, TypeScript, HTML, CSS, Luau/Lua, GDScript, PHP, PowerShell, C#, SQL и форматы конфигурации временно скрыты из пользовательских списков, LSP-таблицы, установщика, файловых фильтров и мастера проектов. Их код не удалён и будет возвращаться поштучно после отдельной проверки качества.
 
 Часть языков умеет запускаться/проверяться через локальные CLI-инструменты, а поддерживаемые language servers Release 3.1 дают diagnostics, completion и навигацию непосредственно в редакторе.
 
@@ -332,7 +314,7 @@ Luau/Rojo диагностируются Project Doctor. D1 создаёт Rojo-
 - Release 3.2: C1 formatters/linters DONE; C2 Test Explorer DONE; C3 Git / Source Control DONE (`TEST_REPORT_RELEASE_3_2_C3.md`); Release 3.2 internally gated and frozen;
 - Release 3.3: D1 StaffedUp Project Templates DONE; D2 StaffedUp Project Health DONE; D3 AI-adjacent workflow DONE (`TEST_REPORT_RELEASE_3_3_D3.md`); функциональный scope 3.x закрыт;
 - Final Integration Gate после D1–D3: PASS; Release 3.3 остаётся замороженным feature baseline;
-- Release 3.4 исправил Windows batch launcher; Release 3.5 закрыл UX/package-manager acceptance feedback; Release 3.6 закрыл native-window/CRLF/log defects; текущий verified candidate — Release 3.14;
+- Release 3.4 исправил Windows batch launcher; Release 3.5 закрыл UX/package-manager acceptance feedback; Release 3.6 закрыл native-window/CRLF/log defects; текущий verified candidate — Release 3.15;
 - только после стабильного Windows sign-off текущей ветки 3.x начинается планирование Release 4.0.
 
 ## Установка, переустановка и Windows acceptance
@@ -375,4 +357,4 @@ D3 sandbox gate: `compileall` PASS, static smoke PASS, **185 collected / 178 PAS
 
 ## Следующий этап
 
-Final Integration Gate поколения 3.x пройден. Текущий рабочий portable build — **Release 3.14** — выпускается целой папкой `Astra Studio`; подробности запуска — в `PORTABLE_README.md`, публикации обновлений — в `UPDATE_DISTRIBUTION.md`. Ручная owner-матрица по `TEST_REGISTRY_3_X.md` остаётся отдельным этапом sign-off и не подменяется автоматическими тестами.
+Final Integration Gate поколения 3.x пройден. Текущий рабочий portable build — **Release 3.15** — выпускается целой папкой `Astra Studio`; подробности запуска — в `PORTABLE_README.md`, публикации обновлений — в `UPDATE_DISTRIBUTION.md`. Ручная owner-матрица по `TEST_REGISTRY_3_X.md` остаётся отдельным этапом sign-off и не подменяется автоматическими тестами.

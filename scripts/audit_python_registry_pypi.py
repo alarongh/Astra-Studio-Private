@@ -26,7 +26,7 @@ def _fetch_project(pip_name: str, timeout: float, attempts: int) -> tuple[str, s
     last_error: Exception | None = None
     payload = None
     for _attempt in range(max(1, attempts)):
-        request = Request(url, headers={"User-Agent": "Astra-Studio-PyPI-Audit/3.14", "Connection": "close"})
+        request = Request(url, headers={"User-Agent": "Astra-Studio-PyPI-Audit/3.15", "Connection": "close"})
         try:
             with urlopen(request, timeout=timeout) as response:
                 if response.status != 200:

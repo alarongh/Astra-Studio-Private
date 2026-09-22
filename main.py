@@ -179,7 +179,7 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.14"
+APP_VERSION = "Release 3.15"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 DEFAULT_LANGUAGE = "Python"
@@ -191,7 +191,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.14 — красно-синий": "assets/astra.ico",
+    "Astra 3.15 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -5681,10 +5681,11 @@ class AstraStudio(QMainWindow):
             title = f"{title}  ·  изменён"
         self.file_label.setText(f"{title}  ·  {editor.language_name}")
 
-        self.language_combo.blockSignals(True)
-        self.language_combo.setCurrentText(editor.language_name)
-        self.language_combo.blockSignals(False)
-        self.current_language_name = editor.language_name
+        if editor.language_name in VISIBLE_LANGUAGES:
+            self.language_combo.blockSignals(True)
+            self.language_combo.setCurrentText(editor.language_name)
+            self.language_combo.blockSignals(False)
+            self.current_language_name = editor.language_name
 
     def new_from_template(self):
         language = self.current_language_name
@@ -5696,7 +5697,7 @@ class AstraStudio(QMainWindow):
         self.statusBar().showMessage("Создан новый файл из шаблона", 2500)
 
     def open_file_dialog(self):
-        all_filters = ";;".join([meta["filters"] for meta in LANGUAGES.values()])
+        all_filters = ";;".join([LANGUAGES[language]["filters"] for language in VISIBLE_LANGUAGES])
         all_filters += ";;Text files (*.txt *.md *.json);;All files (*.*)"
         file_name, _ = QFileDialog.getOpenFileName(
             self,
@@ -9073,7 +9074,9 @@ class AstraStudio(QMainWindow):
             return
         registry = self.lsp_manager.registry
         registry.reload()
-        languages = list(registry.supported_languages())
+        # Keep deferred language-server implementations available internally,
+        # but do not expose them in the current three-language UI cycle.
+        languages = [language for language in registry.supported_languages() if language in VISIBLE_LANGUAGES]
         table.setRowCount(len(languages))
         for row, language in enumerate(languages):
             config = registry.config_for_language(language)
@@ -11672,7 +11675,8 @@ class AstraStudio(QMainWindow):
         template_combo = QComboBox()
         template_combo.setObjectName("LanguageCombo")
         for template_id, label in project_template_choices():
-            template_combo.addItem(label, template_id)
+            if get_project_template(template_id).default_language in VISIBLE_LANGUAGES:
+                template_combo.addItem(label, template_id)
         layout.addWidget(template_label)
         layout.addWidget(template_combo)
 
@@ -11763,7 +11767,11 @@ class AstraStudio(QMainWindow):
         try:
             result = create_project_from_template(project_dir, name, selected_template_id(), APP_VERSION)
             config_data = json.loads(result.config_path.read_text(encoding="utf-8"))
-            self.current_language_name = result.template.default_language
+            self.current_language_name = (
+                result.template.default_language
+                if result.template.default_language in VISIBLE_LANGUAGES
+                else DEFAULT_LANGUAGE
+            )
             if hasattr(self, "language_combo"):
                 self.language_combo.blockSignals(True)
                 self.language_combo.setCurrentText(self.current_language_name)
@@ -11819,7 +11827,7 @@ class AstraStudio(QMainWindow):
         unknown values are ignored and the current global settings stay intact.
         """
         language = data.get("defaultLanguage")
-        if isinstance(language, str) and language in LANGUAGES:
+        if isinstance(language, str) and language in VISIBLE_LANGUAGES:
             self.current_language_name = language
             if hasattr(self, "language_combo"):
                 self.language_combo.blockSignals(True)
@@ -12802,7 +12810,7 @@ Refresh-KnownPaths
         common = self._installer_common_script()
         app_dir = str(project_root_dir())
         shortcut_icon_relative = "assets/astra.ico"
-        shortcut_icon_label = "Astra 3.14 — красно-синий"
+        shortcut_icon_label = "Astra 3.15 — красно-синий"
         if hasattr(self, "shortcut_icon_combo"):
             shortcut_icon_relative = str(self.shortcut_icon_combo.currentData() or shortcut_icon_relative)
             shortcut_icon_label = self.shortcut_icon_combo.currentText() or shortcut_icon_label

@@ -252,5 +252,6 @@ D3 gate: `compileall` + static smoke pass; full sandbox suite collects **185 tes
 - [x] Release 3.14 visible scope: only Java, Python and C++ remain in language selection and installer actions; other implementations stay in source.
 - [x] Public release identity moved from the misleading `Astra-Studio-Private` name to `Astra-Studio-Releases`.
 - [x] Release 3.14 Windows gate: 271 collected / 269 passed / 2 platform-permission skips / 0 failed, plus 88 passing subtests.
+- [x] Release 3.15 complete visibility gate: language combo, new-file dialog, LSP table, installer, file filters and project templates expose only Java, Python and C++.
 
-**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.14, which includes all 3.4–3.13 repairs plus updater recovery and strict three-language visibility; Release 4.0 planning remains blocked until 3.x owner sign-off.**
+**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.15, which includes all 3.4–3.14 repairs plus updater recovery and complete three-language visibility; Release 4.0 planning remains blocked until 3.x owner sign-off.**
