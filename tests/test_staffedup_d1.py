@@ -273,7 +273,7 @@ def test_attached_folder_serialization_is_relative_only_inside_repository():
 
 def test_main_integrates_template_dialog_metadata_and_portable_project_paths():
     source = (ROOT / "main.py").read_text(encoding="utf-8")
-    assert 'APP_VERSION = "Release 3.15"' in source
+    assert 'APP_VERSION = "Release 3.16"' in source
     assert 'dialog.setWindowTitle("Создать проект · StaffedUp")' in source
     assert "create_project_from_template(project_dir, name, selected_template_id(), APP_VERSION)" in source
     assert '"staffedUp": dict(self.project_staffedup_meta)' in source

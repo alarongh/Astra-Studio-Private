@@ -1,6 +1,6 @@
 # Astra Studio 3.x — Windows Acceptance Test Plan
 
-Target build: **Release 3.15 — Windows verified portable build**
+Target build: **Release 3.16 — Windows verified portable build**
 Source of truth: `TEST_REGISTRY_3_X.md`
 
 This plan defines the order of the owner's Windows regression test. It does not replace the full registry; it groups the registry into manageable sessions so a failure can be isolated without losing coverage.
@@ -12,12 +12,12 @@ Do not fix a failure while continuing the same test session unless the failure p
 ## Session 0 — clean reinstall and automated Windows gate
 
 1. Close Astra Studio.
-2. Use the Release 3.15 portable/source archive on Windows and extract it into a fresh normal writable folder. Do not reuse an older `.venv`.
+2. Use the Release 3.16 portable/source archive on Windows and extract it into a fresh normal writable folder. Do not reuse an older `.venv`.
 3. Run `reinstall_app.bat` for a fully clean environment, or `install_app.bat` if the extracted folder has no `.venv`. The installer must install both `requirements.txt` and bundled `requirements-test.txt`; no manual `pip install pytest` step is required.
 4. Launch Astra once through `run_astra.bat` or its generated shortcut, verify the main window opens, then close Astra before the automated test run.
 5. Run `run_acceptance_tests.bat`. It runs compileall, static smoke and `.venv\Scripts\python.exe -m pytest -q -rs` in that order.
 
-Expected target in the Release 3.15 source tree is **271 collected tests**. The verified Windows result is **269 PASS / 2 SKIPPED / 0 FAILED** and 88 passing subtests. The gate includes native caption handling, Angel 404 bundled-font runtime, cyclic completion, desktop shortcut creation, Java UTF-8 output, real C++23 compile/run, Python registry validation, updater replacement from inside the portable working directory and the Windows PowerShell stderr-version probe.
+Expected target in the Release 3.16 source tree is **276 collected tests**. The verified Windows result is **274 PASS / 2 SKIPPED / 0 FAILED** and 88 passing subtests. The gate includes native caption handling, Angel 404 bundled-font runtime, cyclic/context completion, smart indentation, function folding, inline syntax diagnostics, desktop shortcut creation, Java UTF-8 output, real C++23 compile/run, Python registry validation, updater replacement plus health-check rollback from inside the portable working directory and the Windows PowerShell stderr-version probe.
 
 This session also verifies the Release 3.4 batch regression, Release 3.5 unified-install/acceptance wrappers and Release 3.6 native-window/CRLF/log regressions.
 
@@ -112,7 +112,7 @@ After Sessions 0–4 are green:
 
 At this point:
 
-- if no defects remain, the current Release 3.15 acceptance candidate receives owner sign-off while Release 3.3 remains the frozen feature baseline;
+- if no defects remain, the current Release 3.16 acceptance candidate receives owner sign-off while Release 3.3 remains the frozen feature baseline;
 - if defects exist, create the next 3.x acceptance patch and rerun every directly affected section plus Session 5;
 - Release 4.0 planning begins only after stable 3.x sign-off.
 

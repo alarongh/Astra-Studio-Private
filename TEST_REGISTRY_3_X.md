@@ -1,7 +1,7 @@
 # Astra Studio 3.x — Test Registry
 
-- `tests/test_release_314_update_visibility.py::test_release_314_exposes_only_current_three_languages_and_preserves_hidden_implementations`
-- `tests/test_release_314_update_visibility.py::test_installer_ui_and_bulk_update_are_scoped_to_java_python_cpp`
+- `tests/test_release_314_update_visibility.py::test_release_316_exposes_six_focused_languages_and_preserves_hidden_implementations`
+- `tests/test_release_314_update_visibility.py::test_installer_ui_and_bulk_update_are_scoped_to_focused_languages`
 - `tests/test_release_314_update_visibility.py::test_detached_updater_uses_external_working_directory_and_recovers_visible_app`
 - `tests/test_release_314_update_visibility.py::test_public_update_identity_no_longer_uses_private_repository_name`
 - `tests/test_release_313_cpp_python.py::test_cpp_completion_covers_cpp20_keywords_standard_symbols_and_includes`
@@ -25,7 +25,7 @@
 - `tests/test_completion_shortcut_311.py::test_offline_completion_catalog_covers_major_astra_languages`
 - `tests/test_completion_shortcut_311.py::test_java_completion_library_includes_more_classes_and_chained_members`
 - `tests/test_completion_shortcut_311.py::test_java_completion_covers_arrays_var_streams_maps_and_document_methods`
-- `tests/test_completion_shortcut_311.py::test_release_314_exposes_only_java_python_cpp_without_deleting_registry`
+- `tests/test_completion_shortcut_311.py::test_release_316_exposes_six_focused_languages_without_deleting_registry`
 - `tests/test_completion_shortcut_311.py::test_release_312_wallpaper_and_project_tree_are_scale_safe_and_complete`
 - `tests/test_completion_shortcut_311.py::test_tab_cycles_popup_without_inserting_and_space_commits_selection`
 - `tests/test_completion_shortcut_311.py::test_shortcut_icon_variants_are_bundled_windows_icons`
@@ -41,8 +41,13 @@
 - `tests/test_app_updates.py::test_update_channel_accepts_published_https_url`
 - `tests/test_app_updates.py::test_update_archive_verifies_hash_size_layout_and_rejects_traversal`
 - `tests/test_app_updates.py::test_windows_updater_has_wait_backup_rollback_and_restart_steps`
-- `tests/test_app_updates.py::test_release_315_bundles_public_github_channel_and_valid_latest_manifest`
+- `tests/test_app_updates.py::test_release_316_bundles_public_github_channel_and_valid_latest_manifest`
 - `tests/test_app_updates.py::test_windows_updater_replaces_portable_folder_in_isolated_directory`
+- `tests/test_app_updates.py::test_windows_updater_rolls_back_when_new_executable_exits_during_health_check`
+- `tests/test_release_316_editor_recovery.py::test_context_completion_covers_python_javascript_html_and_css`
+- `tests/test_release_316_editor_recovery.py::test_editor_auto_indent_pairing_folding_and_live_error_line`
+- `tests/test_release_316_editor_recovery.py::test_wallpaper_scope_and_compact_layout_are_not_full_window`
+- `tests/test_release_316_editor_recovery.py::test_experimental_synthetic_input_entry_is_removed_from_ui`
 - `tests/test_final_integration_3x.py::test_final_release_identity_and_runtime_tree_has_no_dev_paths`
 - `tests/test_final_integration_3x.py::test_all_roadmap_scope_before_final_gate_is_closed`
 - `tests/test_final_integration_3x.py::test_every_supported_language_has_compile_and_run_route`

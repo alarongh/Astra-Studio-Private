@@ -193,7 +193,7 @@ class MainStaticTests(unittest.TestCase):
             if isinstance(node, ast.Assign)
             and any(isinstance(target, ast.Name) and target.id == "APP_VERSION" for target in node.targets)
         )
-        self.assertEqual(ast.literal_eval(assignment.value), "Release 3.15")
+        self.assertEqual(ast.literal_eval(assignment.value), "Release 3.16")
 
     def test_jsonc_parser_accepts_comments_urls_and_trailing_commas(self):
         wanted = {"_strip_jsonc_comments", "_strip_jsonc_trailing_commas", "loads_jsonc"}

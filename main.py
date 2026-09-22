@@ -1,5 +1,5 @@
-import ast
 from bisect import bisect_right
+import ast
 import datetime
 import html
 import json
@@ -104,6 +104,7 @@ from core.lsp_features import (
 )
 from core.python_environment import detect_project_environment
 from core.quality_tools import (
+    QualityDiagnostic,
     formatter_command,
     formatter_tool_for_language,
     install_plan_for_quality_tool,
@@ -179,7 +180,7 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.15"
+APP_VERSION = "Release 3.16"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 DEFAULT_LANGUAGE = "Python"
@@ -191,7 +192,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.15 — красно-синий": "assets/astra.ico",
+    "Astra 3.16 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -764,7 +765,7 @@ LANGUAGES = {
 # The other language implementations remain available internally and can still
 # open existing files. The current acceptance cycle intentionally exposes only
 # being polished in the current acceptance cycle.
-VISIBLE_LANGUAGES = ("Java", "Python", "C++")
+VISIBLE_LANGUAGES = ("Java", "Python", "C++", "JavaScript", "HTML", "CSS")
 
 SPECIAL_FILENAMES_TO_LANGUAGE = {
     "dockerfile": "Dockerfile",
@@ -1595,6 +1596,17 @@ class LineNumberArea(QWidget):
     def paintEvent(self, event):
         self.code_editor.line_number_area_paint_event(event)
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            try:
+                y = int(event.position().y())
+            except AttributeError:
+                y = int(event.y())
+            if self.code_editor.toggle_fold_at_y(y):
+                event.accept()
+                return
+        super().mousePressEvent(event)
+
 
 
 
@@ -1945,6 +1957,7 @@ class CodeEditor(QPlainTextEdit):
         self.untitled_name = f"без имени{LANGUAGES[language_name]['extension']}"
         self.highlighter = CodeHighlighter(self.document(), theme, language_name)
         self.line_number_area = LineNumberArea(self)
+        self.line_number_area.setToolTip("Нажми ▾/▸ рядом с объявлением функции, чтобы свернуть или развернуть её")
         self.tab_size = 4
         self.indent_size = 4
         self.insert_spaces = language_name in {"Python", "GDScript", "YAML"}
@@ -1977,6 +1990,13 @@ class CodeEditor(QPlainTextEdit):
         self._builtin_completion_timer.setSingleShot(True)
         self._builtin_completion_timer.setInterval(140)
         self._builtin_completion_timer.timeout.connect(self._refresh_builtin_completion)
+        self._syntax_diagnostics: list[dict] = []
+        self._external_diagnostics: list[dict] = []
+        self._folded_ranges: dict[int, int] = {}
+        self._syntax_timer = QTimer(self)
+        self._syntax_timer.setSingleShot(True)
+        self._syntax_timer.setInterval(550)
+        self._syntax_timer.timeout.connect(self._refresh_live_syntax_diagnostics)
 
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
@@ -1985,9 +2005,12 @@ class CodeEditor(QPlainTextEdit):
         self.cursorPositionChanged.connect(self._schedule_builtin_completion)
         self.textChanged.connect(self.update_completion_hint)
         self.textChanged.connect(self._schedule_builtin_completion)
+        self.textChanged.connect(self._schedule_live_syntax_diagnostics)
+        self.document().contentsChange.connect(self._unfold_after_document_edit)
 
         self.apply_editor_font_settings()
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        self.viewport().setMouseTracking(True)
 
         self.update_line_number_area_width(0)
         self.highlight_current_line()
@@ -2056,7 +2079,7 @@ class CodeEditor(QPlainTextEdit):
         metrics = self.fontMetrics()
         # Leave room for wide custom glyphs and high-DPI fonts. A too-narrow
         # viewport margin was the reason leading digits appeared to disappear.
-        return max(36, metrics.horizontalAdvance("9" * digits) + metrics.horizontalAdvance("00"))
+        return max(54, metrics.horizontalAdvance("9" * digits) + metrics.horizontalAdvance("000"))
 
     def update_line_number_area_width(self, _):
         self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
@@ -2100,10 +2123,16 @@ class CodeEditor(QPlainTextEdit):
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
                 number = str(block_number + 1)
+                if self.is_foldable_line(block_number):
+                    folded = block_number in self._folded_ranges
+                    painter.setPen(QColor(self.theme["accent"]))
+                    painter.drawText(3, top, 16, self.fontMetrics().height(), Qt.AlignmentFlag.AlignCenter, "▸" if folded else "▾")
+                diagnostics = self._diagnostics_for_line(block_number)
+                painter.setPen(QColor("#ff5c75") if any(item.get("severity", 1) == 1 for item in diagnostics) else QColor(self.theme["muted"]))
                 painter.drawText(
-                    0,
+                    16,
                     top,
-                    self.line_number_area.width() - 8,
+                    self.line_number_area.width() - 24,
                     self.fontMetrics().height(),
                     Qt.AlignmentFlag.AlignRight,
                     number,
@@ -2122,7 +2151,209 @@ class CodeEditor(QPlainTextEdit):
             selection.cursor = self.textCursor()
             selection.cursor.clearSelection()
             selections.append(selection)
+        for diagnostic in [*self._external_diagnostics, *self._syntax_diagnostics]:
+            block = self.document().findBlockByNumber(max(0, int(diagnostic.get("line", 0))))
+            if not block.isValid():
+                continue
+            start = block.position() + min(max(0, int(diagnostic.get("character", 0))), max(0, block.length() - 1))
+            end_line = max(int(diagnostic.get("line", 0)), int(diagnostic.get("end_line", diagnostic.get("line", 0))))
+            end_block = self.document().findBlockByNumber(end_line)
+            if not end_block.isValid():
+                end_block = block
+            end = end_block.position() + min(max(0, int(diagnostic.get("end_character", int(diagnostic.get("character", 0)) + 1))), max(0, end_block.length() - 1))
+            if end <= start:
+                end = min(start + 1, block.position() + max(0, block.length() - 1))
+            cursor = QTextCursor(self.document())
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            diagnostic_selection = QTextEdit.ExtraSelection()
+            diagnostic_selection.cursor = cursor
+            severity = int(diagnostic.get("severity", 1))
+            color = QColor("#ff4d6d" if severity == 1 else "#ffbf47")
+            diagnostic_selection.format.setUnderlineColor(color)
+            diagnostic_selection.format.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SpellCheckUnderline)
+            if severity == 1:
+                shade = QColor(color)
+                shade.setAlpha(24)
+                diagnostic_selection.format.setBackground(shade)
+            selections.append(diagnostic_selection)
         self.setExtraSelections(selections)
+
+    def _normalise_diagnostic(self, item) -> dict:
+        if isinstance(item, dict):
+            source = item
+            getter = source.get
+        else:
+            getter = lambda name, default=None: getattr(item, name, default)
+        line = max(0, int(getter("line", 0) or 0))
+        character = max(0, int(getter("character", 0) or 0))
+        return {
+            "line": line,
+            "character": character,
+            "end_line": max(line, int(getter("end_line", line) or line)),
+            "end_character": max(character + 1, int(getter("end_character", character + 1) or character + 1)),
+            "severity": max(1, int(getter("severity", 1) or 1)),
+            "message": str(getter("message", "Ошибка") or "Ошибка"),
+            "source": str(getter("source", "Astra") or "Astra"),
+        }
+
+    def set_external_diagnostics(self, diagnostics) -> None:
+        self._external_diagnostics = [self._normalise_diagnostic(item) for item in (diagnostics or [])]
+        self.highlight_current_line()
+        self.line_number_area.update()
+
+    def _schedule_live_syntax_diagnostics(self):
+        self._syntax_timer.start()
+
+    def _refresh_live_syntax_diagnostics(self):
+        diagnostics: list[dict] = []
+        text = self.toPlainText()
+        if self.language_name == "Python" and text.strip():
+            try:
+                ast.parse(text)
+            except SyntaxError as exc:
+                line = max(0, int(exc.lineno or 1) - 1)
+                column = max(0, int(exc.offset or 1) - 1)
+                diagnostics.append({
+                    "line": line, "character": column, "end_line": line,
+                    "end_character": column + 1, "severity": 1,
+                    "message": exc.msg or "Python syntax error", "source": "Python syntax",
+                })
+        elif self.language_name in {"Java", "C++", "JavaScript", "CSS"}:
+            stack: list[tuple[str, int, int]] = []
+            pairs = {"}": "{", "]": "[", ")": "("}
+            state = "code"
+            escaped = False
+            for line_number, line_text in enumerate(text.splitlines()):
+                for column, char in enumerate(line_text):
+                    if escaped:
+                        escaped = False
+                        continue
+                    if state in {"single", "double", "template"}:
+                        if char == "\\":
+                            escaped = True
+                        elif (state == "single" and char == "'") or (state == "double" and char == '"') or (state == "template" and char == "`"):
+                            state = "code"
+                        continue
+                    if char == "'": state = "single"; continue
+                    if char == '"': state = "double"; continue
+                    if char == "`" and self.language_name == "JavaScript": state = "template"; continue
+                    if char in "{[(":
+                        stack.append((char, line_number, column))
+                    elif char in pairs:
+                        if not stack or stack[-1][0] != pairs[char]:
+                            diagnostics.append({"line": line_number, "character": column, "end_line": line_number, "end_character": column + 1, "severity": 1, "message": f"Лишняя закрывающая скобка {char}", "source": "Astra syntax"})
+                            break
+                        stack.pop()
+            if not diagnostics and stack:
+                char, line_number, column = stack[-1]
+                diagnostics.append({"line": line_number, "character": column, "end_line": line_number, "end_character": column + 1, "severity": 1, "message": f"Не закрыта скобка {char}", "source": "Astra syntax"})
+        self._syntax_diagnostics = diagnostics
+        self.highlight_current_line()
+        self.line_number_area.update()
+
+    def _diagnostics_for_line(self, line_number: int) -> list[dict]:
+        return [item for item in [*self._external_diagnostics, *self._syntax_diagnostics] if int(item.get("line", -1)) == int(line_number)]
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        cursor = self.cursorForPosition(event.position().toPoint())
+        diagnostics = self._diagnostics_for_line(cursor.blockNumber())
+        if diagnostics:
+            message = "\n".join(f"{item['source']}: {item['message']}" for item in diagnostics[:5])
+            QToolTip.showText(event.globalPosition().toPoint(), message, self)
+
+    def _fold_range_for_line(self, line_number: int) -> tuple[int, int] | None:
+        lines = self.toPlainText().splitlines()
+        if line_number < 0 or line_number >= len(lines):
+            return None
+        header = lines[line_number]
+        stripped = header.strip()
+        if self.language_name == "Python":
+            if not re.match(r"^(?:async\s+def|def|class)\b.*:\s*(?:#.*)?$", stripped):
+                return None
+            base_indent = len(header) - len(header.lstrip(" \t"))
+            end = line_number
+            for index in range(line_number + 1, len(lines)):
+                candidate = lines[index]
+                if not candidate.strip():
+                    if end > line_number:
+                        end = index
+                    continue
+                indent = len(candidate) - len(candidate.lstrip(" \t"))
+                if indent <= base_indent:
+                    break
+                end = index
+            return (line_number, end) if end > line_number else None
+        if self.language_name not in {"Java", "C++", "JavaScript"}:
+            return None
+        control = re.match(r"^(?:if|for|while|switch|catch|else|try)\b", stripped)
+        function_header = (
+            "{" in header and ")" in header and not control
+            and bool(re.search(r"(?:\bfunction\s+|[A-Za-z_$~][\w:$<>~]*\s*\([^;{}]*\)\s*(?:const\s*)?(?:noexcept\s*)?\{)", stripped))
+        )
+        if not function_header:
+            return None
+        depth = 0
+        opened = False
+        for index in range(line_number, len(lines)):
+            for char in lines[index]:
+                if char == "{":
+                    depth += 1
+                    opened = True
+                elif char == "}" and opened:
+                    depth -= 1
+                    if depth == 0:
+                        return (line_number, index) if index > line_number else None
+        return None
+
+    def is_foldable_line(self, line_number: int) -> bool:
+        return self._fold_range_for_line(line_number) is not None
+
+    def toggle_fold_at_y(self, y: int) -> bool:
+        block = self.firstVisibleBlock()
+        while block.isValid():
+            top = int(self.blockBoundingGeometry(block).translated(self.contentOffset()).top())
+            bottom = top + int(self.blockBoundingRect(block).height())
+            if top <= y < bottom:
+                return self.toggle_fold(block.blockNumber())
+            if top > y:
+                break
+            block = block.next()
+        return False
+
+    def toggle_fold(self, line_number: int) -> bool:
+        fold_range = self._fold_range_for_line(line_number)
+        if fold_range is None:
+            return False
+        _start, end = fold_range
+        folding = line_number not in self._folded_ranges
+        block = self.document().findBlockByNumber(line_number + 1)
+        while block.isValid() and block.blockNumber() <= end:
+            block.setVisible(not folding)
+            block.setLineCount(0 if folding else 1)
+            block = block.next()
+        if folding:
+            self._folded_ranges[line_number] = end
+        else:
+            self._folded_ranges.pop(line_number, None)
+        self.document().markContentsDirty(0, self.document().characterCount())
+        self.viewport().update()
+        self.line_number_area.update()
+        return True
+
+    def _unfold_after_document_edit(self, _position: int, _removed: int, _added: int):
+        if not self._folded_ranges:
+            return
+        block = self.document().begin()
+        while block.isValid():
+            block.setVisible(True)
+            block.setLineCount(1)
+            block = block.next()
+        self._folded_ranges.clear()
+        self.document().markContentsDirty(0, self.document().characterCount())
+        self.viewport().update()
+        self.line_number_area.update()
 
     def set_completion_options(self, enabled: bool, show_snippets: bool, accept_tab: bool):
         self.completion_enabled = bool(enabled)
@@ -2275,7 +2506,10 @@ class CodeEditor(QPlainTextEdit):
         self._builtin_completer.setCompletionPrefix(query.prefix)
         popup = self._builtin_completer.popup()
         popup.setCurrentIndex(self._builtin_completer.completionModel().index(0, 0))
-        popup.setMinimumWidth(min(620, max(280, self.viewport().width() // 2)))
+        available_width = max(150, self.viewport().width() - 24)
+        popup_width = min(560, available_width, max(240, self.viewport().width() // 2))
+        popup.setMinimumWidth(popup_width)
+        popup.setMaximumWidth(available_width)
         self._builtin_completer.complete(self.cursorRect())
 
     def _cycle_builtin_completion(self) -> bool:
@@ -2320,7 +2554,10 @@ class CodeEditor(QPlainTextEdit):
         if query is None or item is None:
             return False
         edits = [*item.additional_edits, CompletionTextEdit(query.start, query.end, item.insert_text)]
-        final_position = query.start + len(item.insert_text)
+        cursor_offset = item.cursor_offset
+        if cursor_offset is None and item.insert_text.endswith("()"):
+            cursor_offset = len(item.insert_text) - 1
+        final_position = query.start + (len(item.insert_text) if cursor_offset is None else max(0, min(len(item.insert_text), cursor_offset)))
         for edit in item.additional_edits:
             if edit.start <= query.start:
                 final_position += len(edit.new_text) - (edit.end - edit.start)
@@ -2464,6 +2701,105 @@ class CodeEditor(QPlainTextEdit):
         self.hide_completion_hint()
         return True
 
+    def _indent_unit(self) -> str:
+        return " " * max(1, int(self.indent_size)) if self.insert_spaces else "\t"
+
+    def _line_opens_block(self, text: str) -> bool:
+        stripped = text.rstrip()
+        if not stripped:
+            return False
+        if self.language_name == "Python":
+            return stripped.endswith(":") and not stripped.lstrip().startswith("#")
+        if self.language_name in {"Java", "C++", "JavaScript", "CSS"}:
+            return stripped.endswith("{")
+        if self.language_name == "HTML":
+            match = re.search(r"<([A-Za-z][\w:-]*)\b[^>]*>\s*$", stripped)
+            if not match or stripped.endswith("/>"):
+                return False
+            return match.group(1).lower() not in {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
+        return False
+
+    def _smart_newline(self) -> bool:
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            cursor.removeSelectedText()
+        block_text = cursor.block().text()
+        column = cursor.positionInBlock()
+        left = block_text[:column]
+        right = block_text[column:]
+        base_indent = re.match(r"[ \t]*", left).group(0)
+        inner_indent = base_indent + (self._indent_unit() if self._line_opens_block(left) else "")
+        between_pair = (
+            (left.rstrip().endswith("{") and right.lstrip().startswith("}"))
+            or (self.language_name == "HTML" and self._line_opens_block(left) and right.lstrip().startswith("</"))
+        )
+        insertion = "\n" + inner_indent
+        cursor.beginEditBlock()
+        cursor.insertText(insertion)
+        target = cursor.position()
+        if between_pair:
+            cursor.insertText("\n" + base_indent)
+            cursor.setPosition(target)
+        cursor.endEditBlock()
+        self.setTextCursor(cursor)
+        return True
+
+    def _change_selected_indent(self, remove: bool = False) -> bool:
+        cursor = self.textCursor()
+        if not cursor.hasSelection():
+            return False
+        start = cursor.selectionStart()
+        end = cursor.selectionEnd()
+        start_block = self.document().findBlock(start)
+        end_block = self.document().findBlock(max(start, end - 1))
+        unit = self._indent_unit()
+        cursor.beginEditBlock()
+        for block_number in range(start_block.blockNumber(), end_block.blockNumber() + 1):
+            block = self.document().findBlockByNumber(block_number)
+            line_cursor = QTextCursor(block)
+            if remove:
+                text = block.text()
+                count = len(unit) if text.startswith(unit) else min(len(text) - len(text.lstrip(" \t")), max(1, int(self.indent_size)))
+                if count > 0:
+                    line_cursor.setPosition(block.position())
+                    line_cursor.setPosition(block.position() + count, QTextCursor.MoveMode.KeepAnchor)
+                    line_cursor.removeSelectedText()
+            else:
+                line_cursor.setPosition(block.position())
+                line_cursor.insertText(unit)
+        cursor.endEditBlock()
+        return True
+
+    def _smart_backspace(self) -> bool:
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            return False
+        prefix = cursor.block().text()[:cursor.positionInBlock()]
+        if not prefix or prefix.strip():
+            return False
+        unit_size = max(1, int(self.indent_size))
+        remove_count = 1 if "\t" in prefix[-1:] else min(unit_size, len(prefix) % unit_size or unit_size)
+        cursor.setPosition(cursor.position() - remove_count, QTextCursor.MoveMode.KeepAnchor)
+        cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+        return True
+
+    def _insert_paired_character(self, opening: str) -> bool:
+        pairs = {"(": ")", "[": "]", "{": "}", '"': '"', "'": "'", "`": "`"}
+        closing = pairs.get(opening)
+        if closing is None or (opening == "`" and self.language_name not in {"JavaScript"}):
+            return False
+        cursor = self.textCursor()
+        selected = cursor.selectedText()
+        cursor.beginEditBlock()
+        cursor.insertText(opening + selected + closing)
+        cursor.setPosition(cursor.position() - len(closing) - len(selected))
+        if selected:
+            cursor.setPosition(cursor.position() + len(selected), QTextCursor.MoveMode.KeepAnchor)
+        cursor.endEditBlock()
+        self.setTextCursor(cursor)
+        return True
+
     def keyPressEvent(self, event):
         popup = self._builtin_completer.popup() if hasattr(self, "_builtin_completer") else None
         if popup is not None and popup.isVisible():
@@ -2473,6 +2809,19 @@ class CodeEditor(QPlainTextEdit):
                 return
             if event.key() == Qt.Key.Key_Tab and self.completion_accept_tab:
                 if self._cycle_builtin_completion():
+                    event.accept()
+                    return
+            if event.key() in {Qt.Key.Key_Down, Qt.Key.Key_Up}:
+                model = self._builtin_completer.completionModel()
+                count = model.rowCount()
+                if count:
+                    current = popup.currentIndex().row()
+                    next_row = (current + (1 if event.key() == Qt.Key.Key_Down else -1)) % count
+                    index = model.index(next_row, 0)
+                    popup.setCurrentIndex(index)
+                    popup.scrollTo(index)
+                    self._builtin_tab_cycle_active = True
+                    self._builtin_tab_cycle_index = next_row
                     event.accept()
                     return
             if event.key() == Qt.Key.Key_Space and self._builtin_tab_cycle_active:
@@ -2491,10 +2840,48 @@ class CodeEditor(QPlainTextEdit):
             if self.insert_active_snippet():
                 event.accept()
                 return
-        if event.key() == Qt.Key.Key_Tab and self.insert_spaces:
-            self.textCursor().insertText(" " * max(1, int(self.indent_size)))
+        if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
+            if self._smart_newline():
+                event.accept()
+                return
+        if event.key() in {Qt.Key.Key_Backtab} or (event.key() == Qt.Key.Key_Tab and event.modifiers() & Qt.KeyboardModifier.ShiftModifier):
+            if self._change_selected_indent(remove=True):
+                event.accept()
+                return
+        if event.key() == Qt.Key.Key_Tab:
+            if self._change_selected_indent(remove=False):
+                event.accept()
+                return
+            self.textCursor().insertText(self._indent_unit())
             event.accept()
             return
+        if event.key() == Qt.Key.Key_Backspace and self._smart_backspace():
+            event.accept()
+            return
+        typed = event.text()
+        if typed in {"(", "[", "{", '"', "'", "`"} and not (event.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier)):
+            if self._insert_paired_character(typed):
+                event.accept()
+                return
+        if typed in {")", "]", "}", '"', "'", "`"}:
+            cursor = self.textCursor()
+            block_text = cursor.block().text()
+            column = cursor.positionInBlock()
+            if column < len(block_text) and block_text[column] == typed:
+                cursor.movePosition(QTextCursor.MoveOperation.Right)
+                self.setTextCursor(cursor)
+                event.accept()
+                return
+            if typed == "}" and not block_text[:column].strip():
+                prefix = block_text[:column]
+                remove_count = 1 if prefix.endswith("\t") else min(max(1, int(self.indent_size)), len(prefix))
+                if remove_count:
+                    cursor.setPosition(cursor.position() - remove_count, QTextCursor.MoveMode.KeepAnchor)
+                    cursor.removeSelectedText()
+                cursor.insertText("}")
+                self.setTextCursor(cursor)
+                event.accept()
+                return
         super().keyPressEvent(event)
 
 
@@ -2971,7 +3358,9 @@ class AstraStudio(QMainWindow):
         self.custom_wallpaper_path = ""
         self.preset_wallpaper_name = DEFAULT_PRESET_WALLPAPER
         self.wallpaper_enabled = True
-        self.wallpaper_all_windows = True
+        # Wallpapers belong to the writing surface only. Keeping navigation,
+        # settings and the project tree opaque makes compact layouts readable.
+        self.wallpaper_all_windows = False
         self.wallpaper_dim_percent = 55
         self.wallpaper_blur_px = 25
         self.disable_console_wallpaper = False
@@ -3032,7 +3421,7 @@ class AstraStudio(QMainWindow):
 
         self.setWindowTitle(f"{APP_NAME} — {APP_VERSION}")
         self.resize(1480, 840)
-        self.setMinimumSize(980, 640)
+        self.setMinimumSize(760, 520)
 
         self._ensure_workspace_examples()
         self._build_ui()
@@ -3179,8 +3568,9 @@ class AstraStudio(QMainWindow):
             self.preset_wallpaper_name = preset_wallpaper
         if isinstance(wallpaper_enabled, bool):
             self.wallpaper_enabled = wallpaper_enabled
-        if isinstance(wallpaper_all_windows, bool):
-            self.wallpaper_all_windows = wallpaper_all_windows
+        # Do not restore the legacy full-window wallpaper mode: on laptop-sized
+        # windows it reduced contrast in every navigation panel.
+        self.wallpaper_all_windows = False
         if isinstance(wallpaper_dim_percent, int):
             self.wallpaper_dim_percent = max(0, min(85, wallpaper_dim_percent))
         if isinstance(wallpaper_blur_px, int):
@@ -3375,14 +3765,14 @@ class AstraStudio(QMainWindow):
         self.sidebar_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.sidebar_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.sidebar_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.sidebar_scroll.setMinimumWidth(236)
-        self.sidebar_scroll.setMaximumWidth(306)
+        self.sidebar_scroll.setMinimumWidth(210)
+        self.sidebar_scroll.setMaximumWidth(270)
         self.sidebar_scroll.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
         self.sidebar = QFrame()
         self.sidebar.setObjectName("Sidebar")
-        self.sidebar.setMinimumWidth(216)
-        self.sidebar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding)
+        self.sidebar.setMinimumWidth(0)
+        self.sidebar.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.MinimumExpanding)
         side_layout = QVBoxLayout(self.sidebar)
         side_layout.setContentsMargins(14, 18, 14, 18)
         side_layout.setSpacing(9)
@@ -3401,7 +3791,7 @@ class AstraStudio(QMainWindow):
         self.logo.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         title_pixmap = QPixmap(str(resource_path("assets/astra_studio_title.png")))
         if not title_pixmap.isNull():
-            self.logo.setPixmap(title_pixmap.scaledToHeight(52, Qt.TransformationMode.SmoothTransformation))
+            self.logo.setPixmap(title_pixmap.scaledToWidth(174, Qt.TransformationMode.SmoothTransformation))
             self.logo.setMinimumHeight(56)
         else:
             self.logo.setText("Astra Studio")
@@ -3413,8 +3803,8 @@ class AstraStudio(QMainWindow):
 
         self.sidebar_shell = QFrame()
         self.sidebar_shell.setObjectName("SidebarShell")
-        self.sidebar_shell.setMinimumWidth(236)
-        self.sidebar_shell.setMaximumWidth(306)
+        self.sidebar_shell.setMinimumWidth(210)
+        self.sidebar_shell.setMaximumWidth(270)
         self.sidebar_shell.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sidebar_shell_layout = QVBoxLayout(self.sidebar_shell)
         sidebar_shell_layout.setContentsMargins(0, 0, 0, 0)
@@ -3435,7 +3825,7 @@ class AstraStudio(QMainWindow):
         self.language_combo = NoWheelComboBox()
         self.language_combo.setMinimumHeight(36)
         self.language_combo.setMinimumWidth(0)
-        self.language_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.language_combo.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.language_combo.addItems(VISIBLE_LANGUAGES)
         self.language_combo.setCurrentText(self.current_language_name)
         language_layout.addWidget(self.language_title)
@@ -3452,13 +3842,19 @@ class AstraStudio(QMainWindow):
         self.btn_run = QPushButton("▶  Запустить   F5")
         self.btn_run.setObjectName("PrimaryButton")
         self.btn_compile = QPushButton("◆  Проверить код")
-        self.btn_format = QPushButton("↹  Форматировать   Shift+Alt+F")
-        self.btn_lint = QPushButton("✓  Lint текущего файла")
+        self.btn_format = QPushButton("↹  Форматировать")
+        self.btn_format.setToolTip("Форматировать текущий файл · Shift+Alt+F")
+        self.btn_lint = QPushButton("✓  Lint файла")
+        self.btn_lint.setToolTip("Проверить текущий файл и показать строки с ошибками")
         self.btn_build_exe = QPushButton("⧉  Собрать EXE")
         self.btn_stop = QPushButton("■  Остановить")
         self.btn_new = QPushButton("+  Создать файл")
         self.btn_enter_typer = QPushButton("⌨  Имитация ввода")
         self.btn_enter_typer.setObjectName("TemplateButton")
+        # Synthetic keyboard input is unrelated to the core IDE workflow and
+        # was a frequent source of confusion. Keep the compatibility handler,
+        # but remove the experimental entry point from the product UI.
+        self.btn_enter_typer.setVisible(False)
         self.btn_open = QPushButton("⌁  Открыть файл")
         self.btn_save = QPushButton("✓  Сохранить")
         self.btn_save_as = QPushButton("⇢  Сохранить как")
@@ -3520,8 +3916,9 @@ class AstraStudio(QMainWindow):
             self.btn_ai_context,
         ]:
             button.setMinimumHeight(34)
+            button.setMinimumWidth(0)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
-            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            button.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
             button.setToolTip(button.text().replace("  ", " ").strip())
 
         side_layout.addWidget(self.language_card)
@@ -3631,9 +4028,10 @@ class AstraStudio(QMainWindow):
         self.btn_apply_astra_profile.setObjectName("PrimaryButton")
         self.btn_apply_angel404_profile = QPushButton("✦  Применить профиль Angel 404")
         self.btn_apply_angel404_profile.setObjectName("PrimaryButton")
-        self.wallpaper_all_toggle = QCheckBox("Использовать обои во всех окнах")
+        self.wallpaper_all_toggle = QCheckBox("Обои только в редакторе и консоли")
         self.wallpaper_all_toggle.setObjectName("OpacityToggle")
-        self.wallpaper_all_toggle.setChecked(self.wallpaper_all_windows)
+        self.wallpaper_all_toggle.setChecked(True)
+        self.wallpaper_all_toggle.setEnabled(False)
         self.disable_console_wallpaper_toggle = QCheckBox("Отключить обои в консоли")
         self.disable_console_wallpaper_toggle.setObjectName("OpacityToggle")
         self.disable_console_wallpaper_toggle.setChecked(self.disable_console_wallpaper)
@@ -3740,7 +4138,7 @@ class AstraStudio(QMainWindow):
 
         self.project_panel = QFrame()
         self.project_panel.setObjectName("ProjectPanel")
-        self.project_panel.setMinimumWidth(245)
+        self.project_panel.setMinimumWidth(210)
         project_layout = QVBoxLayout(self.project_panel)
         project_layout.setContentsMargins(12, 14, 12, 12)
         project_layout.setSpacing(8)
@@ -3864,9 +4262,9 @@ class AstraStudio(QMainWindow):
         installer_layout.setSpacing(8)
 
         self.installer_hint = QLabel(
-            "Текущий набор языков: Java, Python и C++. Автоустановщик работает через WinGet: "
-            "может поставить Python, C++ toolchain через MSYS2 и JDK для Java. "
-            "Остальные языковые реализации сохранены внутри Astra, но временно скрыты из интерфейса."
+            "Основные языки: Java, Python, C++, JavaScript, HTML и CSS. Автоустановщик через WinGet "
+            "ставит Python, MSYS2/g++, JDK и Node.js; Web-LSP устанавливаются через npm. "
+            "Экспериментальные языки сохранены внутри Astra, но скрыты из основного интерфейса."
         )
         self.installer_hint.setObjectName("Muted")
         self.installer_hint.setWordWrap(True)
@@ -3874,7 +4272,7 @@ class AstraStudio(QMainWindow):
         self.app_update_status = QLabel(f"Astra Studio: {APP_VERSION} · канал обновлений: stable")
         self.app_update_status.setObjectName("MiniLabel")
         self.app_update_status.setWordWrap(True)
-        self.btn_check_app_update = QPushButton("Проверить обновление Astra Studio")
+        self.btn_check_app_update = QPushButton("Проверить обновление Astra")
         self.btn_check_app_update.setObjectName("PrimaryButton")
 
         self.install_progress_label = QLabel("Загрузка/проверка: 0%")
@@ -3887,7 +4285,7 @@ class AstraStudio(QMainWindow):
 
         installer_buttons_1 = QVBoxLayout()
         self.btn_check_tools = QPushButton("Проверить версии и инструменты")
-        self.btn_check_updates = QPushButton("Проверить обновления инструментов")
+        self.btn_check_updates = QPushButton("Обновления инструментов")
         self.btn_install_all = QPushButton("Установить всё")
         self.btn_install_all.setObjectName("PrimaryButton")
         self.btn_update_all = QPushButton("Обновить языки")
@@ -3902,25 +4300,28 @@ class AstraStudio(QMainWindow):
         self.btn_install_python = QPushButton("Установить Python + uv")
         self.btn_install_cpp = QPushButton("Установить C++")
         self.btn_install_java = QPushButton("Установить Java")
-        self.btn_install_node = QPushButton("Установить Node.js LTS + TypeScript")
+        self.btn_install_node = QPushButton("Установить Node.js + Web")
+        self.btn_install_node.setToolTip("Установить Node.js LTS, TypeScript, tsx и Web-LSP")
         self.btn_install_git = QPushButton("Установить Git")
         self.btn_install_godot = QPushButton("Установить Godot")
         self.btn_install_php = QPushButton("Установить PHP 8.4")
         self.btn_install_powershell = QPushButton("Установить PowerShell 7")
-        self.btn_install_all.setText("Установить Java + Python + C++")
+        self.btn_install_all.setText("Установить все 6 языков")
         visible_installer_buttons = [
             self.btn_check_tools, self.btn_check_updates, self.btn_install_all, self.btn_update_all,
             self.btn_desktop_shortcut, self.btn_install_python, self.btn_install_cpp, self.btn_install_java,
+            self.btn_install_node,
         ]
         for hidden_button in [
-            self.btn_install_node, self.btn_install_git, self.btn_install_godot,
+            self.btn_install_git, self.btn_install_godot,
             self.btn_install_php, self.btn_install_powershell,
         ]:
             hidden_button.setVisible(False)
         for button in visible_installer_buttons:
             button.setCursor(Qt.CursorShape.PointingHandCursor)
             button.setMinimumHeight(34)
-            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            button.setMinimumWidth(0)
+            button.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
             if button is self.btn_desktop_shortcut:
                 installer_buttons_1.addWidget(self.shortcut_icon_label)
                 installer_buttons_1.addWidget(self.shortcut_icon_combo)
@@ -4507,9 +4908,22 @@ class AstraStudio(QMainWindow):
         self.vertical_splitter.setSizes(self.saved_vertical_splitter_sizes if self.saved_vertical_splitter_sizes else [570, 250])
         self.vertical_splitter.setHandleWidth(3)
 
+        # The wallpaper is scoped to the editor/console surface.  Sidebars,
+        # project navigation and settings stay opaque and independently sized.
+        self.workspace_surface = QWidget()
+        self.workspace_surface.setObjectName("WorkspaceSurface")
+        workspace_layout = QVBoxLayout(self.workspace_surface)
+        workspace_layout.setContentsMargins(0, 0, 0, 0)
+        workspace_layout.setSpacing(0)
+        self.background_label.setParent(self.workspace_surface)
+        self.wallpaper_dim_overlay.setParent(self.workspace_surface)
+        workspace_layout.addWidget(self.vertical_splitter)
+        self.background_label.lower()
+        self.wallpaper_dim_overlay.lower()
+
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
         self.main_splitter.addWidget(self.project_panel)
-        self.main_splitter.addWidget(self.vertical_splitter)
+        self.main_splitter.addWidget(self.workspace_surface)
         self.main_splitter.setCollapsible(0, False)
         main_sizes = list(self.saved_main_splitter_sizes) if self.saved_main_splitter_sizes and len(self.saved_main_splitter_sizes) >= 2 else [280, 940]
         main_sizes[0] = max(260, int(main_sizes[0] or 0))
@@ -4525,8 +4939,8 @@ class AstraStudio(QMainWindow):
 
         self.tools_drawer = QFrame()
         self.tools_drawer.setObjectName("SideToolsPanel")
-        self.tools_drawer.setMinimumWidth(330)
-        self.tools_drawer.setMaximumWidth(760)
+        self.tools_drawer.setMinimumWidth(310)
+        self.tools_drawer.setMaximumWidth(640)
         self.tools_drawer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         drawer_layout = QVBoxLayout(self.tools_drawer)
         drawer_layout.setContentsMargins(10, 10, 10, 10)
@@ -4966,7 +5380,7 @@ class AstraStudio(QMainWindow):
         if hasattr(self, "wallpaper_dim_label"):
             self.wallpaper_dim_label.setText(f"Затемнение обоев: {self.wallpaper_dim_percent}%")
         if hasattr(self, "wallpaper_blur_label"):
-            self.wallpaper_blur_label.setText(f"Размытие обоев во всех окнах: {self.wallpaper_blur_px}%")
+            self.wallpaper_blur_label.setText(f"Размытие обоев редактора и консоли: {self.wallpaper_blur_px}%")
         for attr, text, value in [
             ("editor_transparency_label", "Прозрачность редактора кода", self.editor_bg_transparency_percent),
             ("console_transparency_label", "Прозрачность консоли", self.console_bg_transparency_percent),
@@ -4998,17 +5412,18 @@ class AstraStudio(QMainWindow):
                 self.wallpaper_dim_overlay.hide()
             return
         self.background_label.setPixmap(pixmap)
-        self.background_label.setGeometry(self.root.rect())
+        surface = getattr(self, "workspace_surface", self.root)
+        self.background_label.setGeometry(surface.rect())
         self.background_label.lower()
         self.background_label.show()
         if hasattr(self, "wallpaper_dim_overlay"):
-            self.wallpaper_dim_overlay.setGeometry(self.root.rect())
+            self.wallpaper_dim_overlay.setGeometry(surface.rect())
             self.wallpaper_dim_overlay.setStyleSheet(f"background: rgba(0, 0, 0, {int(255 * self.wallpaper_dim_percent / 100)});")
             self.wallpaper_dim_overlay.show()
             self.wallpaper_dim_overlay.lower()
             self.background_label.lower()
         blur_value = max(int(self.wallpaper_blur_px), int(getattr(self, "editor_blur_percent", 0)), int(getattr(self, "console_blur_percent", 0)), int(getattr(self, "settings_blur_percent", 0)), int(getattr(self, "project_blur_percent", 0)))
-        if blur_value > 0 and self.wallpaper_all_windows:
+        if blur_value > 0:
             effect = QGraphicsBlurEffect(self.background_label)
             effect.setBlurRadius(float(blur_value) * 0.48)
             self.background_label.setGraphicsEffect(effect)
@@ -7284,6 +7699,7 @@ class AstraStudio(QMainWindow):
         env.insert("PYTHONIOENCODING", "utf-8")
         self.run_process.setProcessEnvironment(env)
         self.run_output_encoding = output_encoding
+        self.run_stderr_buffer = ""
         self.run_process.readyReadStandardOutput.connect(self._read_run_stdout)
         self.run_process.readyReadStandardError.connect(self._read_run_stderr)
         self.run_process.errorOccurred.connect(lambda _error: self._run_process_start_failed(program))
@@ -7316,6 +7732,7 @@ class AstraStudio(QMainWindow):
         )
         if self.last_run_language == "Python":
             self._detect_missing_python_module(data)
+        self.run_stderr_buffer = str(getattr(self, "run_stderr_buffer", "")) + data
         self._append_to_output(data)
 
     def _run_process_finished(self, exit_code, _exit_status):
@@ -7325,6 +7742,19 @@ class AstraStudio(QMainWindow):
         self.status_pill.setText("готово" if exit_code == 0 else "сбой")
         self.statusBar().showMessage(f"Процесс завершён с кодом {exit_code}", 4000)
         if exit_code != 0 and self.last_run_language == "Python":
+            traceback_text = str(getattr(self, "run_stderr_buffer", ""))
+            locations = list(re.finditer(r'File "([^"]+)", line (\d+)', traceback_text))
+            if locations and self.last_run_source_path:
+                line_number = max(0, int(locations[-1].group(2)) - 1)
+                message_lines = [line.strip() for line in traceback_text.splitlines() if line.strip()]
+                message = message_lines[-1] if message_lines else "Python runtime error"
+                diagnostic = QualityDiagnostic(
+                    path=Path(self.last_run_source_path), line=line_number, character=0,
+                    end_line=line_number, end_character=1, severity=1,
+                    message=message, source="Python runtime",
+                )
+                self._set_quality_diagnostics(Path(self.last_run_source_path), [diagnostic])
+                self.output_console.appendPlainText(f"\n✕ Ошибка отмечена в строке {line_number + 1}.")
             QTimer.singleShot(0, self.handle_missing_python_module_after_run)
 
     def stop_run_process(self):
@@ -7424,12 +7854,15 @@ class AstraStudio(QMainWindow):
         if hasattr(self, "root_splitter"):
             sizes = self.root_splitter.sizes()
             if len(sizes) >= 3 and sizes[1] < 220:
-                total = max(sum(sizes), 1260)
-                self.root_splitter.setSizes([306, 420, max(520, total - 726)])
+                total = max(self.root_splitter.width(), sum(sizes), 760)
+                sidebar_width = min(240, max(210, sizes[0] or 220))
+                drawer_width = min(390, max(310, total // 3))
+                self.root_splitter.setSizes([sidebar_width, drawer_width, max(280, total - sidebar_width - drawer_width)])
         if hasattr(self, "tools_drawer_title"):
             self.tools_drawer_title.setText(title)
         if hasattr(self, "btn_close_tools_drawer"):
             self.btn_close_tools_drawer.raise_()
+        self._apply_responsive_layout()
 
 
     def open_enter_typer_template(self):
@@ -7466,7 +7899,7 @@ class AstraStudio(QMainWindow):
         self.global_font_name = DEFAULT_GLOBAL_FONT
         self.preset_wallpaper_name = DEFAULT_PRESET_WALLPAPER
         self.custom_wallpaper_path = ""
-        self.wallpaper_all_windows = True
+        self.wallpaper_all_windows = False
         self.disable_console_wallpaper = False
         self.wallpaper_dim_percent = 55
         self.wallpaper_blur_px = 18
@@ -7528,7 +7961,7 @@ class AstraStudio(QMainWindow):
         self.global_font_name = "Minecraft Rus"
         self.custom_wallpaper_path = ""
         self.wallpaper_enabled = True
-        self.wallpaper_all_windows = True
+        self.wallpaper_all_windows = False
         self.disable_console_wallpaper = False
         self.wallpaper_dim_percent = 28
         self.wallpaper_blur_px = 6
@@ -7582,7 +8015,9 @@ class AstraStudio(QMainWindow):
         self.statusBar().showMessage("Профиль Angel 404 применён", 3000)
 
     def toggle_wallpaper_all_windows(self, enabled):
-        self.wallpaper_all_windows = bool(enabled)
+        # Kept as a compatibility slot for old settings/signals. Full-window
+        # wallpaper is intentionally retired.
+        self.wallpaper_all_windows = False
         self.apply_theme()
         self._save_settings()
 
@@ -9847,6 +10282,8 @@ class AstraStudio(QMainWindow):
                 "path": resolved,
                 "line": int(getattr(diagnostic, "line", 0)),
                 "character": int(getattr(diagnostic, "character", 0)),
+                "end_line": int(getattr(diagnostic, "end_line", getattr(diagnostic, "line", 0))),
+                "end_character": int(getattr(diagnostic, "end_character", int(getattr(diagnostic, "character", 0)) + 1)),
                 "severity": severity,
                 "message": str(getattr(diagnostic, "message", "")),
                 "source": str(getattr(diagnostic, "source", "") or "LSP"),
@@ -9871,6 +10308,8 @@ class AstraStudio(QMainWindow):
                     "path": resolved,
                     "line": int(getattr(diagnostic, "line", 0)),
                     "character": int(getattr(diagnostic, "character", 0)),
+                    "end_line": int(getattr(diagnostic, "end_line", getattr(diagnostic, "line", 0))),
+                    "end_character": int(getattr(diagnostic, "end_character", int(getattr(diagnostic, "character", 0)) + 1)),
                     "severity": severity,
                     "message": str(getattr(diagnostic, "message", "")),
                     "source": str(getattr(diagnostic, "source", "") or "Linter"),
@@ -9880,6 +10319,21 @@ class AstraStudio(QMainWindow):
         visible.sort(key=lambda item: (
             str(item["path"]).lower(), item["line"], item["character"], item["severity"], item["message"]
         ))
+        if hasattr(self, "tabs"):
+            for tab_index in range(self.tabs.count()):
+                tab_editor = self.tabs.widget(tab_index)
+                if not isinstance(tab_editor, CodeEditor):
+                    continue
+                if not tab_editor.file_path:
+                    tab_editor.set_external_diagnostics([])
+                    continue
+                try:
+                    editor_path = Path(tab_editor.file_path).resolve()
+                except OSError:
+                    editor_path = Path(tab_editor.file_path)
+                tab_editor.set_external_diagnostics([
+                    item for item in visible if Path(item["path"]) == editor_path
+                ])
         self.problems_tree.clear()
         groups: dict[str, QTreeWidgetItem] = {}
         severity_prefix = {1: "✕", 2: "⚠", 3: "•", 4: "·"}
@@ -12142,6 +12596,7 @@ class AstraStudio(QMainWindow):
     def open_editor_page(self):
         if hasattr(self, "tools_drawer"):
             self.tools_drawer.setVisible(False)
+        self._apply_responsive_layout()
         self.statusBar().showMessage("Редактор открыт", 1800)
 
     def close_tools_drawer(self):
@@ -12152,6 +12607,7 @@ class AstraStudio(QMainWindow):
                 sizes = self.root_splitter.sizes()
                 if len(sizes) >= 3:
                     self.root_splitter.setSizes([sizes[0] or 306, 0, max(700, sizes[2] + sizes[1])])
+            self._apply_responsive_layout()
             self.write_log("Боковая панель закрыта через крестик")
             self.statusBar().showMessage("Боковая панель закрыта", 1600)
         except Exception as exc:
@@ -12413,7 +12869,18 @@ if ($javacPath -and $javaPath) {
     if ($javaOk) { Write-Host "✓ Java: javac=$javacPath | java=$javaPath | $(First-Line $javaVersion) | тест пройден" }
     else { Write-Host "⚠ Java найдена, но тест компиляции/запуска не пройден" }
 } else { Write-Host "✕ Java: согласованная пара javac/java из одного JDK не найдена" }
-P 74
+P 78
+
+$node = Get-Command node -ErrorAction SilentlyContinue
+$npm = Get-Command npm -ErrorAction SilentlyContinue
+if ($node -and $npm) {
+    $nodeVersion = & $node.Source --version 2>&1
+    $npmVersion = & $npm.Source --version 2>&1
+    $nodeOk = $LASTEXITCODE -eq 0
+    if ($nodeOk) { Write-Host "✓ JavaScript/Web: node=$($node.Source) | $(First-Line $nodeVersion); npm=$(First-Line $npmVersion)" }
+    else { Write-Host "⚠ Node.js найден, но тест версии не пройден" }
+} else { Write-Host "✕ JavaScript/Web: node/npm не найдены" }
+P 90
 
 function Tool-Version($name, $args) {
     $tool = Get-Command $name -ErrorAction SilentlyContinue
@@ -12426,7 +12893,7 @@ function Tool-Version($name, $args) {
 $uv = Tool-Version "uv" @("--version")
 if ($uv) { Write-Host "$($(if($uv.Ok){'✓'}else{'⚠'})) uv: $($uv.Path) | $($uv.Version)" } else { Write-Host "ℹ uv: не найден (pip/venv fallback доступен)" }
 P 100
-Write-Host "`nПроверка Java, Python и C++ завершена. Скрытые языки и их инструменты не проверялись."
+Write-Host "`nПроверка Java, Python, C++ и Web-инструментов завершена."
 '''
         self._start_installer_diagnostic_task("tool_check", "Проверка инструментов", script, "tool_check")
 
@@ -12615,7 +13082,7 @@ Write-Host "`nПроверка Java, Python и C++ завершена. Скры�
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(archive_path.parent)))
             return
         target_dir = Path(sys.executable).resolve().parent
-        if target_dir.name.casefold() != "astra studio":
+        if not re.fullmatch(r"astra studio(?: .+)?", target_dir.name, re.IGNORECASE):
             raise RuntimeError(f"Небезопасная папка установки: {target_dir}")
         script_path = self.data_dir / "updates" / "install_verified_update.ps1"
         log_path = self.data_dir / "logs" / "update-install.log"
@@ -12645,13 +13112,14 @@ Write-Host "`nПроверка Java, Python и C++ завершена. Скры�
 $ErrorActionPreference = "Continue"
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 function P($value) { Write-Host "ASTRA_PROGRESS:$value" }
-Write-Host "Проверка обновлений Java, Python и C++...`n"
+Write-Host "Проверка обновлений Java, Python, C++ и Web-инструментов...`n"
 P 5
 $winget = Get-Command winget -ErrorAction SilentlyContinue
 if ($winget) {
     $checks = @(
         @{ Name = "Python 3.14"; Id = "Python.Python.3.14" },
         @{ Name = "uv"; Id = "astral-sh.uv" },
+        @{ Name = "Node.js LTS"; Id = "OpenJS.NodeJS.LTS" },
         @{ Name = "MSYS2 / C++"; Id = "MSYS2.MSYS2" },
         @{ Name = "Java JDK"; Id = "EclipseAdoptium.Temurin.21.JDK" }
     )
@@ -12675,7 +13143,7 @@ if (Test-Path $bash) {
     Write-Host "`nℹ MSYS2 не найден в C:\msys64 — проверка pacman пропущена."
 }
 P 100
-Write-Host "`nПроверка обновлений Java, Python и C++ завершена."
+Write-Host "`nПроверка обновлений Java, Python, C++ и Web-инструментов завершена."
 '''
         self._start_installer_diagnostic_task("update_check", "Проверка обновлений", script, "update_check")
 
@@ -12810,7 +13278,7 @@ Refresh-KnownPaths
         common = self._installer_common_script()
         app_dir = str(project_root_dir())
         shortcut_icon_relative = "assets/astra.ico"
-        shortcut_icon_label = "Astra 3.15 — красно-синий"
+        shortcut_icon_label = "Astra 3.16 — красно-синий"
         if hasattr(self, "shortcut_icon_combo"):
             shortcut_icon_relative = str(self.shortcut_icon_combo.currentData() or shortcut_icon_relative)
             shortcut_icon_label = self.shortcut_icon_combo.currentText() or shortcut_icon_label
@@ -13161,6 +13629,7 @@ Ensure-Winget | Out-Null
 $ids = @(
     "Python.Python.3.14",
     "astral-sh.uv",
+    "OpenJS.NodeJS.LTS",
     "MSYS2.MSYS2",
     "EclipseAdoptium.Temurin.21.JDK"
 )
@@ -13178,6 +13647,12 @@ foreach ($id in $ids) {
 }
 Refresh-KnownPaths
 Astra-Progress 78
+$npm = Get-Command npm -ErrorAction SilentlyContinue
+if ($npm) {
+    Write-Step "Обновление TypeScript tooling и языковых серверов Web"
+    & $npm.Source install --global typescript@latest tsx@latest typescript-language-server@latest vscode-langservers-extracted@latest
+    if ($LASTEXITCODE -ne 0) { Write-Warning "npm не обновил Web tooling." }
+}
 $bash = "C:\msys64\usr\bin\bash.exe"
 if (Test-Path $bash) {
     Write-Step "Обновление пакетов MSYS2 / C++"
@@ -13212,9 +13687,8 @@ Astra-Progress 100
         if kind == "update_all":
             return common + update_script
         if kind == "all":
-            # Only the three languages currently exposed in the UI are part of
-            # the main set. Hidden implementations remain available in source.
-            return common + python_script + uv_script + cpp_script + java_script + shortcut_script + "Astra-Progress 100\n"
+            # Install only the runtimes required by the six focused languages.
+            return common + python_script + uv_script + node_script + cpp_script + java_script + shortcut_script + "Astra-Progress 100\n"
         return common + "Write-Host 'Неизвестная задача установщика.'\n"
 
     def install_toolchain(self, kind: str):
@@ -13305,7 +13779,7 @@ Astra-Progress 100
             self.installer_console.appendPlainText("✕ Установка завершилась с ошибкой. Проверь текст выше: чаще всего не найден WinGet, нет интернета или Windows требует подтверждение.")
 
     def _ask_install_now(self, language_name: str):
-        mapping = {"Python": "python", "C++": "cpp", "Java": "java"}
+        mapping = {"Python": "python", "C++": "cpp", "Java": "java", "JavaScript": "node"}
         kind = mapping.get(language_name)
         if not kind:
             return
@@ -13412,10 +13886,30 @@ Astra-Progress 100
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if hasattr(self, "background_label") and hasattr(self, "root"):
-            self.background_label.setGeometry(self.root.rect())
-        if hasattr(self, "wallpaper_dim_overlay") and hasattr(self, "root"):
-            self.wallpaper_dim_overlay.setGeometry(self.root.rect())
+        surface = getattr(self, "workspace_surface", None)
+        if hasattr(self, "background_label") and surface is not None:
+            self.background_label.setGeometry(surface.rect())
+        if hasattr(self, "wallpaper_dim_overlay") and surface is not None:
+            self.wallpaper_dim_overlay.setGeometry(surface.rect())
+        self._apply_responsive_layout()
+
+    def _apply_responsive_layout(self):
+        """Protect the editor width when a tool drawer is open on a laptop."""
+        if not all(hasattr(self, name) for name in ("tools_drawer", "project_panel", "main_splitter")):
+            return
+        compact = self.width() < 1220 and not self.tools_drawer.isHidden()
+        was_hidden = bool(getattr(self, "_responsive_project_hidden", False))
+        if compact and not self.project_panel.isHidden():
+            self.project_panel.setVisible(False)
+            self._responsive_project_hidden = True
+            self.main_splitter.setSizes([0, max(320, self.main_splitter.width())])
+        elif not compact and was_hidden:
+            self.project_panel.setVisible(True)
+            self._responsive_project_hidden = False
+            total = max(530, self.main_splitter.width())
+            self.main_splitter.setSizes([230, max(300, total - 230)])
+        if hasattr(self, "sidebar_scroll"):
+            self.sidebar_scroll.horizontalScrollBar().setValue(0)
 
     def closeEvent(self, event):
         try:

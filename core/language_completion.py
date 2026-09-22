@@ -19,6 +19,7 @@ class CompletionItem:
     detail: str
     kind: str
     additional_edits: tuple[CompletionTextEdit, ...] = ()
+    cursor_offset: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -565,6 +566,198 @@ class CppCompletionProvider:
         return CompletionQuery(token_match.start(), cursor_offset, prefix, tuple(items[:100])) if items else None
 
 
+PYTHON_MEMBERS: dict[str, tuple[str, ...]] = {
+    "str": ("capitalize()", "casefold()", "center()", "count()", "encode()", "endswith()", "find()", "format()", "index()", "isalnum()", "isalpha()", "isdigit()", "islower()", "isspace()", "istitle()", "isupper()", "join()", "lower()", "lstrip()", "partition()", "removeprefix()", "removesuffix()", "replace()", "rfind()", "rpartition()", "rsplit()", "rstrip()", "split()", "splitlines()", "startswith()", "strip()", "swapcase()", "title()", "upper()", "zfill()"),
+    "list": ("append()", "clear()", "copy()", "count()", "extend()", "index()", "insert()", "pop()", "remove()", "reverse()", "sort()"),
+    "dict": ("clear()", "copy()", "fromkeys()", "get()", "items()", "keys()", "pop()", "popitem()", "setdefault()", "update()", "values()"),
+    "set": ("add()", "clear()", "copy()", "difference()", "discard()", "intersection()", "isdisjoint()", "issubset()", "issuperset()", "pop()", "remove()", "symmetric_difference()", "union()", "update()"),
+    "tuple": ("count()", "index()"),
+    "Path": ("absolute()", "as_posix()", "exists()", "expanduser()", "glob()", "is_dir()", "is_file()", "iterdir()", "mkdir()", "open()", "read_bytes()", "read_text()", "relative_to()", "rename()", "resolve()", "rglob()", "stat()", "suffix", "unlink()", "with_name()", "with_suffix()", "write_bytes()", "write_text()"),
+    "os": ("environ", "getcwd()", "listdir()", "makedirs()", "path", "remove()", "rename()", "replace()", "walk()"),
+    "sys": ("argv", "executable", "exit()", "modules", "path", "platform", "stderr", "stdin", "stdout", "version"),
+    "json": ("dump()", "dumps()", "load()", "loads()"),
+    "re": ("compile()", "escape()", "findall()", "finditer()", "fullmatch()", "match()", "search()", "split()", "sub()"),
+    "math": ("ceil()", "cos()", "e", "floor()", "isclose()", "pi", "pow()", "sin()", "sqrt()", "tan()"),
+}
+
+PYTHON_BUILTINS = tuple(dict.fromkeys((*CATALOG_COMPLETIONS["Python"],
+    "aiter", "anext", "ascii", "bin", "breakpoint", "bytearray", "bytes", "callable", "chr", "classmethod",
+    "compile", "complex", "delattr", "dir", "divmod", "eval", "exec", "format", "frozenset", "getattr", "globals",
+    "hasattr", "hash", "help", "hex", "id", "isinstance", "issubclass", "iter", "locals", "memoryview", "next",
+    "object", "oct", "ord", "pow", "property", "repr", "round", "slice", "staticmethod", "vars", "__name__",
+)))
+
+
+def _python_symbols_and_types(text: str) -> tuple[set[str], dict[str, str]]:
+    symbols: set[str] = set()
+    types: dict[str, str] = {}
+    for pattern in (
+        r"(?m)^\s*(?:async\s+)?def\s+([A-Za-z_]\w*)",
+        r"(?m)^\s*class\s+([A-Za-z_]\w*)",
+        r"(?m)^\s*(?:from\s+[\w.]+\s+)?import\s+([A-Za-z_]\w*)",
+        r"(?m)^\s*(?:for|with)\s+([A-Za-z_]\w*)",
+    ):
+        symbols.update(match.group(1) for match in re.finditer(pattern, text))
+    assignment = re.compile(r"(?m)^\s*([A-Za-z_]\w*)\s*(?::[^=\n]+)?=\s*([^\n#]+)")
+    for match in assignment.finditer(text):
+        name, value = match.groups()
+        symbols.add(name)
+        value = value.strip()
+        if value.startswith(("'", '"', "f'", 'f"')):
+            types[name] = "str"
+        elif value.startswith("[") or re.match(r"list\s*\(", value):
+            types[name] = "list"
+        elif value.startswith("{") or re.match(r"dict\s*\(", value):
+            types[name] = "dict"
+        elif re.match(r"set\s*\(", value):
+            types[name] = "set"
+        elif value.startswith("(") or re.match(r"tuple\s*\(", value):
+            types[name] = "tuple"
+        elif re.match(r"Path\s*\(", value):
+            types[name] = "Path"
+        else:
+            constructor = re.match(r"([A-Za-z_]\w*)\s*\(", value)
+            if constructor:
+                types[name] = constructor.group(1)
+    for match in re.finditer(r"(?m)^\s*import\s+([A-Za-z_]\w*)(?:\s+as\s+([A-Za-z_]\w*))?", text):
+        module, alias = match.groups()
+        name = alias or module
+        symbols.add(name)
+        types[name] = module
+    return symbols, types
+
+
+class PythonCompletionProvider:
+    def complete(self, text: str, cursor_offset: int) -> CompletionQuery | None:
+        if not _generic_code_context("Python", text, cursor_offset):
+            return None
+        before = text[:cursor_offset]
+        symbols, types = _python_symbols_and_types(text)
+        member_match = re.search(r"([A-Za-z_]\w*)\.([A-Za-z_]\w*)?$", before)
+        if member_match:
+            receiver, prefix = member_match.group(1), member_match.group(2) or ""
+            receiver_type = types.get(receiver, receiver if receiver in PYTHON_MEMBERS else "")
+            members = PYTHON_MEMBERS.get(receiver_type, ())
+            items = tuple(
+                CompletionItem(member, member, f"Python · {receiver_type} member", "member")
+                for member in members if member.casefold().startswith(prefix.casefold())
+            )
+            return CompletionQuery(cursor_offset - len(prefix), cursor_offset, prefix, items) if items else None
+        token_match = re.search(r"[A-Za-z_]\w*$", before)
+        if token_match is None:
+            return None
+        prefix = token_match.group(0)
+        if len(prefix) < 2:
+            return None
+        items: list[CompletionItem] = []
+        for symbol in sorted(symbols, key=str.casefold):
+            if symbol.casefold().startswith(prefix.casefold()) and symbol != prefix:
+                items.append(CompletionItem(symbol, symbol, f"symbol · {types.get(symbol, 'document')}", "symbol"))
+        for word in PYTHON_BUILTINS:
+            if word.casefold().startswith(prefix.casefold()) and word != prefix:
+                insertion = word + "()" if word in {"print", "range", "len", "enumerate", "zip", "open", "isinstance", "super", "sorted", "sum", "min", "max", "input"} else word
+                items.append(CompletionItem(word, insertion, "Python keyword / builtin", "builtin"))
+        return CompletionQuery(token_match.start(), cursor_offset, prefix, tuple(items[:120])) if items else None
+
+
+JAVASCRIPT_MEMBERS: dict[str, tuple[str, ...]] = {
+    "Array": ("at()", "concat()", "every()", "filter()", "find()", "findIndex()", "flat()", "flatMap()", "forEach()", "includes()", "indexOf()", "join()", "map()", "pop()", "push()", "reduce()", "reverse()", "shift()", "slice()", "some()", "sort()", "splice()", "unshift()"),
+    "String": ("at()", "charAt()", "endsWith()", "includes()", "indexOf()", "match()", "padEnd()", "padStart()", "repeat()", "replace()", "replaceAll()", "slice()", "split()", "startsWith()", "substring()", "toLowerCase()", "toUpperCase()", "trim()"),
+    "Map": ("clear()", "delete()", "entries()", "forEach()", "get()", "has()", "keys()", "set()", "size", "values()"),
+    "Set": ("add()", "clear()", "delete()", "entries()", "forEach()", "has()", "keys()", "size", "values()"),
+    "Promise": ("catch()", "finally()", "then()"),
+    "console": ("assert()", "clear()", "debug()", "dir()", "error()", "group()", "groupEnd()", "info()", "log()", "table()", "time()", "timeEnd()", "warn()"),
+    "document": ("addEventListener()", "body", "createElement()", "getElementById()", "querySelector()", "querySelectorAll()", "readyState", "title"),
+    "JSON": ("parse()", "stringify()"),
+    "Math": ("abs()", "ceil()", "floor()", "max()", "min()", "pow()", "random()", "round()", "sqrt()"),
+}
+
+
+def _javascript_symbols_and_types(text: str) -> tuple[set[str], dict[str, str]]:
+    symbols = set(match.group(1) for match in re.finditer(r"\b(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)", text))
+    symbols.update(match.group(1) for match in re.finditer(r"\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)", text))
+    types: dict[str, str] = {}
+    for match in re.finditer(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]+)", text):
+        name, value = match.groups()
+        value = value.strip()
+        if value.startswith("["): types[name] = "Array"
+        elif value.startswith(("'", '"', "`")): types[name] = "String"
+        else:
+            constructor = re.match(r"new\s+([A-Za-z_$][\w$]*)", value)
+            if constructor: types[name] = constructor.group(1)
+    return symbols, types
+
+
+class JavaScriptCompletionProvider:
+    def complete(self, text: str, cursor_offset: int) -> CompletionQuery | None:
+        if not _generic_code_context("JavaScript", text, cursor_offset):
+            return None
+        before = text[:cursor_offset]
+        symbols, types = _javascript_symbols_and_types(text)
+        member_match = re.search(r"([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)?$", before)
+        if member_match:
+            receiver, prefix = member_match.group(1), member_match.group(2) or ""
+            receiver_type = types.get(receiver, receiver)
+            members = JAVASCRIPT_MEMBERS.get(receiver_type, ())
+            items = tuple(CompletionItem(member, member, f"JavaScript · {receiver_type}", "member") for member in members if member.casefold().startswith(prefix.casefold()))
+            return CompletionQuery(cursor_offset - len(prefix), cursor_offset, prefix, items) if items else None
+        token_match = re.search(r"[A-Za-z_$][\w$]*$", before)
+        if token_match is None or len(token_match.group(0)) < 2:
+            return None
+        prefix = token_match.group(0)
+        words = tuple(dict.fromkeys((*symbols, *CATALOG_COMPLETIONS["JavaScript"], "addEventListener", "localStorage", "sessionStorage", "requestAnimationFrame", "URL", "URLSearchParams", "HTMLElement", "Event", "CustomEvent")))
+        items = [CompletionItem(word, word + "()" if word in {"fetch", "setTimeout", "setInterval", "addEventListener", "requestAnimationFrame"} else word, "JavaScript symbol / Web API", "symbol" if word in symbols else "builtin") for word in words if word.casefold().startswith(prefix.casefold()) and word != prefix]
+        items.sort(key=lambda item: (item.kind != "symbol", len(item.label), item.label.casefold()))
+        return CompletionQuery(token_match.start(), cursor_offset, prefix, tuple(items[:120])) if items else None
+
+
+HTML_TAGS = ("a", "article", "aside", "body", "button", "canvas", "div", "footer", "form", "h1", "h2", "h3", "head", "header", "html", "img", "input", "label", "li", "link", "main", "meta", "nav", "ol", "option", "p", "script", "section", "select", "span", "style", "table", "tbody", "td", "textarea", "th", "thead", "title", "tr", "ul", "video")
+HTML_VOID_TAGS = {"img", "input", "link", "meta"}
+HTML_ATTRIBUTES = ("aria-label", "class", "data-", "disabled", "for", "href", "id", "name", "placeholder", "rel", "role", "src", "style", "target", "title", "type", "value")
+
+
+class HtmlCompletionProvider:
+    def complete(self, text: str, cursor_offset: int) -> CompletionQuery | None:
+        before = text[:cursor_offset]
+        tag_match = re.search(r"<([A-Za-z][\w-]*)$", before)
+        if tag_match:
+            prefix = tag_match.group(1)
+            items = []
+            for tag in HTML_TAGS:
+                if not tag.startswith(prefix.lower()) or tag == prefix:
+                    continue
+                insertion = tag + ">" if tag in HTML_VOID_TAGS else f"{tag}></{tag}>"
+                items.append(CompletionItem(tag, insertion, "HTML element", "tag", cursor_offset=len(tag) + 1))
+            return CompletionQuery(tag_match.start(1), cursor_offset, prefix, tuple(items)) if items else None
+        open_tag = before.rfind("<")
+        if open_tag > before.rfind(">"):
+            attr_match = re.search(r"([A-Za-z_:][-\w:]*)$", before)
+            if attr_match:
+                prefix = attr_match.group(1)
+                items = [CompletionItem(attr, attr + '=""', "HTML attribute", "attribute", cursor_offset=len(attr) + 2) for attr in HTML_ATTRIBUTES if attr.startswith(prefix.lower()) and attr != prefix]
+                return CompletionQuery(attr_match.start(), cursor_offset, prefix, tuple(items)) if items else None
+        return None
+
+
+CSS_PROPERTIES = tuple(dict.fromkeys((*CATALOG_COMPLETIONS["CSS"], "align-content", "appearance", "aspect-ratio", "backdrop-filter", "background-image", "background-position", "background-size", "border-color", "border-style", "border-width", "bottom", "box-sizing", "column-gap", "content", "flex-basis", "flex-grow", "flex-shrink", "flex-wrap", "grid-area", "grid-auto-flow", "grid-column", "grid-row", "inset", "left", "letter-spacing", "object-fit", "object-position", "outline", "overflow-x", "overflow-y", "pointer-events", "right", "row-gap", "text-overflow", "text-transform", "top", "user-select", "visibility", "white-space")))
+
+
+class CssCompletionProvider:
+    def complete(self, text: str, cursor_offset: int) -> CompletionQuery | None:
+        if not _generic_code_context("CSS", text, cursor_offset):
+            return None
+        before = text[:cursor_offset]
+        if before.rfind("{") <= before.rfind("}"):
+            return CatalogCompletionProvider("CSS", CATALOG_COMPLETIONS["CSS"]).complete(text, cursor_offset)
+        token_match = re.search(r"[-A-Za-z]+$", before)
+        if token_match is None:
+            return None
+        prefix = token_match.group(0)
+        items = [CompletionItem(prop, prop + ": ;", "CSS property", "property", cursor_offset=len(prop) + 2) for prop in CSS_PROPERTIES if prop.startswith(prefix.lower()) and prop != prefix]
+        items.sort(key=lambda item: (len(item.label), item.label))
+        return CompletionQuery(token_match.start(), cursor_offset, prefix, tuple(items[:120])) if items else None
+
+
 def _generic_code_context(language: str, text: str, cursor_offset: int) -> bool:
     before = text[:cursor_offset]
     if language in {"C++", "JavaScript", "TypeScript", "C#", "PHP", "CSS", "Luau"}:
@@ -624,8 +817,12 @@ class CatalogCompletionProvider:
 DEFAULT_COMPLETION_REGISTRY = CompletionRegistry()
 DEFAULT_COMPLETION_REGISTRY.register("Java", JavaCompletionProvider())
 DEFAULT_COMPLETION_REGISTRY.register("C++", CppCompletionProvider())
+DEFAULT_COMPLETION_REGISTRY.register("Python", PythonCompletionProvider())
+DEFAULT_COMPLETION_REGISTRY.register("JavaScript", JavaScriptCompletionProvider())
+DEFAULT_COMPLETION_REGISTRY.register("HTML", HtmlCompletionProvider())
+DEFAULT_COMPLETION_REGISTRY.register("CSS", CssCompletionProvider())
 for _language, _words in CATALOG_COMPLETIONS.items():
-    if _language in {"Java", "C++"}:
+    if _language in {"Java", "C++", "Python", "JavaScript", "HTML", "CSS"}:
         continue
     DEFAULT_COMPLETION_REGISTRY.register(_language, CatalogCompletionProvider(_language, _words))
 

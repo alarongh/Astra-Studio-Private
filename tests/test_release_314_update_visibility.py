@@ -14,30 +14,32 @@ def _assignment(module: ast.Module, name: str):
     raise AssertionError(f"missing assignment: {name}")
 
 
-def test_release_314_exposes_only_current_three_languages_and_preserves_hidden_implementations():
+def test_release_316_exposes_six_focused_languages_and_preserves_hidden_implementations():
     source = (ROOT / "main.py").read_text(encoding="utf-8")
     tree = ast.parse(source)
-    assert _assignment(tree, "VISIBLE_LANGUAGES") == ("Java", "Python", "C++")
+    assert _assignment(tree, "VISIBLE_LANGUAGES") == ("Java", "Python", "C++", "JavaScript", "HTML", "CSS")
     assert 'if language in VISIBLE_LANGUAGES:' in source
     assert "if editor.language_name in VISIBLE_LANGUAGES:" in source
     assert "if get_project_template(template_id).default_language in VISIBLE_LANGUAGES:" in source
     assert "[language for language in registry.supported_languages() if language in VISIBLE_LANGUAGES]" in source
     assert 'LANGUAGES[language]["filters"] for language in VISIBLE_LANGUAGES' in source
-    for hidden in ("JavaScript", "HTML", "CSS", "TypeScript", "C#", "PHP", "Luau", "GDScript"):
+    for hidden in ("TypeScript", "C#", "PHP", "Luau", "GDScript"):
         assert f'"{hidden}":' in source
 
 
-def test_installer_ui_and_bulk_update_are_scoped_to_java_python_cpp():
+def test_installer_ui_and_bulk_update_are_scoped_to_focused_languages():
     source = (ROOT / "main.py").read_text(encoding="utf-8")
-    assert 'self.btn_install_all.setText("Установить Java + Python + C++")' in source
+    assert 'self.btn_install_all.setText("Установить все 6 языков")' in source
     assert "hidden_button.setVisible(False)" in source
     update_script = source.split('update_script = r"""', 1)[1].split('"""', 1)[0]
     assert "Python.Python.3.14" in update_script
     assert "astral-sh.uv" in update_script
+    assert "OpenJS.NodeJS.LTS" in update_script
+    assert "typescript-language-server@latest" in update_script
+    assert "vscode-langservers-extracted@latest" in update_script
     assert "MSYS2.MSYS2" in update_script
     assert "EclipseAdoptium.Temurin.21.JDK" in update_script
     for hidden_package in (
-        "OpenJS.NodeJS.LTS",
         "GodotEngine.GodotEngine",
         "PHP.PHP.8.4",
         "Microsoft.PowerShell",

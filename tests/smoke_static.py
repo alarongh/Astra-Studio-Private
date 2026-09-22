@@ -66,7 +66,7 @@ def main() -> None:
         py_compile.compile(str(file), doraise=True)
 
     tree = ast.parse(MAIN.read_text(encoding="utf-8"))
-    assert literal_assignment(tree, "APP_VERSION") == "Release 3.15"
+    assert literal_assignment(tree, "APP_VERSION") == "Release 3.16"
 
     languages = extract_language_names(tree)
     missing = REQUIRED_LANGUAGES - languages
@@ -178,7 +178,7 @@ def main() -> None:
     ]:
         assert package_id in main_text, f"Installer package id missing: {package_id}"
 
-    print("PASS: Astra Studio Release 3.15 static smoke checks")
+    print("PASS: Astra Studio Release 3.16 static smoke checks")
     print(f"Languages: {len(languages)}")
     print(f"Python registry entries: {len(registry_json['libraries'])}")
     print(f"Assets checked: {len(REQUIRED_ASSETS)}")

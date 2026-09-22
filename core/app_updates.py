@@ -164,7 +164,9 @@ def windows_update_script() -> str:
     [Parameter(Mandatory=$true)][string]$Archive,
     [Parameter(Mandatory=$true)][string]$TargetDirectory,
     [Parameter(Mandatory=$true)][int]$ParentPid,
-    [Parameter(Mandatory=$true)][string]$LogPath
+    [Parameter(Mandatory=$true)][string]$LogPath,
+    [switch]$SkipHealthCheck,
+    [switch]$SuppressUi
 )
 $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
@@ -177,7 +179,8 @@ function Write-UpdateLog([string]$Message) {
 try {
     $archivePath = [IO.Path]::GetFullPath($Archive)
     $targetPath = [IO.Path]::GetFullPath($TargetDirectory).TrimEnd('\')
-    if ([IO.Path]::GetFileName($targetPath) -ne "Astra Studio") { throw "Unsafe target directory: $targetPath" }
+    $targetName = [IO.Path]::GetFileName($targetPath)
+    if ($targetName -notmatch '^Astra Studio(?: .+)?$') { throw "Unsafe target directory: $targetPath" }
     if (-not (Test-Path -LiteralPath $archivePath -PathType Leaf)) { throw "Update archive is missing: $archivePath" }
     if (-not (Test-Path -LiteralPath (Join-Path $targetPath "Astra Studio.exe") -PathType Leaf)) { throw "Current Astra Studio executable is missing" }
 
@@ -195,6 +198,7 @@ try {
 
     $stagePath = Join-Path $updatesRoot ("stage-" + [guid]::NewGuid().ToString("N"))
     $backupPath = $targetPath + ".previous-" + (Get-Date -Format "yyyyMMddHHmmss")
+    $failedPath = $targetPath + ".failed-" + (Get-Date -Format "yyyyMMddHHmmss")
     New-Item -ItemType Directory -Path $stagePath -Force | Out-Null
     Expand-Archive -LiteralPath $archivePath -DestinationPath $stagePath -Force
     $payloadPath = Join-Path $stagePath "Astra Studio"
@@ -213,15 +217,35 @@ try {
     }
 
     $installedExecutable = Join-Path $targetPath "Astra Studio.exe"
-    Start-Process -FilePath $installedExecutable -WorkingDirectory $targetPath
-    Start-Sleep -Milliseconds 1200
-    if (Test-Path -LiteralPath $backupPath) { Remove-Item -LiteralPath $backupPath -Recurse -Force }
-    if (Test-Path -LiteralPath $stagePath) { Remove-Item -LiteralPath $stagePath -Recurse -Force }
-    if (Test-Path -LiteralPath $archivePath) { Remove-Item -LiteralPath $archivePath -Force }
-    Write-UpdateLog "Update installed successfully"
+    $newProcess = Start-Process -FilePath $installedExecutable -WorkingDirectory $targetPath -PassThru
+    if (-not $SkipHealthCheck) {
+        Start-Sleep -Seconds 6
+        $newProcess.Refresh()
+        if ($newProcess.HasExited) {
+            throw "The updated Astra Studio exited during the startup health check (exit code $($newProcess.ExitCode))"
+        }
+    }
+    # A verified previous build is deliberately retained. It is the recovery
+    # copy for a laptop that loses power or discovers a delayed compatibility
+    # problem after the update. Never trade that safety for automatic cleanup.
+    try { if (Test-Path -LiteralPath $stagePath) { Remove-Item -LiteralPath $stagePath -Recurse -Force } } catch { Write-UpdateLog ("STAGE CLEANUP FAILED: " + $_.Exception.Message) }
+    try { if (Test-Path -LiteralPath $archivePath) { Remove-Item -LiteralPath $archivePath -Force } } catch { Write-UpdateLog ("ARCHIVE CLEANUP FAILED: " + $_.Exception.Message) }
+    Write-UpdateLog "Update installed successfully; previous build retained at $backupPath"
 } catch {
     $failureMessage = $_.Exception.Message
     Write-UpdateLog ("UPDATE FAILED: " + $failureMessage)
+    # Roll back even if the new folder was already moved into place and its EXE
+    # managed to start but terminated during the health check.
+    try {
+        if (Test-Path -LiteralPath $backupPath) {
+            if (Test-Path -LiteralPath $targetPath) {
+                Move-Item -LiteralPath $targetPath -Destination $failedPath
+                Write-UpdateLog "Failed update retained at $failedPath"
+            }
+            Move-Item -LiteralPath $backupPath -Destination $targetPath
+            Write-UpdateLog "Previous Astra Studio restored to $targetPath"
+        }
+    } catch { Write-UpdateLog ("ROLLBACK FAILED: " + $_.Exception.Message) }
     # Never leave the user with an application that merely disappeared. The
     # existing or rolled-back build is started again and the failure is shown.
     try {
@@ -231,6 +255,7 @@ try {
         }
     } catch { Write-UpdateLog ("RECOVERY START FAILED: " + $_.Exception.Message) }
     try {
+        if ($SuppressUi) { throw "UI suppressed" }
         Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
         [System.Windows.MessageBox]::Show(
             "Astra Studio не удалось установить обновление.`n`n$failureMessage`n`nПодробности: $LogPath",

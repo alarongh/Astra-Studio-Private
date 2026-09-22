@@ -110,23 +110,26 @@ def test_windows_updater_has_wait_backup_rollback_and_restart_steps():
         "Move-Item -LiteralPath $targetPath -Destination $backupPath",
         "Move-Item -LiteralPath $backupPath -Destination $targetPath",
         "Start-Process -FilePath $installedExecutable",
+        "previous build retained",
+        "Previous Astra Studio restored",
+        "startup health check",
         "Astra Studio не удалось установить обновление",
     ):
         assert required in script
 
 
-def test_release_315_bundles_public_github_channel_and_valid_latest_manifest():
+def test_release_316_bundles_public_github_channel_and_valid_latest_manifest():
     channel_url = configured_manifest_url(ROOT / "update_channel.json", {})
     assert channel_url == "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
     manifest = parse_update_manifest((ROOT / "update" / "latest.json").read_bytes())
-    assert manifest.version == "Release 3.15"
-    assert manifest.download_url.endswith("/v3.15/Astra_Studio_Release_3_15.zip")
-    assert manifest.notes_url.endswith("/releases/tag/v3.15")
+    assert manifest.version == "Release 3.16"
+    assert manifest.download_url.endswith("/v3.16/Astra_Studio_Release_3_16.zip")
+    assert manifest.notes_url.endswith("/releases/tag/v3.16")
 
 
 @pytest.mark.skipif(os.name != "nt" or shutil.which("powershell.exe") is None, reason="Windows updater integration")
 def test_windows_updater_replaces_portable_folder_in_isolated_directory(tmp_path: Path):
-    target = tmp_path / "Astra Studio"
+    target = tmp_path / "Astra Studio 3.15"
     payload = tmp_path / "payload" / "Astra Studio"
     target.mkdir()
     payload.mkdir(parents=True)
@@ -147,7 +150,7 @@ def test_windows_updater_replaces_portable_folder_in_isolated_directory(tmp_path
         [
             "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
             "-Archive", str(archive), "-TargetDirectory", str(target), "-ParentPid", "999999",
-            "-LogPath", str(log),
+            "-LogPath", str(log), "-SkipHealthCheck", "-SuppressUi",
         ],
         capture_output=True,
         text=True,
@@ -160,4 +163,43 @@ def test_windows_updater_replaces_portable_folder_in_isolated_directory(tmp_path
     assert (target / "Astra Studio.exe").read_bytes() == helper_exe.read_bytes()
     assert (target / "new.txt").read_text(encoding="utf-8") == "new"
     assert not (target / "old.txt").exists()
-    assert "Update installed successfully" in log.read_text(encoding="utf-8-sig")
+    log_text = log.read_text(encoding="utf-8-sig")
+    assert "Update installed successfully" in log_text
+    assert "previous build retained" in log_text
+    assert list(tmp_path.glob("Astra Studio 3.15.previous-*"))
+
+
+@pytest.mark.skipif(os.name != "nt" or shutil.which("powershell.exe") is None, reason="Windows updater integration")
+def test_windows_updater_rolls_back_when_new_executable_exits_during_health_check(tmp_path: Path):
+    target = tmp_path / "Astra Studio 3.15"
+    payload = tmp_path / "payload" / "Astra Studio"
+    target.mkdir()
+    payload.mkdir(parents=True)
+    helper_exe = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "where.exe"
+    shutil.copy2(helper_exe, target / "Astra Studio.exe")
+    (target / "old.txt").write_text("old", encoding="utf-8")
+    shutil.copy2(helper_exe, payload / "Astra Studio.exe")
+    (payload / "new.txt").write_text("new", encoding="utf-8")
+    archive = tmp_path / "update.zip"
+    with zipfile.ZipFile(archive, "w") as package:
+        for path in payload.rglob("*"):
+            if path.is_file():
+                package.write(path, path.relative_to(payload.parent).as_posix())
+    script = tmp_path / "install.ps1"
+    log = tmp_path / "update.log"
+    script.write_text(windows_update_script(), encoding="utf-8-sig")
+    completed = subprocess.run(
+        [
+            "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
+            "-Archive", str(archive), "-TargetDirectory", str(target), "-ParentPid", "999999",
+            "-LogPath", str(log), "-SuppressUi",
+        ],
+        capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=target, timeout=30,
+    )
+    assert completed.returncode == 1
+    assert (target / "old.txt").read_text(encoding="utf-8") == "old"
+    assert not (target / "new.txt").exists()
+    assert list(tmp_path.glob("Astra Studio 3.15.failed-*"))
+    log_text = log.read_text(encoding="utf-8-sig")
+    assert "startup health check" in log_text
+    assert "Previous Astra Studio restored" in log_text

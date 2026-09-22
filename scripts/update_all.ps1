@@ -9,12 +9,8 @@ $ids = @(
     "Python.Python.3.14",
     "astral-sh.uv",
     "OpenJS.NodeJS.LTS",
-    "Git.Git",
-    "Microsoft.PowerShell",
     "MSYS2.MSYS2",
-    "EclipseAdoptium.Temurin.21.JDK",
-    "GodotEngine.GodotEngine",
-    "PHP.PHP.8.4"
+    "EclipseAdoptium.Temurin.21.JDK"
 )
 foreach ($id in $ids) {
     if (-not (Test-WingetInstalled $id)) {
@@ -28,8 +24,8 @@ foreach ($id in $ids) {
 $npm = Get-Command npm -ErrorAction SilentlyContinue
 if ($npm) {
     Write-Step "Update TypeScript tooling"
-    & $npm.Source install --global typescript@latest tsx@latest
-    if ($LASTEXITCODE -ne 0) { Write-Warning "npm could not update TypeScript/tsx." }
+    & $npm.Source install --global typescript@latest tsx@latest typescript-language-server@latest vscode-langservers-extracted@latest
+    if ($LASTEXITCODE -ne 0) { Write-Warning "npm could not update Web tooling." }
 }
 $bash = "C:\msys64\usr\bin\bash.exe"
 if (Test-Path $bash) {
