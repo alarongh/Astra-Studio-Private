@@ -180,7 +180,7 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.17"
+APP_VERSION = "Release 3.18"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 DEFAULT_LANGUAGE = "Python"
@@ -192,7 +192,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.17 — красно-синий": "assets/astra.ico",
+    "Astra 3.18 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -6190,7 +6190,7 @@ class AstraStudio(QMainWindow):
 
     def _on_task_output(self, task_id: str, text: str, stream: str):
         context = self.active_task_context if self.active_task_context.get("task_id") == task_id else {}
-        if context.get("mode") == "compile" and context.get("language") in {"Java", "C++"}:
+        if context.get("mode") == "compile" and context.get("language") in {"Python", "Java", "C++", "JavaScript"}:
             key = "stdout_chunks" if stream == "stdout" else "stderr_chunks"
             context.setdefault(key, []).append(text)
         if context.get("mode") in {"quality_format", "quality_lint"}:
@@ -6277,15 +6277,22 @@ class AstraStudio(QMainWindow):
 
         if mode == "compile":
             language = context.get("language", self.last_run_language)
-            if language in {"Java", "C++"}:
+            compile_parsers = {
+                "Python": "python-compile",
+                "Java": "javac",
+                "C++": "cpp-compiler",
+                "JavaScript": "node-check",
+            }
+            compile_diagnostics: list[QualityDiagnostic] = []
+            if language in compile_parsers:
                 compiler_output = "".join(context.get("stdout_chunks", [])) + "\n" + "".join(context.get("stderr_chunks", []))
                 source_path = Path(context.get("source_path") or self.last_run_source_path)
-                parser = "javac" if language == "Java" else "cpp-compiler"
-                diagnostics = parse_linter_output(parser, compiler_output, source_path)
-                self._set_quality_diagnostics(source_path, diagnostics)
+                parser = compile_parsers[language]
+                compile_diagnostics = parse_linter_output(parser, compiler_output, source_path)
+                self._set_quality_diagnostics(source_path, compile_diagnostics)
                 self.write_log(
-                    f"[{language}] compile exit={exit_code}; diagnostics={len(diagnostics)}; "
-                    f"compiler={context.get('javac_path') or context.get('compiler_path', '')}"
+                    f"[{language}] compile exit={exit_code}; diagnostics={len(compile_diagnostics)}; "
+                    f"compiler={context.get('tool_path') or context.get('javac_path') or context.get('compiler_path', '')}"
                 )
             if success:
                 if language == "Python":
@@ -6307,15 +6314,19 @@ class AstraStudio(QMainWindow):
                     return
             else:
                 self.output_console.appendPlainText(f"\n✕ {language} проверка/сборка завершилась с кодом {exit_code}")
-                if language == "Java":
-                    self.output_console.appendPlainText("Ошибки javac относятся к исходному коду; JDK найден, установщик не требуется.")
-                elif language == "C++":
-                    diagnostics = self.quality_diagnostics.get(str(Path(context.get("source_path") or self.last_run_source_path).resolve()), [])
-                    if diagnostics:
-                        first_line = int(getattr(diagnostics[0], "line", 0)) + 1
+                if language in compile_parsers:
+                    tool_names = {
+                        "Python": "Python",
+                        "Java": "JDK",
+                        "C++": "C++ компилятор",
+                        "JavaScript": "Node.js",
+                    }
+                    tool_name = tool_names[language]
+                    if compile_diagnostics:
+                        first_line = int(getattr(compile_diagnostics[0], "line", 0)) + 1
                         self.output_console.appendPlainText(
                             f"Ошибка относится к коду, первая проблемная строка: {first_line}. "
-                            "Компилятор найден; переустанавливать C++ не требуется."
+                            f"{tool_name} найден и запущен; переустановка не требуется."
                         )
                         if hasattr(self, "problems_page"):
                             index = self.bottom_tabs.indexOf(self.problems_page)
@@ -6323,7 +6334,7 @@ class AstraStudio(QMainWindow):
                                 self.bottom_tabs.setCurrentIndex(index)
                     else:
                         self.output_console.appendPlainText(
-                            "Компилятор найден и запущен. Проверь его сообщения выше; установщик C++ не требуется."
+                            f"{tool_name} найден и запущен. Проверь его сообщения выше; установщик не требуется."
                         )
         elif mode == "build_python_exe":
             exe_path = context.get("exe_path")
@@ -6720,7 +6731,7 @@ class AstraStudio(QMainWindow):
             args = [*py_args, "-m", "py_compile", str(source_path)]
             self.output_console.appendPlainText("Этапы: подготовка → проверка синтаксиса → завершение\n")
             self.output_console.appendPlainText(f"▶ Команда: {self._safe_command_preview(py_program, args)}\n")
-            self._start_process_task("compile_python", "Идёт проверка Python…", py_program, args, source_path.parent, {"mode": "compile", "language": language, "source_path": str(source_path), "indeterminate": False}, 5, 100, False)
+            self._start_process_task("compile_python", "Идёт проверка Python…", py_program, args, source_path.parent, {"mode": "compile", "language": language, "source_path": str(source_path), "tool_path": str(py_program), "indeterminate": False, "stdout_chunks": [], "stderr_chunks": []}, 5, 100, False)
             return None
         if language == "C++":
             return self._start_compile_cpp_task(source_path, run_after=False)
@@ -6735,7 +6746,7 @@ class AstraStudio(QMainWindow):
             args = ["--check", str(source_path)]
             self.output_console.appendPlainText("Этапы: подготовка → node --check → завершение\n")
             self.output_console.appendPlainText(f"▶ Команда: {self._safe_command_preview(node, args)}\n")
-            self._start_process_task("compile_js", "Идёт проверка JavaScript…", node, args, source_path.parent, {"mode": "compile", "language": language, "source_path": str(source_path), "indeterminate": False}, 5, 100, False)
+            self._start_process_task("compile_js", "Идёт проверка JavaScript…", node, args, source_path.parent, {"mode": "compile", "language": language, "source_path": str(source_path), "tool_path": str(node), "indeterminate": False, "stdout_chunks": [], "stderr_chunks": []}, 5, 100, False)
             return None
         if language == "TypeScript":
             tsc = project_tool_path(source_path.parent, "tsc")
@@ -7180,21 +7191,37 @@ class AstraStudio(QMainWindow):
             self.write_log(f"[Java] launch exit={exit_code}")
         self.status_pill.setText("готово" if exit_code == 0 else "сбой")
         self.statusBar().showMessage(f"Процесс завершён с кодом {exit_code}", 4000)
-        if exit_code != 0 and self.last_run_language == "Python":
-            traceback_text = str(getattr(self, "run_stderr_buffer", ""))
-            locations = list(re.finditer(r'File "([^"]+)", line (\d+)', traceback_text))
-            if locations and self.last_run_source_path:
-                line_number = max(0, int(locations[-1].group(2)) - 1)
-                message_lines = [line.strip() for line in traceback_text.splitlines() if line.strip()]
-                message = message_lines[-1] if message_lines else "Python runtime error"
-                diagnostic = QualityDiagnostic(
-                    path=Path(self.last_run_source_path), line=line_number, character=0,
-                    end_line=line_number, end_character=1, severity=1,
-                    message=message, source="Python runtime",
+        if exit_code != 0 and self.last_run_source_path:
+            runtime_output = str(getattr(self, "run_stderr_buffer", ""))
+            source_path = Path(self.last_run_source_path)
+            diagnostics: list[QualityDiagnostic] = []
+            if self.last_run_language == "Python":
+                locations = list(re.finditer(r'File "([^"]+)", line (\d+)', runtime_output))
+                if locations:
+                    line_number = max(0, int(locations[-1].group(2)) - 1)
+                    message_lines = [line.strip() for line in runtime_output.splitlines() if line.strip()]
+                    message = message_lines[-1] if message_lines else "Python runtime error"
+                    diagnostics = [QualityDiagnostic(
+                        path=source_path, line=line_number, character=0,
+                        end_line=line_number, end_character=1, severity=1,
+                        message=message, source="Python runtime",
+                    )]
+                QTimer.singleShot(0, self.handle_missing_python_module_after_run)
+            elif self.last_run_language == "JavaScript":
+                diagnostics = parse_linter_output("node-runtime", runtime_output, source_path)
+            elif self.last_run_language == "Java":
+                diagnostics = parse_linter_output("java-runtime", runtime_output, source_path)
+            if diagnostics:
+                self._set_quality_diagnostics(source_path, diagnostics)
+                first_line = int(diagnostics[0].line) + 1
+                self.output_console.appendPlainText(
+                    f"\n✕ Ошибка отмечена в строке {first_line}. "
+                    "Среда выполнения найдена; переустановка языка не требуется."
                 )
-                self._set_quality_diagnostics(Path(self.last_run_source_path), [diagnostic])
-                self.output_console.appendPlainText(f"\n✕ Ошибка отмечена в строке {line_number + 1}.")
-            QTimer.singleShot(0, self.handle_missing_python_module_after_run)
+                if hasattr(self, "problems_page"):
+                    index = self.bottom_tabs.indexOf(self.problems_page)
+                    if index >= 0:
+                        self.bottom_tabs.setCurrentIndex(index)
 
     def stop_run_process(self):
         if self.run_process and self.run_process.state() != QProcess.ProcessState.NotRunning:

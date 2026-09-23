@@ -213,6 +213,8 @@ Release 3.15 extends the visibility gate beyond the main language selector: LSP 
 
 Release 3.17 retains the six focused languages and transactional updater from 3.16, simplifies appearance customization into a profile plus shared panel/wallpaper controls, and moves shortcut management from the language installer into Settings. C++ compiler output now becomes exact Problems/line diagnostics; a source error can no longer be misreported as a missing compiler. Synthetic input and duplicate blocking compile paths were removed, while deferred language engines remain preserved for later work.
 
+Release 3.18 applies the same classification boundary to the other focused languages: once Python, Node.js, JDK or the C++ compiler has started, a non-zero result is treated as a source-code failure rather than a missing installation. Python/Java/JavaScript runtime locations and Python/Java/C++/JavaScript compile locations are normalized into Problems. HTML and CSS remain toolchain-independent for basic checking and cannot trigger a language-installer prompt.
+
 ## Release 3.9 installer correction
 
 Owner runtime output confirmed that Temurin JDK 21 and `javac` were already healthy, but Windows PowerShell converted the normal stderr output of `java -version` into a terminating `NativeCommandError` because the installer uses `$ErrorActionPreference = "Stop"`. Release 3.9 runs version probes through `System.Diagnostics.Process` with separately redirected stdout/stderr and decides success from the child exit code. The complete Java installer has been rerun against Temurin 21.0.11 and exits successfully.

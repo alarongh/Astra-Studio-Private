@@ -424,6 +424,102 @@ def parse_cpp_compiler_output(output: str, fallback_path: Path) -> list[QualityD
     return result
 
 
+def parse_python_compile_output(output: str, fallback_path: Path) -> list[QualityDiagnostic]:
+    """Parse ``python -m py_compile`` syntax diagnostics."""
+    lines = str(output or "").replace("\r\n", "\n").splitlines()
+    location = re.compile(r'^\s*File "(?P<path>.+)", line (?P<line>\d+)\s*$')
+    result: list[QualityDiagnostic] = []
+    for index, line_text in enumerate(lines):
+        match = location.match(line_text)
+        if not match:
+            continue
+        character = 0
+        message = "Python syntax error"
+        for candidate in lines[index + 1:index + 6]:
+            caret = candidate.find("^")
+            if caret >= 0:
+                character = caret
+            stripped = candidate.strip()
+            if stripped.startswith(("SyntaxError:", "IndentationError:", "TabError:")):
+                message = stripped
+                break
+        line_number = max(0, int(match.group("line")) - 1)
+        result.append(QualityDiagnostic(
+            path=Path(fallback_path),
+            line=line_number,
+            character=character,
+            end_line=line_number,
+            end_character=character + 1,
+            severity=1,
+            message=message,
+            source="Python compiler",
+        ))
+    return result
+
+
+def parse_node_diagnostic_output(output: str, fallback_path: Path) -> list[QualityDiagnostic]:
+    """Parse Node.js syntax/runtime diagnostics that start with ``path:line``."""
+    lines = str(output or "").replace("\r\n", "\n").splitlines()
+    location = re.compile(r"^(?P<path>.+\.(?:js|mjs|cjs|jsx)):(?P<line>\d+)\s*$", re.IGNORECASE)
+    result: list[QualityDiagnostic] = []
+    seen: set[tuple[int, int, str]] = set()
+    for index, line_text in enumerate(lines):
+        match = location.match(line_text.strip())
+        if not match:
+            continue
+        character = 0
+        message = "JavaScript error"
+        for candidate in lines[index + 1:index + 8]:
+            caret = candidate.find("^")
+            if caret >= 0:
+                character = caret
+            stripped = candidate.strip()
+            if re.match(r"^(?:SyntaxError|ReferenceError|TypeError|RangeError|URIError|EvalError):", stripped):
+                message = stripped
+                break
+        line_number = max(0, int(match.group("line")) - 1)
+        key = (line_number, character, message)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(QualityDiagnostic(
+            path=Path(fallback_path),
+            line=line_number,
+            character=character,
+            end_line=line_number,
+            end_character=character + 1,
+            severity=1,
+            message=message,
+            source="Node.js",
+        ))
+    return result
+
+
+def parse_java_runtime_output(output: str, fallback_path: Path) -> list[QualityDiagnostic]:
+    """Parse Java stack frames and point Problems at the user's source line."""
+    pattern = re.compile(r"\bat\s+[\w.$<>]+\((?P<file>[^():]+\.java):(?P<line>\d+)\)")
+    message = next(
+        (line.strip() for line in str(output or "").splitlines() if "Exception" in line or "Error" in line),
+        "Java runtime error",
+    )
+    for line_text in str(output or "").replace("\r\n", "\n").splitlines():
+        match = pattern.search(line_text)
+        if not match:
+            continue
+        line_number = max(0, int(match.group("line")) - 1)
+        return [QualityDiagnostic(
+            path=Path(fallback_path),
+            line=line_number,
+            character=0,
+            end_line=line_number,
+            end_character=1,
+            severity=1,
+            message=message,
+            source="Java runtime",
+        )]
+    return []
+
+
 def parse_linter_output(parser: str, output: str, fallback_path: Path) -> list[QualityDiagnostic]:
     if parser == "ruff-json":
         return parse_ruff_json(output, fallback_path)
@@ -433,4 +529,10 @@ def parse_linter_output(parser: str, output: str, fallback_path: Path) -> list[Q
         return parse_javac_output(output, fallback_path)
     if parser in {"gcc", "g++", "clang", "clang++", "cpp-compiler"}:
         return parse_cpp_compiler_output(output, fallback_path)
+    if parser == "python-compile":
+        return parse_python_compile_output(output, fallback_path)
+    if parser in {"node-check", "node-runtime"}:
+        return parse_node_diagnostic_output(output, fallback_path)
+    if parser == "java-runtime":
+        return parse_java_runtime_output(output, fallback_path)
     return []

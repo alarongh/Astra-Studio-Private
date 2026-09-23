@@ -1,13 +1,13 @@
 # Astra Studio
 
-Версия: **Release 3.17 — Windows verified portable build**
+Версия: **Release 3.18 — Windows verified portable build**
 
 Astra Studio — лёгкая локальная IDE, которая развивается как среда разработки для задач StaffedUp: web, Python, Roblox/Luau, Godot, Windows-скрипты и небольшие приложения. Цель 3.x — сохранить простой интерфейс Astra, но добавить проектные инструменты, окружения, диагностику и IDE-функции без необходимости превращать программу в копию VS Code.
 
 
-## Статус Release 3.17
+## Статус Release 3.18
 
-Release 3.0–3.3 остаются замороженным функциональным baseline. **Release 3.17** сохраняет транзакционное обновление и шесть основных языков 3.16, но упрощает повседневный UX: настройки оформления объединены в профиль, общую прозрачность панелей и размытие обоев; ярлык перенесён из установщика в «Настройки». Ошибка компиляции C++ теперь показывает реальную строку и не выдаёт ложный запрос на установку уже найденного компилятора. Спорная «Имитация ввода» и дублирующие blocking-компиляторы удалены. Отложенные языковые движки не вырезаны.
+Release 3.0–3.3 остаются замороженным функциональным baseline. **Release 3.18** сохраняет упрощённый UX 3.17 и закрывает одинаковую классификацию ошибок во всех шести активных языках. Python, Java, C++ и JavaScript показывают точную строку из вывода реального инструмента и не открывают установщик, если инструмент уже запустился. Python, Java и JavaScript также подсвечивают строку runtime-исключения. HTML и CSS не зависят от установщика языка: для них остаются встроенная проверка структуры и project-local Prettier/ESLint.
 
 Тестовые зависимости теперь входят в единый установочный поток: `install_app.bat` устанавливает `requirements-test.txt`, `reinstall_app.bat` пересоздаёт `.venv` целиком, а `run_acceptance_tests.bat` запускает Windows acceptance suite без ручной докачки `pytest`.
 
@@ -317,7 +317,7 @@ Luau/Rojo диагностируются Project Doctor. D1 создаёт Rojo-
 - Release 3.2: C1 formatters/linters DONE; C2 Test Explorer DONE; C3 Git / Source Control DONE (`TEST_REPORT_RELEASE_3_2_C3.md`); Release 3.2 internally gated and frozen;
 - Release 3.3: D1 StaffedUp Project Templates DONE; D2 StaffedUp Project Health DONE; D3 AI-adjacent workflow DONE (`TEST_REPORT_RELEASE_3_3_D3.md`); функциональный scope 3.x закрыт;
 - Final Integration Gate после D1–D3: PASS; Release 3.3 остаётся замороженным feature baseline;
-- Release 3.4 исправил Windows batch launcher; Release 3.5 закрыл UX/package-manager acceptance feedback; Release 3.6 закрыл native-window/CRLF/log defects; текущий verified candidate — Release 3.17;
+- Release 3.4 исправил Windows batch launcher; Release 3.5 закрыл UX/package-manager acceptance feedback; Release 3.6 закрыл native-window/CRLF/log defects; текущий verified candidate — Release 3.18;
 - только после стабильного Windows sign-off текущей ветки 3.x начинается планирование Release 4.0.
 
 ## Установка, переустановка и Windows acceptance
@@ -360,4 +360,4 @@ D3 sandbox gate: `compileall` PASS, static smoke PASS, **185 collected / 178 PAS
 
 ## Следующий этап
 
-Final Integration Gate поколения 3.x пройден. Текущий рабочий portable build — **Release 3.17** — выпускается целой папкой `Astra Studio`; подробности запуска — в `PORTABLE_README.md`, публикации обновлений — в `UPDATE_DISTRIBUTION.md`. Ручная owner-матрица по `TEST_REGISTRY_3_X.md` остаётся отдельным этапом sign-off и не подменяется автоматическими тестами.
+Final Integration Gate поколения 3.x пройден. Текущий рабочий portable build — **Release 3.18** — выпускается целой папкой `Astra Studio`; подробности запуска — в `PORTABLE_README.md`, публикации обновлений — в `UPDATE_DISTRIBUTION.md`. Ручная owner-матрица по `TEST_REGISTRY_3_X.md` остаётся отдельным этапом sign-off и не подменяется автоматическими тестами.

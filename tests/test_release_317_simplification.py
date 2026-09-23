@@ -30,9 +30,9 @@ def test_cpp_compiler_diagnostic_points_to_actual_source_line():
 def test_cpp_failure_is_not_misreported_as_missing_compiler():
     source = (ROOT / "main.py").read_text(encoding="utf-8")
 
-    assert 'context.get("language") in {"Java", "C++"}' in source
-    assert 'parser = "javac" if language == "Java" else "cpp-compiler"' in source
-    assert "Компилятор найден; переустанавливать C++ не требуется." in source
+    assert '"C++": "cpp-compiler"' in source
+    assert '"C++": "C++ компилятор"' in source
+    assert 'f"{tool_name} найден и запущен; переустановка не требуется."' in source
     assert "elif language == \"C++\":\n                    self._ask_install_now(language)" not in source
     assert 'compiler = cpp_compiler_path()' in source
 
@@ -130,7 +130,7 @@ def test_real_cpp_error_marks_line_without_opening_installer(monkeypatch, tmp_pa
     diagnostics = window.quality_diagnostics[str(source_path.resolve())]
     assert diagnostics
     assert any(item.line == 2 for item in diagnostics)
-    assert "переустанавливать C++ не требуется" in window.output_console.toPlainText()
+    assert "переустановка не требуется" in window.output_console.toPlainText()
 
     window.close()
     app.processEvents()

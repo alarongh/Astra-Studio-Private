@@ -119,7 +119,8 @@ def test_missing_java_runtime_is_reported_only_when_pair_is_absent():
     runtime = discover_java_runtime(env={}, which=lambda _name: None, search_standard_homes=False)
     assert runtime is None
     source = (ROOT / "main.py").read_text(encoding="utf-8")
-    assert "Ошибки javac относятся к исходному коду; JDK найден, установщик не требуется." in source
+    assert '"Java": "JDK"' in source
+    assert 'f"{tool_name} найден и запущен; переустановка не требуется."' in source
     assert 'if language in ("C++", "Java")' not in source
 
 
@@ -181,7 +182,7 @@ def test_javac_compile_error_updates_problems_without_opening_installer(tmp_path
     AstraStudio._on_task_finished(fake, "compile_java", 1, False)
     assert diagnostics and diagnostics[0].source == "javac"
     assert installer_requests == []
-    assert any("установщик не требуется" in line for line in fake.output_console.lines)
+    assert any("переустановка не требуется" in line for line in fake.output_console.lines)
 
 
 @pytest.mark.skipif(discover_java_runtime() is None, reason="paired JDK is unavailable")
