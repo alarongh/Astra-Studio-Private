@@ -1,13 +1,13 @@
 # Astra Studio
 
-Версия: **Release 3.16 — Windows verified portable build**
+Версия: **Release 3.17 — Windows verified portable build**
 
 Astra Studio — лёгкая локальная IDE, которая развивается как среда разработки для задач StaffedUp: web, Python, Roblox/Luau, Godot, Windows-скрипты и небольшие приложения. Цель 3.x — сохранить простой интерфейс Astra, но добавить проектные инструменты, окружения, диагностику и IDE-функции без необходимости превращать программу в копию VS Code.
 
 
-## Статус Release 3.16
+## Статус Release 3.17
 
-Release 3.0–3.3 остаются замороженным функциональным baseline. Патчи 3.4–3.15 закрыли Windows launcher/runtime, Java, C++, Python libraries, шрифт, ярлык и первые дефекты обновления. **Release 3.16** делает обновление транзакционным с сохранением предыдущей сборки и автоматическим rollback, возвращает JavaScript/HTML/CSS к Java/Python/C++, ограничивает обои редактором и консолью, добавляет компактную компоновку, сворачивание функций, живую строку ошибки, умные отступы и контекстное автодополнение для шести основных языков. Экспериментальные языковые реализации сохранены внутри проекта, но скрыты из основного интерфейса.
+Release 3.0–3.3 остаются замороженным функциональным baseline. **Release 3.17** сохраняет транзакционное обновление и шесть основных языков 3.16, но упрощает повседневный UX: настройки оформления объединены в профиль, общую прозрачность панелей и размытие обоев; ярлык перенесён из установщика в «Настройки». Ошибка компиляции C++ теперь показывает реальную строку и не выдаёт ложный запрос на установку уже найденного компилятора. Спорная «Имитация ввода» и дублирующие blocking-компиляторы удалены. Отложенные языковые движки не вырезаны.
 
 Тестовые зависимости теперь входят в единый установочный поток: `install_app.bat` устанавливает `requirements-test.txt`, `reinstall_app.bat` пересоздаёт `.venv` целиком, а `run_acceptance_tests.bat` запускает Windows acceptance suite без ручной докачки `pytest`.
 
@@ -59,8 +59,11 @@ Release 3.0–3.3 остаются замороженным функционал
 - Python
 - C++
 - Java
+- JavaScript
+- HTML
+- CSS
 
-JavaScript, TypeScript, HTML, CSS, Luau/Lua, GDScript, PHP, PowerShell, C#, SQL и форматы конфигурации временно скрыты из пользовательских списков, LSP-таблицы, установщика, файловых фильтров и мастера проектов. Их код не удалён и будет возвращаться поштучно после отдельной проверки качества.
+TypeScript, Luau/Lua, GDScript, PHP, PowerShell, C#, SQL и форматы конфигурации временно скрыты из основного интерфейса. Их реализации не удалены и будут возвращаться поштучно после отдельной проверки качества.
 
 Часть языков умеет запускаться/проверяться через локальные CLI-инструменты, а поддерживаемые language servers Release 3.1 дают diagnostics, completion и навигацию непосредственно в редакторе.
 
@@ -68,7 +71,7 @@ JavaScript, TypeScript, HTML, CSS, Luau/Lua, GDScript, PHP, PowerShell, C#, SQL 
 
 В открытом окне подсказок Tab больше не вставляет первый вариант сразу: первый Tab выбирает нулевую строку, последующие Tab циклически переходят дальше и после конца возвращаются к началу. Space фиксирует выбранный вариант и добавляет пробел; Enter и клик мышью фиксируют его без пробела. Exact snippets остаются отдельным точным Tab-механизмом.
 
-На странице установщика можно выбрать оформление ярлыка — классический Astra, Angel 404 или Astra Legacy — и создать/обновить `Astra Studio.lnk` на рабочем столе. Поиск рабочего стола учитывает обычную, русскую и перенесённую в OneDrive папку.
+В `Настройки` → `Ярлык Windows` можно выбрать оформление — классический Astra, Angel 404 или Astra Legacy — и создать/обновить `Astra Studio.lnk` на рабочем столе. Установщик языков больше не создаёт ярлык и не смешивает эти операции.
 
 Для Java Astra передаёт UTF-8 отдельно исходному коду, stdout и stderr JVM. Это устраняет «кракозябры» русских строк на Windows, где графически запущенный JDK может использовать `Cp1251` для консольных потоков даже при `file.encoding=UTF-8`.
 
@@ -314,7 +317,7 @@ Luau/Rojo диагностируются Project Doctor. D1 создаёт Rojo-
 - Release 3.2: C1 formatters/linters DONE; C2 Test Explorer DONE; C3 Git / Source Control DONE (`TEST_REPORT_RELEASE_3_2_C3.md`); Release 3.2 internally gated and frozen;
 - Release 3.3: D1 StaffedUp Project Templates DONE; D2 StaffedUp Project Health DONE; D3 AI-adjacent workflow DONE (`TEST_REPORT_RELEASE_3_3_D3.md`); функциональный scope 3.x закрыт;
 - Final Integration Gate после D1–D3: PASS; Release 3.3 остаётся замороженным feature baseline;
-- Release 3.4 исправил Windows batch launcher; Release 3.5 закрыл UX/package-manager acceptance feedback; Release 3.6 закрыл native-window/CRLF/log defects; текущий verified candidate — Release 3.16;
+- Release 3.4 исправил Windows batch launcher; Release 3.5 закрыл UX/package-manager acceptance feedback; Release 3.6 закрыл native-window/CRLF/log defects; текущий verified candidate — Release 3.17;
 - только после стабильного Windows sign-off текущей ветки 3.x начинается планирование Release 4.0.
 
 ## Установка, переустановка и Windows acceptance
@@ -357,4 +360,4 @@ D3 sandbox gate: `compileall` PASS, static smoke PASS, **185 collected / 178 PAS
 
 ## Следующий этап
 
-Final Integration Gate поколения 3.x пройден. Текущий рабочий portable build — **Release 3.16** — выпускается целой папкой `Astra Studio`; подробности запуска — в `PORTABLE_README.md`, публикации обновлений — в `UPDATE_DISTRIBUTION.md`. Ручная owner-матрица по `TEST_REGISTRY_3_X.md` остаётся отдельным этапом sign-off и не подменяется автоматическими тестами.
+Final Integration Gate поколения 3.x пройден. Текущий рабочий portable build — **Release 3.17** — выпускается целой папкой `Astra Studio`; подробности запуска — в `PORTABLE_README.md`, публикации обновлений — в `UPDATE_DISTRIBUTION.md`. Ручная owner-матрица по `TEST_REGISTRY_3_X.md` остаётся отдельным этапом sign-off и не подменяется автоматическими тестами.

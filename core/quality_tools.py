@@ -386,6 +386,44 @@ def parse_javac_output(output: str, fallback_path: Path) -> list[QualityDiagnost
     return result
 
 
+def parse_cpp_compiler_output(output: str, fallback_path: Path) -> list[QualityDiagnostic]:
+    """Parse GCC/Clang diagnostics, including Windows drive-letter paths."""
+    pattern = re.compile(
+        r"^(?P<path>.+):(?P<line>\d+):(?P<column>\d+):\s*"
+        r"(?P<severity>fatal error|error|warning|note):\s*(?P<message>.+)$",
+        re.IGNORECASE,
+    )
+    result: list[QualityDiagnostic] = []
+    seen: set[tuple[int, int, str]] = set()
+    for raw_line in str(output or "").replace("\r\n", "\n").splitlines():
+        match = pattern.match(raw_line.strip())
+        if not match:
+            continue
+        try:
+            line = max(0, int(match.group("line")) - 1)
+            character = max(0, int(match.group("column")) - 1)
+        except ValueError:
+            continue
+        severity_text = match.group("severity").lower()
+        severity = 1 if severity_text in {"error", "fatal error"} else (2 if severity_text == "warning" else 3)
+        message = match.group("message").strip() or "C++ compiler diagnostic"
+        key = (line, character, message)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(QualityDiagnostic(
+            path=Path(fallback_path),
+            line=line,
+            character=character,
+            end_line=line,
+            end_character=character + 1,
+            severity=severity,
+            message=message,
+            source="C++ compiler",
+        ))
+    return result
+
+
 def parse_linter_output(parser: str, output: str, fallback_path: Path) -> list[QualityDiagnostic]:
     if parser == "ruff-json":
         return parse_ruff_json(output, fallback_path)
@@ -393,4 +431,6 @@ def parse_linter_output(parser: str, output: str, fallback_path: Path) -> list[Q
         return parse_eslint_json(output, fallback_path)
     if parser == "javac":
         return parse_javac_output(output, fallback_path)
+    if parser in {"gcc", "g++", "clang", "clang++", "cpp-compiler"}:
+        return parse_cpp_compiler_output(output, fallback_path)
     return []

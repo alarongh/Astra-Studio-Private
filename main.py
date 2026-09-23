@@ -180,7 +180,7 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.16"
+APP_VERSION = "Release 3.17"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 DEFAULT_LANGUAGE = "Python"
@@ -192,10 +192,11 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.16 — красно-синий": "assets/astra.ico",
+    "Astra 3.17 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
+APPEARANCE_PROFILES = ("Astra", "Angel 404")
 FALLBACK_BACKGROUND = "#1E1E1E"
 CURSOR_MARKER = "§CURSOR§"
 
@@ -450,272 +451,6 @@ WORKDIR /app
 COPY . .
 
 CMD ["python", "main.py"]
-'''
-
-ENTER_TYPER_TEMPLATE = r'''# Astra Studio Template: Имитация ввода
-# Скрипт имитирует нажатия клавиш. Используйте его только в своих окнах и с понятной целью.
-
-import time
-import random
-import sys
-from dataclasses import dataclass
-from typing import Optional
-
-from pynput.keyboard import Controller, Key
-
-try:
-    import pyperclip as clipboard
-except ImportError:
-    print("Ошибка: требуется библиотека 'pyperclip'.")
-    print("Установите её командой:")
-    print("python -m pip install pyperclip")
-    sys.exit(1)
-
-
-@dataclass
-class TypingConfig:
-    start_delay: float = 5.0
-    min_delay: float = 0.06
-    max_delay: float = 0.15
-    long_delay_chance: float = 0.10
-    long_delay_min: float = 0.30
-    long_delay_max: float = 0.80
-    typos_enabled: bool = False
-    typo_chance: float = 0.03
-    fix_typos: bool = True
-    convert_four_spaces_to_tab: bool = True
-    fix_delay_min: float = 0.20
-    fix_delay_max: float = 0.40
-    newline_delay_min: float = 0.40
-    newline_delay_max: float = 0.90
-
-
-class EnterTyper:
-    def __init__(self):
-        self.keyboard = Controller()
-        self.cached_text = ""
-        self.config = TypingConfig()
-        self.key_map = {
-            "q": "w", "w": "e", "e": "r", "r": "t", "t": "y", "y": "u", "u": "i", "i": "o", "o": "p",
-            "a": "s", "s": "d", "d": "f", "f": "g", "g": "h", "h": "j", "j": "k", "k": "l",
-            "z": "x", "x": "c", "c": "v", "v": "b", "b": "n", "n": "m",
-            "й": "ц", "ц": "у", "у": "к", "к": "е", "е": "н", "н": "г", "г": "ш", "ш": "щ", "щ": "з", "з": "х",
-            "ф": "ы", "ы": "в", "в": "а", "а": "п", "п": "р", "р": "о", "о": "л", "л": "д", "д": "ж", "ж": "э",
-            "я": "ч", "ч": "с", "с": "м", "м": "и", "и": "т", "т": "ь", "ь": "б", "б": "ю",
-        }
-
-    def ask_yes_no(self, text: str, default: bool) -> bool:
-        default_text = "Y/n" if default else "y/N"
-        while True:
-            answer = input(f"{text} [{default_text}]: ").strip().lower()
-            if not answer:
-                return default
-            if answer in ("y", "yes", "д", "да"):
-                return True
-            if answer in ("n", "no", "н", "нет"):
-                return False
-            print("Введите y/n или да/нет.")
-
-    def ask_float(self, text: str, default: float, min_value: Optional[float] = None, max_value: Optional[float] = None) -> float:
-        while True:
-            answer = input(f"{text} [{default}]: ").strip().replace(",", ".")
-            if not answer:
-                return default
-            try:
-                value = float(answer)
-                if min_value is not None and value < min_value:
-                    print(f"Значение не может быть меньше {min_value}.")
-                    continue
-                if max_value is not None and value > max_value:
-                    print(f"Значение не может быть больше {max_value}.")
-                    continue
-                return value
-            except ValueError:
-                print("Введите число.")
-
-    def choose_config_mode(self) -> str:
-        print("=== РЕЖИМ НАСТРОЕК ===")
-        print("1. Дефолтные настройки — безопасные значения без лишних вопросов")
-        print("2. Расширенные настройки — задержки, опечатки и дополнительные параметры")
-        while True:
-            answer = input("Выберите режим [1/2, по умолчанию 1]: ").strip().lower()
-            if answer in ("", "1", "default", "дефолт", "д"):
-                return "default"
-            if answer in ("2", "advanced", "расширенные", "р"):
-                return "advanced"
-            print("Введите 1 для дефолтных настроек или 2 для расширенных.")
-
-    def configure(self):
-        print("=== НАСТРОЙКА ПЕЧАТИ ===")
-        mode = self.choose_config_mode()
-        if mode == "default":
-            print("Используются дефолтные настройки: безопасная скорость, Tab вместо 4 пробелов, опечатки выключены.")
-            print()
-            return
-
-        print("=== РАСШИРЕННЫЕ НАСТРОЙКИ ===")
-        self.config.typos_enabled = self.ask_yes_no("Включить опечатки?", self.config.typos_enabled)
-        if self.config.typos_enabled:
-            typo_percent = self.ask_float("Шанс опечатки в процентах, рекомендованная", self.config.typo_chance * 100, min_value=0, max_value=100)
-            self.config.typo_chance = typo_percent / 100
-            self.config.fix_typos = self.ask_yes_no("Исправлять опечатки через Backspace?", self.config.fix_typos)
-        self.config.convert_four_spaces_to_tab = self.ask_yes_no("Заменять каждые 4 пробела на Tab?", self.config.convert_four_spaces_to_tab)
-        self.config.start_delay = self.ask_float("Какую задержку перед началом печати вы хотите поставить, рекомендованная", self.config.start_delay, min_value=0)
-        self.config.min_delay = self.ask_float("Какую минимальную задержку между символами вы хотите поставить, рекомендованная", self.config.min_delay, min_value=0)
-        self.config.max_delay = self.ask_float("Какую максимальную задержку между символами вы хотите поставить, рекомендованная", self.config.max_delay, min_value=0)
-        if self.config.max_delay < self.config.min_delay:
-            print("Максимальная задержка была меньше минимальной — значения автоматически выровнены.")
-            self.config.max_delay = self.config.min_delay
-        print()
-
-    def capture_clipboard(self) -> bool:
-        try:
-            content = clipboard.paste()
-            if not content or not content.strip():
-                return False
-            self.cached_text = content
-            return True
-        except Exception as error:
-            print(f"Ошибка чтения буфера обмена: {error}")
-            return False
-
-    def normalize_clipboard_text(self):
-        text = self.cached_text
-
-        # Приводим переносы строк к единому виду
-        text = text.replace("\r\n", "\n").replace("\r", "\n")
-
-        # Заменяем каждые 4 подряд идущих пробела на один символ табуляции
-        if self.config.convert_four_spaces_to_tab:
-            text = text.replace("    ", "\t")
-
-        self.cached_text = text
-
-    def get_human_delay(self) -> float:
-        if random.random() < self.config.long_delay_chance:
-            return random.uniform(self.config.long_delay_min, self.config.long_delay_max)
-        return random.uniform(self.config.min_delay, self.config.max_delay)
-
-    def get_wrong_char(self, char: str) -> Optional[str]:
-        lower = char.lower()
-        if lower not in self.key_map:
-            return None
-        wrong_char = self.key_map[lower]
-        return wrong_char.upper() if char.isupper() else wrong_char
-
-    def type_char(self, char: str):
-        try:
-            self.keyboard.type(char)
-        except Exception:
-            try:
-                self.keyboard.press(char)
-                self.keyboard.release(char)
-            except Exception:
-                pass
-
-    def press_key(self, key):
-        self.keyboard.press(key)
-        self.keyboard.release(key)
-
-    def countdown(self):
-        full_seconds = int(self.config.start_delay)
-        for i in range(full_seconds, 0, -1):
-            print(f"\r[>] Начало печати через {i} сек... ", end="", flush=True)
-            time.sleep(1)
-        extra_delay = self.config.start_delay - full_seconds
-        if extra_delay > 0:
-            time.sleep(extra_delay)
-        print("\r[>] Печать начинается! ")
-
-    def print_current_settings(self):
-        print("=== ТЕКУЩИЕ НАСТРОЙКИ ===")
-        print(f"Символов в тексте: {len(self.cached_text)}")
-        print(f"Задержка перед стартом: {self.config.start_delay} сек.")
-        print(f"Опечатки: {'включены' if self.config.typos_enabled else 'выключены'}")
-        print(f"Замена 4 пробелов на Tab: {'включена' if self.config.convert_four_spaces_to_tab else 'выключена'}")
-        if self.config.typos_enabled:
-            print(f"Шанс опечатки: {self.config.typo_chance * 100:.1f}%")
-            print(f"Исправление опечаток: {'да' if self.config.fix_typos else 'нет'}")
-        print("=========================")
-        print()
-
-    def handle_typo(self, char: str) -> bool:
-        if not self.config.typos_enabled or not char.isalpha() or random.random() >= self.config.typo_chance:
-            return False
-        wrong_char = self.get_wrong_char(char)
-        if not wrong_char:
-            return False
-        self.type_char(wrong_char)
-        if self.config.fix_typos:
-            time.sleep(random.uniform(self.config.fix_delay_min, self.config.fix_delay_max))
-            self.press_key(Key.backspace)
-            time.sleep(self.get_human_delay())
-            return False
-        return True
-
-    def simulate_typing(self):
-        if not self.cached_text:
-            print("Текст не был сохранен в память.")
-            return
-        self.print_current_settings()
-        print("[!] Текст сохранен в память.")
-        print("[!] Переключитесь в редактор кода или текстовое поле.")
-        print("[!] Установите курсор в нужное место.")
-        print("[!] Проверьте раскладку клавиатуры RU/EN.")
-        print("[!] Нажмите Enter в этом окне для начала.")
-        input()
-        print(f"\n[>] У вас есть {self.config.start_delay} сек. на переключение окна...")
-        self.countdown()
-        print("\n[>] Для экстренной остановки нажмите Ctrl+C")
-        time.sleep(0.3)
-        try:
-            total = len(self.cached_text)
-            for index, char in enumerate(self.cached_text, start=1):
-                if char == "\n":
-                    self.press_key(Key.enter)
-                    time.sleep(random.uniform(self.config.newline_delay_min, self.config.newline_delay_max))
-                    continue
-                if char == "\t":
-                    self.press_key(Key.tab)
-                    time.sleep(self.get_human_delay())
-                    continue
-                typo_was_left = self.handle_typo(char)
-                if not typo_was_left:
-                    self.type_char(char)
-                time.sleep(self.get_human_delay())
-                if index % 50 == 0 or index == total:
-                    percent = index / total * 100
-                    print(f"\r[>] Напечатано: {index}/{total} символов ({percent:.1f}%)", end="", flush=True)
-            print("\n[>] Ввод завершен.")
-        except KeyboardInterrupt:
-            print("\n[!] Ввод прерван пользователем.")
-
-    def run(self):
-        print("=== ENTER TYPER RU/EN ===")
-        print("1. Скопируйте нужный текст в буфер обмена.")
-        print("2. Запустите этот скрипт.")
-        print("3. Настройте режим печати.")
-        print("4. Переключитесь в нужное окно после команды.")
-        print("=========================")
-        print()
-        if not self.capture_clipboard():
-            print("Буфер обмена пуст или недоступен.")
-            print("Скопируйте текст и запустите скрипт заново.")
-            return
-        self.configure()
-        self.normalize_clipboard_text()
-        self.simulate_typing()
-
-
-if __name__ == "__main__":
-    try:
-        typer = EnterTyper()
-        typer.run()
-    except KeyboardInterrupt:
-        print("\nСкрипт завершен пользователем.")
-    except Exception as error:
-        print(f"\nКритическая ошибка: {error}")
-        print("Попробуйте запустить скрипт от имени администратора.")
 '''
 
 # Python library registry is kept in core/python_library_registry.py.
@@ -1524,6 +1259,39 @@ def compiler_path(*names: str) -> str | None:
                 if candidate.exists():
                     prepend_runtime_path(folder)
                     return str(candidate)
+    return None
+
+
+def cpp_compiler_path() -> str | None:
+    """Resolve a real C++ compiler, preferring Astra's supported MSYS2 paths.
+
+    A stale PATH entry must not win over an existing UCRT64 installation.  This
+    is especially important after an in-app install because Explorer and the
+    already-running Astra process can have different environment snapshots.
+    """
+    candidates: list[Path] = []
+    if os.name == "nt":
+        candidates.extend([
+            Path(r"C:\msys64\ucrt64\bin\g++.exe"),
+            Path(r"C:\msys64\mingw64\bin\g++.exe"),
+            Path(r"C:\msys64\clang64\bin\clang++.exe"),
+            Path(r"C:\Program Files\LLVM\bin\clang++.exe"),
+        ])
+    discovered = compiler_path("g++", "g++.exe", "clang++", "clang++.exe")
+    if discovered:
+        candidates.append(Path(discovered))
+    seen: set[str] = set()
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            resolved = candidate
+        key = str(resolved).casefold()
+        if key in seen or not resolved.is_file():
+            continue
+        seen.add(key)
+        prepend_runtime_path(resolved.parent)
+        return str(resolved)
     return None
 
 
@@ -3349,7 +3117,7 @@ class AstraStudio(QMainWindow):
         self.current_accent_name = DEFAULT_ACCENT
         self.current_language_name = DEFAULT_LANGUAGE
         self.transparency_enabled = False
-        self.window_opacity_percent = 92
+        self.window_opacity_percent = 100
         self.always_on_top_enabled = False
         self.autocomplete_enabled = True
         self.show_snippets_enabled = True
@@ -3364,7 +3132,7 @@ class AstraStudio(QMainWindow):
         self.wallpaper_dim_percent = 55
         self.wallpaper_blur_px = 25
         self.disable_console_wallpaper = False
-        self.editor_bg_transparency_percent = 0
+        self.editor_bg_transparency_percent = 15
         self.console_bg_transparency_percent = 15
         self.settings_bg_transparency_percent = 15
         self.project_bg_transparency_percent = 15
@@ -3494,8 +3262,6 @@ class AstraStudio(QMainWindow):
         accent = data.get("accent")
         language = data.get("language")
         workspace = data.get("workspace")
-        transparency_enabled = data.get("transparency_enabled")
-        opacity_percent = data.get("opacity_percent")
         always_on_top = data.get("always_on_top")
         autocomplete_enabled = data.get("autocomplete_enabled")
         show_snippets_enabled = data.get("show_snippets_enabled")
@@ -3504,10 +3270,10 @@ class AstraStudio(QMainWindow):
         custom_wallpaper_path = data.get("custom_wallpaper_path")
         preset_wallpaper = data.get("preset_wallpaper")
         wallpaper_enabled = data.get("wallpaper_enabled")
-        wallpaper_all_windows = data.get("wallpaper_all_windows")
         wallpaper_dim_percent = data.get("wallpaper_dim_percent")
         wallpaper_blur_px = data.get("wallpaper_blur_px")
-        disable_console_wallpaper = data.get("disable_console_wallpaper")
+        panel_transparency_percent = data.get("panel_transparency_percent")
+        visual_blur_percent = data.get("visual_blur_percent")
         editor_bg_transparency_percent = data.get("editor_bg_transparency_percent")
         console_bg_transparency_percent = data.get("console_bg_transparency_percent")
         settings_bg_transparency_percent = data.get("settings_bg_transparency_percent")
@@ -3536,20 +3302,17 @@ class AstraStudio(QMainWindow):
         editor_insert_spaces = data.get("editor_insert_spaces")
         ui_font_size = data.get("ui_font_size")
         editor_font_size = data.get("editor_font_size")
-        console_font_size = data.get("console_font_size")
         global_font_name = data.get("global_font_name")
-        logo_frame_blur_percent = data.get("logo_frame_blur_percent")
-        logo_frame_transparency_percent = data.get("logo_frame_transparency_percent")
         if theme in THEMES:
             self.current_theme_name = theme
         if accent in ACCENTS:
             self.current_accent_name = accent
         if language in VISIBLE_LANGUAGES:
             self.current_language_name = language
-        if isinstance(transparency_enabled, bool):
-            self.transparency_enabled = transparency_enabled
-        if isinstance(opacity_percent, int):
-            self.window_opacity_percent = max(35, min(100, opacity_percent))
+        # Whole-window opacity made compact layouts hard to read.  Old values
+        # are accepted for migration but intentionally retired in 3.17.
+        self.transparency_enabled = False
+        self.window_opacity_percent = 100
         if isinstance(always_on_top, bool):
             self.always_on_top_enabled = always_on_top
         if isinstance(autocomplete_enabled, bool):
@@ -3575,8 +3338,6 @@ class AstraStudio(QMainWindow):
             self.wallpaper_dim_percent = max(0, min(85, wallpaper_dim_percent))
         if isinstance(wallpaper_blur_px, int):
             self.wallpaper_blur_px = max(0, min(100, wallpaper_blur_px))
-        if isinstance(disable_console_wallpaper, bool):
-            self.disable_console_wallpaper = disable_console_wallpaper
         if isinstance(editor_bg_transparency_percent, int):
             self.editor_bg_transparency_percent = max(0, min(100, editor_bg_transparency_percent))
         if isinstance(console_bg_transparency_percent, int):
@@ -3595,6 +3356,28 @@ class AstraStudio(QMainWindow):
             self.settings_blur_percent = max(0, min(100, settings_blur_percent))
         if isinstance(project_blur_percent, int):
             self.project_blur_percent = max(0, min(100, project_blur_percent))
+        if isinstance(panel_transparency_percent, int):
+            panel_value = max(0, min(70, panel_transparency_percent))
+        else:
+            panel_value = int(round((
+                self.editor_bg_transparency_percent + self.console_bg_transparency_percent
+                + self.settings_bg_transparency_percent + self.project_bg_transparency_percent
+                + self.aux_bg_transparency_percent
+            ) / 5))
+        self.editor_bg_transparency_percent = panel_value
+        self.console_bg_transparency_percent = panel_value
+        self.settings_bg_transparency_percent = panel_value
+        self.project_bg_transparency_percent = panel_value
+        self.aux_bg_transparency_percent = panel_value
+        if isinstance(visual_blur_percent, int):
+            self.wallpaper_blur_px = max(0, min(60, visual_blur_percent))
+        self.editor_blur_percent = self.wallpaper_blur_px
+        self.console_blur_percent = self.wallpaper_blur_px
+        self.settings_blur_percent = self.wallpaper_blur_px
+        self.project_blur_percent = self.wallpaper_blur_px
+        self.logo_frame_blur_percent = self.wallpaper_blur_px
+        self.wallpaper_all_windows = False
+        self.disable_console_wallpaper = False
         if isinstance(save_window_sizes_enabled, bool):
             self.save_window_sizes_enabled = save_window_sizes_enabled
         if isinstance(saved_geometry_hex, str):
@@ -3633,14 +3416,9 @@ class AstraStudio(QMainWindow):
             self.ui_font_size = max(10, min(22, ui_font_size))
         if isinstance(editor_font_size, int):
             self.editor_font_size = max(8, min(32, editor_font_size))
-        if isinstance(console_font_size, int):
-            self.console_font_size = max(8, min(28, console_font_size))
+        self.console_font_size = max(8, min(28, self.editor_font_size - 2))
         if global_font_name in GLOBAL_FONT_OPTIONS:
             self.global_font_name = global_font_name
-        if isinstance(logo_frame_blur_percent, int):
-            self.logo_frame_blur_percent = max(0, min(100, logo_frame_blur_percent))
-        if isinstance(logo_frame_transparency_percent, int):
-            self.logo_frame_transparency_percent = max(0, min(100, logo_frame_transparency_percent))
         if workspace:
             path = Path(workspace)
             if path.exists() and path.is_dir() and can_write_to_directory(path):
@@ -3653,8 +3431,6 @@ class AstraStudio(QMainWindow):
             "accent": self.current_accent_name,
             "language": self.current_language_name,
             "workspace": str(self.workspace_dir),
-            "transparency_enabled": self.transparency_enabled,
-            "opacity_percent": self.window_opacity_percent,
             "always_on_top": self.always_on_top_enabled,
             "autocomplete_enabled": self.autocomplete_enabled,
             "show_snippets_enabled": self.show_snippets_enabled,
@@ -3663,19 +3439,10 @@ class AstraStudio(QMainWindow):
             "custom_wallpaper_path": self.custom_wallpaper_path,
             "preset_wallpaper": self.preset_wallpaper_name,
             "wallpaper_enabled": self.wallpaper_enabled,
-            "wallpaper_all_windows": self.wallpaper_all_windows,
             "wallpaper_dim_percent": self.wallpaper_dim_percent,
             "wallpaper_blur_px": self.wallpaper_blur_px,
-            "disable_console_wallpaper": self.disable_console_wallpaper,
-            "editor_bg_transparency_percent": self.editor_bg_transparency_percent,
-            "console_bg_transparency_percent": self.console_bg_transparency_percent,
-            "settings_bg_transparency_percent": self.settings_bg_transparency_percent,
-            "project_bg_transparency_percent": self.project_bg_transparency_percent,
-            "aux_bg_transparency_percent": self.aux_bg_transparency_percent,
-            "editor_blur_percent": self.editor_blur_percent,
-            "console_blur_percent": self.console_blur_percent,
-            "settings_blur_percent": self.settings_blur_percent,
-            "project_blur_percent": self.project_blur_percent,
+            "panel_transparency_percent": self.editor_bg_transparency_percent,
+            "visual_blur_percent": self.wallpaper_blur_px,
             "save_window_sizes_enabled": self.save_window_sizes_enabled,
             "window_geometry": bytes(self.saveGeometry().toHex()).decode("ascii") if self.save_window_sizes_enabled else "",
             "root_splitter_sizes": self.root_splitter.sizes() if self.save_window_sizes_enabled and hasattr(self, "root_splitter") else [],
@@ -3695,10 +3462,7 @@ class AstraStudio(QMainWindow):
             "editor_insert_spaces": self.editor_insert_spaces,
             "ui_font_size": self.ui_font_size,
             "editor_font_size": self.editor_font_size,
-            "console_font_size": self.console_font_size,
             "global_font_name": self.global_font_name,
-            "logo_frame_blur_percent": self.logo_frame_blur_percent,
-            "logo_frame_transparency_percent": self.logo_frame_transparency_percent,
         }
         try:
             self.settings_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -3849,12 +3613,6 @@ class AstraStudio(QMainWindow):
         self.btn_build_exe = QPushButton("⧉  Собрать EXE")
         self.btn_stop = QPushButton("■  Остановить")
         self.btn_new = QPushButton("+  Создать файл")
-        self.btn_enter_typer = QPushButton("⌨  Имитация ввода")
-        self.btn_enter_typer.setObjectName("TemplateButton")
-        # Synthetic keyboard input is unrelated to the core IDE workflow and
-        # was a frequent source of confusion. Keep the compatibility handler,
-        # but remove the experimental entry point from the product UI.
-        self.btn_enter_typer.setVisible(False)
         self.btn_open = QPushButton("⌁  Открыть файл")
         self.btn_save = QPushButton("✓  Сохранить")
         self.btn_save_as = QPushButton("⇢  Сохранить как")
@@ -3892,7 +3650,6 @@ class AstraStudio(QMainWindow):
             self.btn_build_exe,
             self.btn_stop,
             self.btn_new,
-            self.btn_enter_typer,
             self.btn_open,
             self.btn_save,
             self.btn_save_as,
@@ -3931,7 +3688,6 @@ class AstraStudio(QMainWindow):
         side_layout.addWidget(self.btn_stop)
         side_layout.addSpacing(10)
         side_layout.addWidget(self.btn_new)
-        side_layout.addWidget(self.btn_enter_typer)
         side_layout.addWidget(self.btn_open)
         side_layout.addWidget(self.btn_save)
         side_layout.addWidget(self.btn_save_as)
@@ -3947,31 +3703,13 @@ class AstraStudio(QMainWindow):
         side_layout.addWidget(self.btn_nav_developer)
         side_layout.addSpacing(12)
 
-        self.theme_label = QLabel("Тема интерфейса")
-        self.theme_label.setObjectName("MiniLabel")
-        self.theme_combo = QComboBox()
-        self.theme_combo.addItems(THEMES.keys())
-        self.theme_combo.setCurrentText(self.current_theme_name)
-
-        self.accent_label = QLabel("Акцентный цвет")
-        self.accent_label.setObjectName("MiniLabel")
-        self.accent_combo = QComboBox()
-        self.accent_combo.addItems(ACCENTS.keys())
-        self.accent_combo.setCurrentText(self.current_accent_name)
-
-        self.opacity_toggle = QCheckBox("Полупрозрачный режим")
-        self.opacity_toggle.setObjectName("OpacityToggle")
-        self.opacity_toggle.setChecked(self.transparency_enabled)
-        self.opacity_label = QLabel()
-        self.opacity_label.setObjectName("MiniLabel")
-        self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
-        self.opacity_slider.setObjectName("OpacitySlider")
-        self.opacity_slider.setMinimum(35)
-        self.opacity_slider.setMaximum(100)
-        self.opacity_slider.setSingleStep(1)
-        self.opacity_slider.setPageStep(5)
-        self.opacity_slider.setValue(self.window_opacity_percent)
-        self.update_opacity_label()
+        self.design_profile_label = QLabel("Стиль оформления")
+        self.design_profile_label.setObjectName("MiniLabel")
+        self.design_profile_combo = QComboBox()
+        self.design_profile_combo.addItems(APPEARANCE_PROFILES)
+        self.design_profile_combo.setCurrentText(
+            "Angel 404" if self.current_theme_name == ANGEL_404_THEME else "Astra"
+        )
 
         self.topmost_toggle = QCheckBox("Закрепить поверх всех окон")
         self.topmost_toggle.setObjectName("OpacityToggle")
@@ -4024,17 +3762,6 @@ class AstraStudio(QMainWindow):
         self.preset_wallpaper_combo = QComboBox()
         self.preset_wallpaper_combo.addItems(ASTRA_WALLPAPERS.keys())
         self.preset_wallpaper_combo.setCurrentText(self.preset_wallpaper_name)
-        self.btn_apply_astra_profile = QPushButton("✦  Применить профиль Astra")
-        self.btn_apply_astra_profile.setObjectName("PrimaryButton")
-        self.btn_apply_angel404_profile = QPushButton("✦  Применить профиль Angel 404")
-        self.btn_apply_angel404_profile.setObjectName("PrimaryButton")
-        self.wallpaper_all_toggle = QCheckBox("Обои только в редакторе и консоли")
-        self.wallpaper_all_toggle.setObjectName("OpacityToggle")
-        self.wallpaper_all_toggle.setChecked(True)
-        self.wallpaper_all_toggle.setEnabled(False)
-        self.disable_console_wallpaper_toggle = QCheckBox("Отключить обои в консоли")
-        self.disable_console_wallpaper_toggle.setObjectName("OpacityToggle")
-        self.disable_console_wallpaper_toggle.setChecked(self.disable_console_wallpaper)
         self.wallpaper_dim_label = QLabel()
         self.wallpaper_dim_label.setObjectName("MiniLabel")
         self.wallpaper_dim_slider = QSlider(Qt.Orientation.Horizontal)
@@ -4045,15 +3772,10 @@ class AstraStudio(QMainWindow):
         self.wallpaper_blur_label.setObjectName("MiniLabel")
         self.wallpaper_blur_slider = QSlider(Qt.Orientation.Horizontal)
         self.wallpaper_blur_slider.setObjectName("OpacitySlider")
-        self.wallpaper_blur_slider.setRange(0, 100)
+        self.wallpaper_blur_slider.setRange(0, 60)
         self.wallpaper_blur_slider.setValue(self.wallpaper_blur_px)
-        simple_panel_transparency = int(round((self.editor_bg_transparency_percent + self.console_bg_transparency_percent + self.settings_bg_transparency_percent + self.project_bg_transparency_percent + self.aux_bg_transparency_percent) / 5))
-        self.panel_transparency_label, self.panel_transparency_slider = self._make_percent_slider("Прозрачность панелей", simple_panel_transparency, 0, 100)
-        self.logo_frame_blur_label, self.logo_frame_blur_slider = self._make_percent_slider("Размытие рамки логотипа", self.logo_frame_blur_percent, 0, 100)
-        self.logo_frame_transparency_label, self.logo_frame_transparency_slider = self._make_percent_slider("Прозрачность рамки логотипа", self.logo_frame_transparency_percent, 0, 100)
-        self.appearance_advanced_toggle = QCheckBox("Расширенные настройки оформления")
-        self.appearance_advanced_toggle.setObjectName("OpacityToggle")
-        self.appearance_advanced_toggle.setChecked(True)
+        simple_panel_transparency = self.editor_bg_transparency_percent
+        self.panel_transparency_label, self.panel_transparency_slider = self._make_percent_slider("Прозрачность панелей", simple_panel_transparency, 0, 70)
 
         self.editor_tab_size_label = QLabel()
         self.editor_tab_size_label.setObjectName("MiniLabel")
@@ -4083,11 +3805,6 @@ class AstraStudio(QMainWindow):
         self.editor_font_size_slider.setObjectName("OpacitySlider")
         self.editor_font_size_slider.setRange(8, 32)
         self.editor_font_size_slider.setValue(self.editor_font_size)
-        self.console_font_size_label = QLabel()
-        self.console_font_size_label.setObjectName("MiniLabel")
-        self.console_font_size_slider = QSlider(Qt.Orientation.Horizontal)
-        self.console_font_size_slider.setRange(8, 28)
-        self.console_font_size_slider.setValue(self.console_font_size)
         self.global_font_label = QLabel("Шрифт всего приложения")
         self.global_font_label.setObjectName("MiniLabel")
         self.global_font_combo = QComboBox()
@@ -4103,27 +3820,16 @@ class AstraStudio(QMainWindow):
         self.btn_reset_indents.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_indent_labels()
 
-        self.editor_transparency_label, self.editor_transparency_slider = self._make_percent_slider("Прозрачность редактора кода", self.editor_bg_transparency_percent, 0, 100)
-        self.console_transparency_label, self.console_transparency_slider = self._make_percent_slider("Прозрачность консоли", self.console_bg_transparency_percent, 0, 100)
-        self.settings_transparency_label, self.settings_transparency_slider = self._make_percent_slider("Прозрачность настроек", self.settings_bg_transparency_percent, 0, 100)
-        self.project_transparency_label, self.project_transparency_slider = self._make_percent_slider("Прозрачность окна проекта", self.project_bg_transparency_percent, 0, 100)
-        self.aux_transparency_label, self.aux_transparency_slider = self._make_percent_slider("Прозрачность дополнительных окон", self.aux_bg_transparency_percent, 0, 100)
-        self.editor_blur_label, self.editor_blur_slider = self._make_percent_slider("Размытие фона редактора", self.editor_blur_percent, 0, 100)
-        self.console_blur_label, self.console_blur_slider = self._make_percent_slider("Размытие фона консоли", self.console_blur_percent, 0, 100)
-        self.settings_blur_label, self.settings_blur_slider = self._make_percent_slider("Размытие фона настроек", self.settings_blur_percent, 0, 100)
-        self.project_blur_label, self.project_blur_slider = self._make_percent_slider("Размытие фона проекта", self.project_blur_percent, 0, 100)
         self.save_window_sizes_toggle = QCheckBox("Сохранять размеры окон")
         self.save_window_sizes_toggle.setObjectName("OpacityToggle")
         self.save_window_sizes_toggle.setChecked(self.save_window_sizes_enabled)
-        self.btn_reset_transparency = QPushButton("↺  Сбросить прозрачность")
-        self.btn_reset_blur = QPushButton("↺  Сбросить размытие")
         self.btn_reset_window_sizes = QPushButton("↺  Восстановить размеры окон")
         self.btn_reset_appearance = QPushButton("↺  Оформление по умолчанию")
-        for button in [self.btn_reset_transparency, self.btn_reset_blur, self.btn_reset_window_sizes, self.btn_reset_appearance]:
+        for button in [self.btn_reset_window_sizes, self.btn_reset_appearance]:
             button.setMinimumHeight(34)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_wallpaper_effect_labels()
-        for button in [self.btn_choose_wallpaper, self.btn_clear_wallpaper, self.btn_apply_astra_profile, self.btn_apply_angel404_profile]:
+        for button in [self.btn_choose_wallpaper, self.btn_clear_wallpaper]:
             button.setMinimumHeight(34)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_wallpaper_label()
@@ -4289,7 +3995,7 @@ class AstraStudio(QMainWindow):
         self.btn_install_all = QPushButton("Установить всё")
         self.btn_install_all.setObjectName("PrimaryButton")
         self.btn_update_all = QPushButton("Обновить языки")
-        self.btn_desktop_shortcut = QPushButton("Создать ярлык на рабочем столе")
+        self.btn_desktop_shortcut = QPushButton("Создать или обновить ярлык")
         self.shortcut_icon_label = QLabel("Оформление ярлыка")
         self.shortcut_icon_label.setObjectName("MiniLabel")
         self.shortcut_icon_combo = QComboBox()
@@ -4297,6 +4003,8 @@ class AstraStudio(QMainWindow):
             self.shortcut_icon_combo.addItem(label, relative_path)
         self.shortcut_icon_combo.setToolTip("Выбери значок и нажми «Создать ярлык на рабочем столе»")
         self.shortcut_icon_combo.setMinimumHeight(34)
+        self.btn_desktop_shortcut.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_desktop_shortcut.setMinimumHeight(34)
         self.btn_install_python = QPushButton("Установить Python + uv")
         self.btn_install_cpp = QPushButton("Установить C++")
         self.btn_install_java = QPushButton("Установить Java")
@@ -4309,7 +4017,7 @@ class AstraStudio(QMainWindow):
         self.btn_install_all.setText("Установить все 6 языков")
         visible_installer_buttons = [
             self.btn_check_tools, self.btn_check_updates, self.btn_install_all, self.btn_update_all,
-            self.btn_desktop_shortcut, self.btn_install_python, self.btn_install_cpp, self.btn_install_java,
+            self.btn_install_python, self.btn_install_cpp, self.btn_install_java,
             self.btn_install_node,
         ]
         for hidden_button in [
@@ -4322,9 +4030,6 @@ class AstraStudio(QMainWindow):
             button.setMinimumHeight(34)
             button.setMinimumWidth(0)
             button.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
-            if button is self.btn_desktop_shortcut:
-                installer_buttons_1.addWidget(self.shortcut_icon_label)
-                installer_buttons_1.addWidget(self.shortcut_icon_combo)
             installer_buttons_1.addWidget(button)
 
         self.installer_console = QPlainTextEdit()
@@ -4385,18 +4090,16 @@ class AstraStudio(QMainWindow):
         settings_logo_pixmap = QPixmap(str(resource_path("assets/astra.png")))
         if not settings_logo_pixmap.isNull():
             settings_logo.setPixmap(settings_logo_pixmap.scaledToHeight(74, Qt.TransformationMode.SmoothTransformation))
-        settings_title = QLabel("НАСТРОЙКИ ОФОРМЛЕНИЯ")
+        settings_title = QLabel("НАСТРОЙКИ")
         settings_title.setObjectName("SectionTitle")
-        settings_text = QLabel("Здесь собраны темы, акцентные цвета, прозрачность окон, размытие и обои. Изменения сохраняются автоматически.")
+        settings_text = QLabel("Основные настройки редактора и оформления. Связанные параметры объединены, изменения сохраняются автоматически.")
         settings_text.setObjectName("Muted")
         settings_text.setWordWrap(True)
         settings_layout.addWidget(settings_logo)
         settings_layout.addWidget(settings_title)
         settings_layout.addWidget(settings_text)
-        settings_layout.addWidget(self.theme_label)
-        settings_layout.addWidget(self.theme_combo)
-        settings_layout.addWidget(self.accent_label)
-        settings_layout.addWidget(self.accent_combo)
+        settings_layout.addWidget(self.design_profile_label)
+        settings_layout.addWidget(self.design_profile_combo)
         settings_layout.addSpacing(8)
         wallpaper_title = QLabel("ОБОИ ИНТЕРФЕЙСА")
         wallpaper_title.setObjectName("SectionTitle")
@@ -4411,57 +4114,31 @@ class AstraStudio(QMainWindow):
         preset_label.setWordWrap(True)
         settings_layout.addWidget(preset_label)
         settings_layout.addWidget(self.preset_wallpaper_combo)
-        settings_layout.addWidget(self.btn_apply_astra_profile)
-        settings_layout.addWidget(self.btn_apply_angel404_profile)
         settings_layout.addWidget(self.btn_choose_wallpaper)
         settings_layout.addWidget(self.btn_clear_wallpaper)
-        settings_layout.addWidget(self.wallpaper_all_toggle)
-        settings_layout.addWidget(self.disable_console_wallpaper_toggle)
         settings_layout.addWidget(self.wallpaper_dim_label)
         settings_layout.addWidget(self.wallpaper_dim_slider)
         settings_layout.addWidget(self.wallpaper_blur_label)
         settings_layout.addWidget(self.wallpaper_blur_slider)
         settings_layout.addWidget(self.panel_transparency_label)
         settings_layout.addWidget(self.panel_transparency_slider)
-        settings_layout.addWidget(self.logo_frame_blur_label)
-        settings_layout.addWidget(self.logo_frame_blur_slider)
-        settings_layout.addWidget(self.appearance_advanced_toggle)
-        settings_layout.addWidget(self.logo_frame_transparency_label)
-        settings_layout.addWidget(self.logo_frame_transparency_slider)
-        settings_layout.addWidget(self.editor_blur_label)
-        settings_layout.addWidget(self.editor_blur_slider)
-        settings_layout.addWidget(self.console_blur_label)
-        settings_layout.addWidget(self.console_blur_slider)
-        settings_layout.addWidget(self.settings_blur_label)
-        settings_layout.addWidget(self.settings_blur_slider)
-        settings_layout.addWidget(self.project_blur_label)
-        settings_layout.addWidget(self.project_blur_slider)
-        settings_layout.addWidget(self.btn_reset_blur)
-        settings_layout.addSpacing(8)
-        transparency_title = QLabel("ОФОРМЛЕНИЕ ПАНЕЛЕЙ")
-        transparency_title.setObjectName("SectionTitle")
-        settings_layout.addWidget(transparency_title)
-        settings_layout.addWidget(self.editor_transparency_label)
-        settings_layout.addWidget(self.editor_transparency_slider)
-        settings_layout.addWidget(self.console_transparency_label)
-        settings_layout.addWidget(self.console_transparency_slider)
-        settings_layout.addWidget(self.settings_transparency_label)
-        settings_layout.addWidget(self.settings_transparency_slider)
-        settings_layout.addWidget(self.project_transparency_label)
-        settings_layout.addWidget(self.project_transparency_slider)
-        settings_layout.addWidget(self.aux_transparency_label)
-        settings_layout.addWidget(self.aux_transparency_slider)
-        settings_layout.addWidget(self.btn_reset_transparency)
-        settings_layout.addSpacing(8)
-        settings_layout.addWidget(self.opacity_toggle)
-        settings_layout.addWidget(self.opacity_label)
-        settings_layout.addWidget(self.opacity_slider)
         settings_layout.addSpacing(8)
         settings_layout.addWidget(self.topmost_toggle)
         settings_layout.addSpacing(8)
         settings_layout.addWidget(self.save_window_sizes_toggle)
         settings_layout.addWidget(self.btn_reset_window_sizes)
         settings_layout.addWidget(self.btn_reset_appearance)
+        settings_layout.addSpacing(10)
+        shortcut_title = QLabel("ЯРЛЫК WINDOWS")
+        shortcut_title.setObjectName("SectionTitle")
+        shortcut_hint = QLabel("Выбери значок и создай либо обнови ярлык Astra Studio на рабочем столе.")
+        shortcut_hint.setObjectName("Muted")
+        shortcut_hint.setWordWrap(True)
+        settings_layout.addWidget(shortcut_title)
+        settings_layout.addWidget(shortcut_hint)
+        settings_layout.addWidget(self.shortcut_icon_label)
+        settings_layout.addWidget(self.shortcut_icon_combo)
+        settings_layout.addWidget(self.btn_desktop_shortcut)
         settings_layout.addSpacing(10)
         autocomplete_title = QLabel("АВТОДОПОЛНЕНИЕ")
         autocomplete_title.setObjectName("SectionTitle")
@@ -4483,7 +4160,7 @@ class AstraStudio(QMainWindow):
         settings_layout.addSpacing(8)
         fonts_title = QLabel("ШРИФТЫ")
         fonts_title.setObjectName("SectionTitle")
-        fonts_hint = QLabel("Выбранный шрифт применяется ко всему тексту Astra: интерфейсу, редактору, консолям, меню и диалогам. Размеры областей можно настроить отдельно.")
+        fonts_hint = QLabel("Выбранный шрифт применяется ко всему тексту Astra. Отдельно настраиваются интерфейс и область кода; консоль следует размеру редактора.")
         fonts_hint.setObjectName("Muted")
         fonts_hint.setWordWrap(True)
         settings_layout.addWidget(fonts_title)
@@ -4494,8 +4171,6 @@ class AstraStudio(QMainWindow):
         settings_layout.addWidget(self.ui_font_size_slider)
         settings_layout.addWidget(self.editor_font_size_label)
         settings_layout.addWidget(self.editor_font_size_slider)
-        settings_layout.addWidget(self.console_font_size_label)
-        settings_layout.addWidget(self.console_font_size_slider)
         settings_layout.addWidget(self.btn_reset_fonts)
         settings_layout.addSpacing(8)
         settings_layout.addWidget(self.autocomplete_toggle)
@@ -5010,7 +4685,6 @@ class AstraStudio(QMainWindow):
         self.btn_build_exe.clicked.connect(self.build_current_exe)
         self.btn_stop.clicked.connect(self.stop_run_process)
         self.btn_new.clicked.connect(self.create_new_file_dialog)
-        self.btn_enter_typer.clicked.connect(self.open_enter_typer_template)
         self.btn_open.clicked.connect(self.open_file_dialog)
         self.btn_save.clicked.connect(self.save_current_file)
         self.btn_save_as.clicked.connect(self.save_current_file_as)
@@ -5033,10 +4707,7 @@ class AstraStudio(QMainWindow):
         self.btn_project_doctor.clicked.connect(self.open_project_doctor)
         self.btn_ai_context.clicked.connect(self.open_ai_context_dialog)
         self.language_combo.currentTextChanged.connect(self.change_language)
-        self.theme_combo.currentTextChanged.connect(self.change_theme)
-        self.accent_combo.currentTextChanged.connect(self.change_accent)
-        self.opacity_toggle.toggled.connect(self.toggle_transparency)
-        self.opacity_slider.valueChanged.connect(self.change_window_opacity)
+        self.design_profile_combo.currentTextChanged.connect(self.change_design_profile)
         self.topmost_toggle.toggled.connect(self.toggle_always_on_top)
         self.autocomplete_toggle.toggled.connect(self.toggle_autocomplete)
         self.show_snippets_toggle.toggled.connect(self.toggle_show_snippets)
@@ -5051,37 +4722,18 @@ class AstraStudio(QMainWindow):
         self.btn_choose_wallpaper.clicked.connect(self.choose_custom_wallpaper)
         self.btn_clear_wallpaper.clicked.connect(self.clear_custom_wallpaper)
         self.preset_wallpaper_combo.currentTextChanged.connect(self.change_preset_wallpaper)
-        self.btn_apply_astra_profile.clicked.connect(self.apply_astra_profile)
-        self.btn_apply_angel404_profile.clicked.connect(self.apply_angel404_profile)
-        self.wallpaper_all_toggle.toggled.connect(self.toggle_wallpaper_all_windows)
-        self.disable_console_wallpaper_toggle.toggled.connect(self.toggle_disable_console_wallpaper)
         self.wallpaper_dim_slider.valueChanged.connect(self.change_wallpaper_dim)
         self.wallpaper_blur_slider.valueChanged.connect(self.change_wallpaper_blur)
         self.panel_transparency_slider.valueChanged.connect(self.change_all_panel_transparency)
-        self.logo_frame_blur_slider.valueChanged.connect(self.change_logo_frame_blur)
-        self.logo_frame_transparency_slider.valueChanged.connect(self.change_logo_frame_transparency)
-        self.appearance_advanced_toggle.toggled.connect(self.set_advanced_appearance_visible)
         self.editor_tab_size_slider.valueChanged.connect(self.change_editor_tab_size)
         self.editor_indent_size_slider.valueChanged.connect(self.change_editor_indent_size)
         self.editor_insert_spaces_toggle.toggled.connect(self.toggle_editor_insert_spaces)
         self.btn_reset_indents.clicked.connect(self.reset_indent_settings)
         self.ui_font_size_slider.valueChanged.connect(self.change_ui_font_size)
         self.editor_font_size_slider.valueChanged.connect(self.change_editor_font_size)
-        self.console_font_size_slider.valueChanged.connect(self.change_console_font_size)
         self.global_font_combo.currentTextChanged.connect(self.change_global_font)
         self.btn_reset_fonts.clicked.connect(self.reset_font_settings)
-        self.editor_transparency_slider.valueChanged.connect(lambda value: self.change_panel_transparency("editor", value))
-        self.console_transparency_slider.valueChanged.connect(lambda value: self.change_panel_transparency("console", value))
-        self.settings_transparency_slider.valueChanged.connect(lambda value: self.change_panel_transparency("settings", value))
-        self.project_transparency_slider.valueChanged.connect(lambda value: self.change_panel_transparency("project", value))
-        self.aux_transparency_slider.valueChanged.connect(lambda value: self.change_panel_transparency("aux", value))
-        self.editor_blur_slider.valueChanged.connect(lambda value: self.change_secondary_blur("editor", value))
-        self.console_blur_slider.valueChanged.connect(lambda value: self.change_secondary_blur("console", value))
-        self.settings_blur_slider.valueChanged.connect(lambda value: self.change_secondary_blur("settings", value))
-        self.project_blur_slider.valueChanged.connect(lambda value: self.change_secondary_blur("project", value))
         self.save_window_sizes_toggle.toggled.connect(self.toggle_save_window_sizes)
-        self.btn_reset_transparency.clicked.connect(self.reset_transparency_settings)
-        self.btn_reset_blur.clicked.connect(self.reset_blur_settings)
         self.btn_reset_window_sizes.clicked.connect(self.reset_window_sizes)
         self.btn_reset_appearance.clicked.connect(self.reset_appearance_defaults)
         self.btn_terminal_restart.clicked.connect(self.restart_terminal)
@@ -5099,7 +4751,7 @@ class AstraStudio(QMainWindow):
         self.btn_install_php.clicked.connect(lambda: self.install_toolchain("php"))
         self.btn_install_powershell.clicked.connect(lambda: self.install_toolchain("powershell"))
         self.btn_install_all.clicked.connect(lambda: self.install_toolchain("all"))
-        self.btn_desktop_shortcut.clicked.connect(lambda: self.install_toolchain("shortcut"))
+        self.btn_desktop_shortcut.clicked.connect(self.create_or_update_desktop_shortcut)
         self.btn_cancel_task.clicked.connect(self.cancel_active_task)
         self.task_manager.taskStarted.connect(self._on_task_started)
         self.task_manager.taskOutput.connect(self._on_task_output)
@@ -5110,7 +4762,6 @@ class AstraStudio(QMainWindow):
         self.project_tree.itemDoubleClicked.connect(self.open_project_tree_item)
         self.refresh_project_tree()
         self._refresh_python_environment_status()
-        self.set_advanced_appearance_visible(True)
         self.tabs.currentChanged.connect(self.update_current_file_label)
         self.tabs.currentChanged.connect(lambda _index: self._refresh_problems_panel())
         self.tabs.currentChanged.connect(lambda _index: self._on_current_editor_changed_for_lsp())
@@ -5222,11 +4873,7 @@ class AstraStudio(QMainWindow):
 
     def change_editor_font_size(self, value):
         self.editor_font_size = max(8, min(32, int(value)))
-        self.apply_font_settings(reapply_theme=True)
-        self._save_settings()
-
-    def change_console_font_size(self, value):
-        self.console_font_size = max(8, min(28, int(value)))
+        self.console_font_size = max(8, min(28, self.editor_font_size - 2))
         self.apply_font_settings(reapply_theme=True)
         self._save_settings()
 
@@ -5249,7 +4896,6 @@ class AstraStudio(QMainWindow):
         for slider, value in [
             (self.ui_font_size_slider, self.ui_font_size),
             (self.editor_font_size_slider, self.editor_font_size),
-            (self.console_font_size_slider, self.console_font_size),
         ]:
             slider.blockSignals(True)
             slider.setValue(value)
@@ -5307,47 +4953,13 @@ class AstraStudio(QMainWindow):
         self._save_settings()
         self.statusBar().showMessage("Отступы сброшены: Tab = 4, Indent = 4", 2200)
 
-    def set_advanced_appearance_visible(self, visible: bool):
-        advanced_widgets = [
-            self.logo_frame_transparency_label, self.logo_frame_transparency_slider,
-            self.editor_transparency_label, self.editor_transparency_slider,
-            self.console_transparency_label, self.console_transparency_slider,
-            self.settings_transparency_label, self.settings_transparency_slider,
-            self.project_transparency_label, self.project_transparency_slider,
-            self.aux_transparency_label, self.aux_transparency_slider,
-            self.editor_blur_label, self.editor_blur_slider,
-            self.console_blur_label, self.console_blur_slider,
-            self.settings_blur_label, self.settings_blur_slider,
-            self.project_blur_label, self.project_blur_slider,
-            self.btn_reset_transparency, self.btn_reset_blur,
-        ]
-        for widget in advanced_widgets:
-            if widget is not None:
-                widget.setVisible(bool(visible))
-
     def change_all_panel_transparency(self, value):
-        value = int(value)
+        value = max(0, min(70, int(value)))
         self.editor_bg_transparency_percent = value
         self.console_bg_transparency_percent = value
         self.settings_bg_transparency_percent = value
         self.project_bg_transparency_percent = value
         self.aux_bg_transparency_percent = value
-        for slider in [self.editor_transparency_slider, self.console_transparency_slider, self.settings_transparency_slider, self.project_transparency_slider, self.aux_transparency_slider]:
-            slider.blockSignals(True)
-            slider.setValue(value)
-            slider.blockSignals(False)
-        self.update_wallpaper_effect_labels()
-        self.apply_theme()
-        self._save_settings()
-
-    def change_logo_frame_blur(self, value):
-        self.logo_frame_blur_percent = max(0, min(100, int(value)))
-        self.update_wallpaper_effect_labels()
-        self.apply_theme()
-        self._save_settings()
-
-    def change_logo_frame_transparency(self, value):
-        self.logo_frame_transparency_percent = max(0, min(100, int(value)))
         self.update_wallpaper_effect_labels()
         self.apply_theme()
         self._save_settings()
@@ -5381,19 +4993,10 @@ class AstraStudio(QMainWindow):
             self.wallpaper_dim_label.setText(f"Затемнение обоев: {self.wallpaper_dim_percent}%")
         if hasattr(self, "wallpaper_blur_label"):
             self.wallpaper_blur_label.setText(f"Размытие обоев редактора и консоли: {self.wallpaper_blur_px}%")
-        for attr, text, value in [
-            ("editor_transparency_label", "Прозрачность редактора кода", self.editor_bg_transparency_percent),
-            ("console_transparency_label", "Прозрачность консоли", self.console_bg_transparency_percent),
-            ("settings_transparency_label", "Прозрачность настроек", self.settings_bg_transparency_percent),
-            ("project_transparency_label", "Прозрачность окна проекта", self.project_bg_transparency_percent),
-            ("aux_transparency_label", "Прозрачность дополнительных окон", self.aux_bg_transparency_percent),
-            ("editor_blur_label", "Размытие фона редактора", self.editor_blur_percent),
-            ("console_blur_label", "Размытие фона консоли", self.console_blur_percent),
-            ("settings_blur_label", "Размытие фона настроек", self.settings_blur_percent),
-            ("project_blur_label", "Размытие фона проекта", self.project_blur_percent),
-        ]:
-            if hasattr(self, attr):
-                getattr(self, attr).setText(f"{text}: {value}%")
+        if hasattr(self, "panel_transparency_label"):
+            self.panel_transparency_label.setText(
+                f"Прозрачность панелей: {self.editor_bg_transparency_percent}%"
+            )
 
     def update_background_wallpaper(self):
         if not hasattr(self, "background_label"):
@@ -5883,34 +5486,10 @@ class AstraStudio(QMainWindow):
         self.write_log("Обои отключены пользователем. Включён серый fallback-фон.")
         self.statusBar().showMessage("Обои отключены · включён серый фон", 2200)
 
-    def update_opacity_label(self):
-        if not hasattr(self, "opacity_label"):
-            return
-        if self.transparency_enabled:
-            self.opacity_label.setText(f"Прозрачность окна: {self.window_opacity_percent}%")
-        else:
-            self.opacity_label.setText("Прозрачность окна: выключена")
-
     def apply_window_opacity(self):
-        if self.transparency_enabled:
-            self.setWindowOpacity(max(0.35, min(1.0, self.window_opacity_percent / 100)))
-        else:
-            self.setWindowOpacity(1.0)
-        self.update_opacity_label()
-        if hasattr(self, "opacity_slider"):
-            self.opacity_slider.setEnabled(self.transparency_enabled)
-
-    def toggle_transparency(self, enabled):
-        self.transparency_enabled = bool(enabled)
-        self.apply_window_opacity()
-        self._save_settings()
-        state = "включена" if enabled else "выключена"
-        self.statusBar().showMessage(f"Полупрозрачность {state}", 2200)
-
-    def change_window_opacity(self, value):
-        self.window_opacity_percent = int(value)
-        self.apply_window_opacity()
-        self._save_settings()
+        # Whole-window opacity was removed from the user settings: it reduced
+        # text contrast and made small windows look broken.
+        self.setWindowOpacity(1.0)
 
 
     def _ensure_log_utf8_bom(self):
@@ -6008,17 +5587,11 @@ class AstraStudio(QMainWindow):
         state = "включено" if enabled else "выключено"
         self.statusBar().showMessage(f"Format on Save: {state}", 2200)
 
-    def change_theme(self, name):
-        self.current_theme_name = name
-        self.apply_theme()
-        self._save_settings()
-        self.statusBar().showMessage(f"Тема изменена: {name}", 2500)
-
-    def change_accent(self, name):
-        self.current_accent_name = name
-        self.apply_theme()
-        self._save_settings()
-        self.statusBar().showMessage(f"Акцент изменён: {name}", 2500)
+    def change_design_profile(self, name):
+        if name == "Angel 404":
+            self.apply_angel404_profile()
+        elif name == "Astra":
+            self.apply_astra_profile()
 
     def change_language(self, name):
         if name not in LANGUAGES:
@@ -6511,7 +6084,7 @@ class AstraStudio(QMainWindow):
 
     def _task_buttons(self):
         names = [
-            "btn_run", "btn_compile", "btn_format", "btn_lint", "btn_build_exe", "btn_new", "btn_enter_typer", "btn_open",
+            "btn_run", "btn_compile", "btn_format", "btn_lint", "btn_build_exe", "btn_new", "btn_open",
             "btn_save_as", "btn_open_folder", "btn_create_project", "btn_open_project",
             "btn_add_project_folder", "btn_remove_project_folder", "btn_refresh_project",
             "btn_new_project_folder", "btn_open_project_folder", "btn_lib_install", "btn_lib_update",
@@ -6617,7 +6190,7 @@ class AstraStudio(QMainWindow):
 
     def _on_task_output(self, task_id: str, text: str, stream: str):
         context = self.active_task_context if self.active_task_context.get("task_id") == task_id else {}
-        if context.get("mode") == "compile" and context.get("language") == "Java":
+        if context.get("mode") == "compile" and context.get("language") in {"Java", "C++"}:
             key = "stdout_chunks" if stream == "stdout" else "stderr_chunks"
             context.setdefault(key, []).append(text)
         if context.get("mode") in {"quality_format", "quality_lint"}:
@@ -6704,14 +6277,15 @@ class AstraStudio(QMainWindow):
 
         if mode == "compile":
             language = context.get("language", self.last_run_language)
-            if language == "Java":
+            if language in {"Java", "C++"}:
                 compiler_output = "".join(context.get("stdout_chunks", [])) + "\n" + "".join(context.get("stderr_chunks", []))
                 source_path = Path(context.get("source_path") or self.last_run_source_path)
-                diagnostics = parse_linter_output("javac", compiler_output, source_path)
+                parser = "javac" if language == "Java" else "cpp-compiler"
+                diagnostics = parse_linter_output(parser, compiler_output, source_path)
                 self._set_quality_diagnostics(source_path, diagnostics)
                 self.write_log(
-                    f"[Java] compile exit={exit_code}; diagnostics={len(diagnostics)}; "
-                    f"javac={context.get('javac_path', '')}"
+                    f"[{language}] compile exit={exit_code}; diagnostics={len(diagnostics)}; "
+                    f"compiler={context.get('javac_path') or context.get('compiler_path', '')}"
                 )
             if success:
                 if language == "Python":
@@ -6736,7 +6310,21 @@ class AstraStudio(QMainWindow):
                 if language == "Java":
                     self.output_console.appendPlainText("Ошибки javac относятся к исходному коду; JDK найден, установщик не требуется.")
                 elif language == "C++":
-                    self._ask_install_now(language)
+                    diagnostics = self.quality_diagnostics.get(str(Path(context.get("source_path") or self.last_run_source_path).resolve()), [])
+                    if diagnostics:
+                        first_line = int(getattr(diagnostics[0], "line", 0)) + 1
+                        self.output_console.appendPlainText(
+                            f"Ошибка относится к коду, первая проблемная строка: {first_line}. "
+                            "Компилятор найден; переустанавливать C++ не требуется."
+                        )
+                        if hasattr(self, "problems_page"):
+                            index = self.bottom_tabs.indexOf(self.problems_page)
+                            if index >= 0:
+                                self.bottom_tabs.setCurrentIndex(index)
+                    else:
+                        self.output_console.appendPlainText(
+                            "Компилятор найден и запущен. Проверь его сообщения выше; установщик C++ не требуется."
+                        )
         elif mode == "build_python_exe":
             exe_path = context.get("exe_path")
             if success:
@@ -7028,25 +6616,6 @@ class AstraStudio(QMainWindow):
             return
         self.statusBar().showMessage("Нет активной долгой операции", 2500)
 
-    def _compile_javascript(self, source_path: Path):
-        node = compiler_path("node.exe", "node")
-        if not node:
-            self.output_console.appendPlainText("ℹ Node.js не найден. JS-файл сохранён, но синтаксис через node --check проверить нельзя.")
-            self.status_pill.setText("нет Node.js")
-            return False
-        ok, exit_code, stdout, stderr = self._run_blocking(node, ["--check", str(source_path)], source_path.parent)
-        if stdout:
-            self.output_console.appendPlainText(stdout)
-        if stderr:
-            self.output_console.appendPlainText(stderr)
-        if ok:
-            self.output_console.appendPlainText("✓ JavaScript синтаксис корректен.")
-            self.status_pill.setText("проверено")
-            return True
-        self.output_console.appendPlainText(f"✕ JavaScript проверка завершилась с кодом {exit_code}")
-        self.status_pill.setText("ошибка")
-        return False
-
     def _prepare_csharp_project(self, source_path: Path) -> Path:
         project_dir = self.build_dir / "csharp_runtime" / source_path.stem
         project_dir.mkdir(parents=True, exist_ok=True)
@@ -7066,27 +6635,6 @@ class AstraStudio(QMainWindow):
         source_text, _source_encoding = _read_text_utf8_or_cp1251(source_path)
         program.write_text(source_text, encoding="utf-8")
         return project_dir
-
-    def _compile_csharp(self, source_path: Path):
-        dotnet = compiler_path("dotnet.exe", "dotnet")
-        if not dotnet:
-            self.output_console.appendPlainText("ℹ .NET SDK не найден. C#-файл сохранён, но сборка невозможна без dotnet.")
-            self.status_pill.setText("нет .NET")
-            return False, None
-        project_dir = self._prepare_csharp_project(source_path)
-        self.last_csharp_project_dir = project_dir
-        ok, exit_code, stdout, stderr = self._run_blocking(dotnet, ["build", "--nologo"], project_dir, timeout_ms=60000)
-        if stdout:
-            self.output_console.appendPlainText(stdout)
-        if stderr:
-            self.output_console.appendPlainText(stderr)
-        if ok:
-            self.output_console.appendPlainText(f"✓ C# сборка успешна: {project_dir}")
-            self.status_pill.setText("собрано")
-            return True, project_dir
-        self.output_console.appendPlainText(f"✕ C# сборка завершилась с кодом {exit_code}")
-        self.status_pill.setText("ошибка")
-        return False, None
 
     def _find_upwards(self, start: Path, filename: str) -> Path | None:
         """Find a project marker by walking from start to the filesystem root."""
@@ -7283,7 +6831,7 @@ class AstraStudio(QMainWindow):
         return False
 
     def _start_compile_cpp_task(self, source_path: Path, run_after: bool = False):
-        compiler = compiler_path("g++", "g++.exe", "clang++", "clang++.exe")
+        compiler = cpp_compiler_path()
         if not compiler:
             self.output_console.appendPlainText("✕ Не найден C++ компилятор. Открой боковую панель «Установщик» и нажми «Установить C++».")
             self.status_pill.setText("нет компилятора")
@@ -7303,7 +6851,7 @@ class AstraStudio(QMainWindow):
             compiler,
             args,
             source_path.parent,
-            {"mode": "compile", "language": "C++", "source_path": str(source_path), "binary_path": str(binary_path), "run_after": run_after, "workdir": str(source_path.parent), "indeterminate": True},
+            {"mode": "compile", "language": "C++", "source_path": str(source_path), "binary_path": str(binary_path), "compiler_path": str(compiler), "run_after": run_after, "workdir": str(source_path.parent), "indeterminate": True, "stdout_chunks": [], "stderr_chunks": []},
             20,
             100,
             True,
@@ -7384,27 +6932,6 @@ class AstraStudio(QMainWindow):
         )
         return None
 
-    def _compile_python(self, source_path: Path):
-        try:
-            pyc_path = py_compile.compile(str(source_path), doraise=True)
-        except py_compile.PyCompileError as exc:
-            self.output_console.appendPlainText("✕ Ошибка компиляции Python:\n")
-            self.output_console.appendPlainText(str(exc))
-            self.status_pill.setText("ошибка")
-            self.statusBar().showMessage("Проверка не пройдена", 3000)
-            return False
-        except Exception as exc:
-            self.output_console.appendPlainText("✕ Ошибка:\n")
-            self.output_console.appendPlainText(str(exc))
-            self.status_pill.setText("ошибка")
-            return False
-
-        self.output_console.appendPlainText("✓ Синтаксис Python корректный.")
-        self.output_console.appendPlainText(f"✓ Создан .pyc: {pyc_path}")
-        self.status_pill.setText("проверено")
-        self.statusBar().showMessage("Проверка завершена", 3000)
-        return True
-
     def _cpp_extra_args(self, source_path: Path) -> tuple[list[str], list[str]]:
         """Возвращает дополнительные флаги компиляции и линковки для типовых Windows/C++ задач."""
         source_encoding = "utf-8"
@@ -7461,86 +6988,12 @@ class AstraStudio(QMainWindow):
 
         return compile_flags, linker_flags
 
-    def _compile_cpp(self, source_path: Path):
-        compiler = compiler_path("g++", "g++.exe", "clang++", "clang++.exe")
-        if not compiler:
-            self.output_console.appendPlainText(
-                "✕ Не найден C++ компилятор.\n"
-                "Открой боковую панель «Установщик» и нажми «Установить C++» — Astra поставит MSYS2/g++ и добавит путь автоматически."
-            )
-            self.status_pill.setText("нет компилятора")
-            self._ask_install_now("C++")
-            return False, None
-
-        suffix = ".exe" if os.name == "nt" else ""
-        binary_path = self.build_dir / f"{source_path.stem}{suffix}"
-        compile_flags, linker_flags = self._cpp_extra_args(source_path)
-        args = ["-std=c++17", "-Wall", "-Wextra", "-fdiagnostics-color=never", *compile_flags, str(source_path), "-o", str(binary_path), *linker_flags]
-        if linker_flags:
-            self.output_console.appendPlainText("ℹ Обнаружены Windows/GDI-вызовы — добавлены системные библиотеки: " + " ".join(linker_flags))
-        ok, exit_code, stdout, stderr = self._run_blocking(compiler, args, source_path.parent)
-        if stdout:
-            self.output_console.appendPlainText(stdout)
-        if stderr:
-            self.output_console.appendPlainText(stderr)
-
-        if ok:
-            self.output_console.appendPlainText(f"✓ C++ сборка успешна: {binary_path}")
-            self.status_pill.setText("собрано")
-            return True, binary_path
-
-        self.output_console.appendPlainText(f"✕ C++ сборка завершилась с кодом {exit_code}")
-        self.status_pill.setText("ошибка")
-        return False, None
-
     def _detect_java_class_name(self, text: str) -> str | None:
         match = re.search(r"public\s+class\s+([A-Za-z_][A-Za-z0-9_]*)", text)
         if match:
             return match.group(1)
         match = re.search(r"class\s+([A-Za-z_][A-Za-z0-9_]*)", text)
         return match.group(1) if match else None
-
-    def _compile_java(self, source_path: Path):
-        runtime = discover_java_runtime()
-        if runtime is None:
-            self.output_console.appendPlainText(
-                "✕ Не найдена согласованная пара javac/java из одного JDK.\n"
-                "Открой боковую панель «Установщик» и нажми «Установить Java» — Astra поставит JDK и добавит путь автоматически."
-            )
-            self.status_pill.setText("нет JDK")
-            self._ask_install_now("Java")
-            return False, None
-
-        text, source_encoding = _read_text_utf8_or_cp1251(source_path)
-        class_name = self._detect_java_class_name(text) or source_path.stem
-        compile_source = source_path
-        runtime_dir = source_path.parent
-        if (class_name and source_path.stem != class_name) or source_encoding != "utf-8":
-            runtime_dir = self.build_dir / "java_runtime" / class_name
-            runtime_dir.mkdir(parents=True, exist_ok=True)
-            compile_source = runtime_dir / f"{class_name}.java"
-            compile_source.write_text(text, encoding="utf-8")
-            self.output_console.appendPlainText(
-                f"ℹ Java требует, чтобы public class совпадал с именем файла. "
-                f"Для сборки создана временная копия: {compile_source}"
-            )
-        self.last_java_classpath = runtime_dir
-        ok, exit_code, stdout, stderr = self._run_blocking(
-            str(runtime.javac), javac_arguments(compile_source), compile_source.parent, output_encoding="utf-8"
-        )
-        if stdout:
-            self.output_console.appendPlainText(stdout)
-        if stderr:
-            self.output_console.appendPlainText(stderr)
-
-        if ok:
-            self.output_console.appendPlainText(f"✓ Java сборка успешна. Главный класс: {class_name}")
-            self.status_pill.setText("собрано")
-            return True, class_name
-
-        self.output_console.appendPlainText(f"✕ Java сборка завершилась с кодом {exit_code}")
-        self.status_pill.setText("ошибка")
-        return False, None
 
     def run_code(self):
         if self.run_process and self.run_process.state() != QProcess.ProcessState.NotRunning:
@@ -7574,20 +7027,6 @@ class AstraStudio(QMainWindow):
                 self.status_pill.setText("нет Python")
                 self._ask_install_now("Python")
                 return
-            if ("# Astra Studio Template: Имитация ввода" in editor.toPlainText() or "# Astral Studio Template: Имитация ввода" in editor.toPlainText()):
-                answer = QMessageBox.warning(
-                    self,
-                    "Имитация ввода",
-                    "Этот скрипт имитирует нажатия клавиш. Используйте его только в своих окнах и с понятной целью.\n\nПродолжить запуск?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No,
-                )
-                if answer != QMessageBox.StandardButton.Yes:
-                    self.status_pill.setText("отменено")
-                    return
-                if not self.ensure_python_packages_for_enter_typer():
-                    self.status_pill.setText("нет библиотек")
-                    return
             if not self._ensure_python_imports_before_run(editor.toPlainText(), source_path):
                 self.status_pill.setText("нет библиотек")
                 return
@@ -7865,23 +7304,6 @@ class AstraStudio(QMainWindow):
         self._apply_responsive_layout()
 
 
-    def open_enter_typer_template(self):
-        self.current_language_name = "Python"
-        if hasattr(self, "language_combo"):
-            self.language_combo.blockSignals(True)
-            self.language_combo.setCurrentText("Python")
-            self.language_combo.blockSignals(False)
-        editor = self.add_editor_tab(ENTER_TYPER_TEMPLATE, name="enter_typer_ru_en.py", language_name="Python")
-        editor.document().setModified(True)
-        QMessageBox.information(
-            self,
-            "Имитация ввода",
-            "Шаблон открыт в новом Python-файле.\n\n"
-            "Важно: скрипт имитирует нажатия клавиш. Используй его только в своих окнах и с понятной целью.\n"
-            "Для запуска нажми F5 вручную.",
-        )
-        self.statusBar().showMessage("Открыт шаблон: Имитация ввода", 3000)
-
     def change_preset_wallpaper(self, name):
         if name not in ASTRA_WALLPAPERS:
             return
@@ -7914,36 +7336,19 @@ class AstraStudio(QMainWindow):
         self.project_blur_percent = 18
         self.logo_frame_blur_percent = 18
         self.logo_frame_transparency_percent = 42
-        for combo, value in [(self.theme_combo, self.current_theme_name), (self.accent_combo, self.current_accent_name), (self.preset_wallpaper_combo, self.preset_wallpaper_name)]:
+        for combo, value in [(self.preset_wallpaper_combo, self.preset_wallpaper_name), (self.global_font_combo, self.global_font_name)]:
             combo.blockSignals(True)
             combo.setCurrentText(value)
             combo.blockSignals(False)
-        self.global_font_combo.blockSignals(True)
-        self.global_font_combo.setCurrentText(self.global_font_name)
-        self.global_font_combo.blockSignals(False)
-        self.wallpaper_all_toggle.blockSignals(True)
-        self.wallpaper_all_toggle.setChecked(True)
-        self.wallpaper_all_toggle.blockSignals(False)
-        self.disable_console_wallpaper_toggle.blockSignals(True)
-        self.disable_console_wallpaper_toggle.setChecked(False)
-        self.disable_console_wallpaper_toggle.blockSignals(False)
+        self.design_profile_combo.blockSignals(True)
+        self.design_profile_combo.setCurrentText("Astra")
+        self.design_profile_combo.blockSignals(False)
         self.wallpaper_dim_slider.blockSignals(True)
         self.wallpaper_dim_slider.setValue(self.wallpaper_dim_percent)
         self.wallpaper_dim_slider.blockSignals(False)
         for slider, value in [
             (self.wallpaper_blur_slider, self.wallpaper_blur_px),
-            (self.editor_blur_slider, self.editor_blur_percent),
-            (self.console_blur_slider, self.console_blur_percent),
-            (self.settings_blur_slider, self.settings_blur_percent),
-            (self.project_blur_slider, self.project_blur_percent),
             (self.panel_transparency_slider, 15),
-            (self.editor_transparency_slider, 15),
-            (self.console_transparency_slider, 15),
-            (self.settings_transparency_slider, 15),
-            (self.project_transparency_slider, 15),
-            (self.aux_transparency_slider, 15),
-            (self.logo_frame_blur_slider, self.logo_frame_blur_percent),
-            (self.logo_frame_transparency_slider, self.logo_frame_transparency_percent),
         ]:
             slider.blockSignals(True)
             slider.setValue(value)
@@ -7976,34 +7381,19 @@ class AstraStudio(QMainWindow):
         self.project_blur_percent = 6
 
         for combo, value in [
-            (self.theme_combo, self.current_theme_name),
-            (self.accent_combo, self.current_accent_name),
             (self.preset_wallpaper_combo, self.preset_wallpaper_name),
             (self.global_font_combo, self.global_font_name),
         ]:
             combo.blockSignals(True)
             combo.setCurrentText(value)
             combo.blockSignals(False)
-        for toggle, checked in [
-            (self.wallpaper_all_toggle, True),
-            (self.disable_console_wallpaper_toggle, False),
-        ]:
-            toggle.blockSignals(True)
-            toggle.setChecked(checked)
-            toggle.blockSignals(False)
+        self.design_profile_combo.blockSignals(True)
+        self.design_profile_combo.setCurrentText("Angel 404")
+        self.design_profile_combo.blockSignals(False)
         for slider, value in [
             (self.wallpaper_dim_slider, self.wallpaper_dim_percent),
             (self.wallpaper_blur_slider, self.wallpaper_blur_px),
-            (self.editor_blur_slider, self.editor_blur_percent),
-            (self.console_blur_slider, self.console_blur_percent),
-            (self.settings_blur_slider, self.settings_blur_percent),
-            (self.project_blur_slider, self.project_blur_percent),
             (self.panel_transparency_slider, 24),
-            (self.editor_transparency_slider, self.editor_bg_transparency_percent),
-            (self.console_transparency_slider, self.console_bg_transparency_percent),
-            (self.settings_transparency_slider, self.settings_bg_transparency_percent),
-            (self.project_transparency_slider, self.project_bg_transparency_percent),
-            (self.aux_transparency_slider, self.aux_bg_transparency_percent),
         ]:
             slider.blockSignals(True)
             slider.setValue(value)
@@ -8014,18 +7404,6 @@ class AstraStudio(QMainWindow):
         self._save_settings()
         self.statusBar().showMessage("Профиль Angel 404 применён", 3000)
 
-    def toggle_wallpaper_all_windows(self, enabled):
-        # Kept as a compatibility slot for old settings/signals. Full-window
-        # wallpaper is intentionally retired.
-        self.wallpaper_all_windows = False
-        self.apply_theme()
-        self._save_settings()
-
-    def toggle_disable_console_wallpaper(self, enabled):
-        self.disable_console_wallpaper = bool(enabled)
-        self.apply_theme()
-        self._save_settings()
-
     def change_wallpaper_dim(self, value):
         self.wallpaper_dim_percent = int(value)
         self.update_wallpaper_effect_labels()
@@ -8033,45 +7411,12 @@ class AstraStudio(QMainWindow):
         self._save_settings()
 
     def change_wallpaper_blur(self, value):
-        self.wallpaper_blur_px = int(value)
-        self.editor_blur_percent = int(value)
-        self.console_blur_percent = int(value)
-        self.settings_blur_percent = int(value)
-        self.project_blur_percent = int(value)
-        for slider in [self.editor_blur_slider, self.console_blur_slider, self.settings_blur_slider, self.project_blur_slider]:
-            slider.blockSignals(True)
-            slider.setValue(int(value))
-            slider.blockSignals(False)
-        self.update_wallpaper_effect_labels()
-        self.apply_theme()
-        self._save_settings()
-
-    def change_panel_transparency(self, target: str, value: int):
-        value = int(value)
-        if target == "editor":
-            self.editor_bg_transparency_percent = value
-        elif target == "console":
-            self.console_bg_transparency_percent = value
-        elif target == "settings":
-            self.settings_bg_transparency_percent = value
-        elif target == "project":
-            self.project_bg_transparency_percent = value
-        elif target == "aux":
-            self.aux_bg_transparency_percent = value
-        self.update_wallpaper_effect_labels()
-        self.apply_theme()
-        self._save_settings()
-
-    def change_secondary_blur(self, target: str, value: int):
-        value = int(value)
-        if target == "editor":
-            self.editor_blur_percent = value
-        elif target == "console":
-            self.console_blur_percent = value
-        elif target == "settings":
-            self.settings_blur_percent = value
-        elif target == "project":
-            self.project_blur_percent = value
+        self.wallpaper_blur_px = max(0, min(60, int(value)))
+        self.editor_blur_percent = self.wallpaper_blur_px
+        self.console_blur_percent = self.wallpaper_blur_px
+        self.settings_blur_percent = self.wallpaper_blur_px
+        self.project_blur_percent = self.wallpaper_blur_px
+        self.logo_frame_blur_percent = self.wallpaper_blur_px
         self.update_wallpaper_effect_labels()
         self.apply_theme()
         self._save_settings()
@@ -8079,41 +7424,6 @@ class AstraStudio(QMainWindow):
     def toggle_save_window_sizes(self, enabled):
         self.save_window_sizes_enabled = bool(enabled)
         self._save_settings()
-
-    def reset_transparency_settings(self):
-        values = {
-            "editor": 15,
-            "console": 15,
-            "settings": 15,
-            "project": 15,
-            "aux": 15,
-        }
-        self.editor_bg_transparency_percent = values["editor"]
-        self.console_bg_transparency_percent = values["console"]
-        self.settings_bg_transparency_percent = values["settings"]
-        self.project_bg_transparency_percent = values["project"]
-        self.aux_bg_transparency_percent = values["aux"]
-        for slider, value in [
-            (self.editor_transparency_slider, values["editor"]),
-            (self.console_transparency_slider, values["console"]),
-            (self.settings_transparency_slider, values["settings"]),
-            (self.project_transparency_slider, values["project"]),
-            (self.aux_transparency_slider, values["aux"]),
-            (self.panel_transparency_slider, 15),
-        ]:
-            slider.blockSignals(True); slider.setValue(value); slider.blockSignals(False)
-        self.update_wallpaper_effect_labels(); self.apply_theme(); self._save_settings()
-
-    def reset_blur_settings(self):
-        self.wallpaper_blur_px = 25
-        self.editor_blur_percent = 25
-        self.console_blur_percent = 25
-        self.settings_blur_percent = 25
-        self.project_blur_percent = 25
-        self.logo_frame_blur_percent = 18
-        for slider, value in [(self.wallpaper_blur_slider, 25), (self.editor_blur_slider, 25), (self.console_blur_slider, 25), (self.settings_blur_slider, 25), (self.project_blur_slider, 25), (self.logo_frame_blur_slider, 18)]:
-            slider.blockSignals(True); slider.setValue(value); slider.blockSignals(False)
-        self.update_wallpaper_effect_labels(); self.apply_theme(); self._save_settings()
 
     def reset_window_sizes(self):
         self.saved_root_splitter_sizes = []
@@ -8932,26 +8242,6 @@ class AstraStudio(QMainWindow):
     def install_missing_python_module(self, module_name: str) -> bool:
         return self._ask_about_missing_python_module(module_name, rerun_after=True)
 
-    def ensure_python_packages_for_enter_typer(self) -> bool:
-        required = ["pynput", "pyperclip"]
-        missing = [name for name in required if not self._python_import_available(name)]
-        if not missing:
-            return True
-        answer = QMessageBox.question(
-            self,
-            "Зависимости шаблона",
-            "Для шаблона «Имитация ввода» нужны библиотеки:\n\n" + "\n".join(missing) + "\n\nУстановить их через активный Python? После установки нажми запуск ещё раз.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if answer != QMessageBox.StandardButton.Yes:
-            return False
-        records = [self._python_package_record(name) for name in missing]
-        records = [record for record in records if record]
-        if records:
-            self._run_pip_for_records(records)
-        return False
-
     def _detect_missing_python_module(self, text: str):
         match = re.search(r"ModuleNotFoundError:\s+No module named ['\"]([^'\"]+)['\"]", text)
         if match:
@@ -9035,7 +8325,7 @@ class AstraStudio(QMainWindow):
         )
 
     def _build_cpp_exe(self, source_path: Path):
-        compiler = compiler_path("g++", "g++.exe", "clang++", "clang++.exe")
+        compiler = cpp_compiler_path()
         if not compiler:
             self.output_console.appendPlainText("✕ Не найден C++ компилятор.")
             self._ask_install_now("C++")
@@ -9277,7 +8567,6 @@ class AstraStudio(QMainWindow):
                 "insertSpaces": self.editor_insert_spaces,
                 "uiFontSize": self.ui_font_size,
                 "editorFontSize": self.editor_font_size,
-                "consoleFontSize": self.console_font_size,
             },
             "astralStudioVersion": APP_VERSION,
         }
@@ -12304,14 +11593,13 @@ class AstraStudio(QMainWindow):
             self.editor_insert_spaces = settings["insertSpaces"]
         self.ui_font_size = int_value("uiFontSize", self.ui_font_size, 10, 22)
         self.editor_font_size = int_value("editorFontSize", self.editor_font_size, 8, 32)
-        self.console_font_size = int_value("consoleFontSize", self.console_font_size, 8, 28)
+        self.console_font_size = max(8, min(28, self.editor_font_size - 2))
 
         for attr, value in (
             ("editor_tab_size_slider", self.editor_tab_size),
             ("editor_indent_size_slider", self.editor_indent_size),
             ("ui_font_size_slider", self.ui_font_size),
             ("editor_font_size_slider", self.editor_font_size),
-            ("console_font_size_slider", self.console_font_size),
         ):
             widget = getattr(self, attr, None)
             if widget is not None:
@@ -12691,7 +11979,7 @@ class AstraStudio(QMainWindow):
         return label, version, valid
 
     def _check_cpp_validity(self) -> tuple[str | None, str | None, bool]:
-        compiler = compiler_path("g++.exe", "g++") or compiler_path("clang++.exe", "clang++")
+        compiler = cpp_compiler_path()
         if not compiler:
             return None, None, False
         ok_version, version_text = self._run_capture(compiler, ["--version"], timeout=8)
@@ -13276,57 +12564,6 @@ Refresh-KnownPaths
 
     def _installer_script(self, kind: str) -> str:
         common = self._installer_common_script()
-        app_dir = str(project_root_dir())
-        shortcut_icon_relative = "assets/astra.ico"
-        shortcut_icon_label = "Astra 3.16 — красно-синий"
-        if hasattr(self, "shortcut_icon_combo"):
-            shortcut_icon_relative = str(self.shortcut_icon_combo.currentData() or shortcut_icon_relative)
-            shortcut_icon_label = self.shortcut_icon_combo.currentText() or shortcut_icon_label
-        shortcut_icon_path = str(resource_path(shortcut_icon_relative))
-        shortcut_script = f"""
-Write-Step "Создание ярлыка Astra Studio"
-$appDir = {self._ps_quote(app_dir)}
-$desktopCandidates = @([Environment]::GetFolderPath([Environment+SpecialFolder]::DesktopDirectory))
-$registryDesktop = (Get-ItemProperty -LiteralPath "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders" -Name Desktop -ErrorAction SilentlyContinue).Desktop
-if (-not [string]::IsNullOrWhiteSpace($registryDesktop)) {{ $desktopCandidates += [Environment]::ExpandEnvironmentVariables($registryDesktop) }}
-if (-not [string]::IsNullOrWhiteSpace($env:OneDrive)) {{
-    $desktopCandidates += Join-Path $env:OneDrive "Рабочий стол"
-    $desktopCandidates += Join-Path $env:OneDrive "Desktop"
-}}
-if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {{
-    $desktopCandidates += Join-Path $env:USERPROFILE "Рабочий стол"
-    $desktopCandidates += Join-Path $env:USERPROFILE "Desktop"
-}}
-$desktop = $desktopCandidates | Where-Object {{ -not [string]::IsNullOrWhiteSpace($_) -and (Test-Path -LiteralPath $_) }} | Select-Object -First 1
-if ([string]::IsNullOrWhiteSpace($desktop)) {{ throw "Не удалось определить папку рабочего стола." }}
-$linkPath = Join-Path $desktop "Astra Studio.lnk"
-$exeCandidate = Join-Path $appDir "Astra Studio.exe"
-$distOneDirCandidate = Join-Path $appDir "dist\\Astra Studio\\Astra Studio.exe"
-$distExeCandidate = Join-Path $appDir "dist\\Astra Studio.exe"
-$vbsCandidate = Join-Path $appDir "run_astra.vbs"
-$batCandidate = Join-Path $appDir "run_astra.bat"
-if (Test-Path $exeCandidate) {{ $target = $exeCandidate }}
-elseif (Test-Path $distOneDirCandidate) {{ $target = $distOneDirCandidate }}
-elseif (Test-Path $distExeCandidate) {{ $target = $distExeCandidate }}
-elseif (Test-Path $vbsCandidate) {{ $target = $vbsCandidate }}
-elseif (Test-Path $batCandidate) {{ $target = $batCandidate }}
-elseif (Test-Path (Join-Path $appDir "run.bat")) {{ $target = Join-Path $appDir "run.bat" }}
-else {{ throw "Не найден исполняемый файл или launcher Astra Studio для ярлыка." }}
-$wsh = New-Object -ComObject WScript.Shell
-$shortcut = $wsh.CreateShortcut($linkPath)
-$shortcut.TargetPath = $target
-$shortcut.WorkingDirectory = Split-Path -Parent $target
-$preferredIcon = {self._ps_quote(shortcut_icon_path)}
-$stableIcon = Join-Path $appDir "assets\astra.ico"
-if (Test-Path -LiteralPath $preferredIcon) {{ $shortcut.IconLocation = $preferredIcon }}
-elseif (Test-Path -LiteralPath $stableIcon) {{ $shortcut.IconLocation = $stableIcon }}
-else {{ $shortcut.IconLocation = $target }}
-$shortcut.Description = "Astra Studio — среда для кода"
-$shortcut.Save()
-if (-not (Test-Path -LiteralPath $linkPath)) {{ throw "Windows не создала файл ярлыка: $linkPath" }}
-Write-Host "Ярлык создан: $linkPath"
-Write-Host "Оформление: {shortcut_icon_label}"
-"""
         python_script = r"""
 Astra-Progress 8
 Write-Step "Установка Python"
@@ -13682,14 +12919,42 @@ Astra-Progress 100
             return common + cpp_script
         if kind == "java":
             return common + java_script
-        if kind == "shortcut":
-            return common + shortcut_script
         if kind == "update_all":
             return common + update_script
         if kind == "all":
             # Install only the runtimes required by the six focused languages.
-            return common + python_script + uv_script + node_script + cpp_script + java_script + shortcut_script + "Astra-Progress 100\n"
+            return common + python_script + uv_script + node_script + cpp_script + java_script + "Astra-Progress 100\n"
         return common + "Write-Host 'Неизвестная задача установщика.'\n"
+
+    def create_or_update_desktop_shortcut(self):
+        if os.name != "nt":
+            QMessageBox.information(self, "Ярлык", "Создание ярлыка доступно в Windows.")
+            return False
+        powershell = compiler_path("powershell.exe", "pwsh.exe", "pwsh")
+        script_path = resource_path("scripts/create_desktop_shortcut.ps1")
+        if not powershell or not script_path.is_file():
+            QMessageBox.warning(self, "Ярлык", "Не найден PowerShell или сценарий создания ярлыка.")
+            return False
+        selected_icon = str(self.shortcut_icon_combo.currentData() or "assets/astra.ico")
+        icon_style = {
+            "assets/astra_angel404.ico": "angel404",
+            "assets/legacy_astra.ico": "legacy",
+        }.get(selected_icon, "classic")
+        args = [
+            "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path),
+            "-IconStyle", icon_style,
+            "-AppDirOverride", str(project_root_dir()),
+        ]
+        ok, _code, stdout, stderr = self._run_blocking(
+            powershell, args, project_root_dir(), timeout_ms=30000, output_encoding="utf-8"
+        )
+        if ok:
+            self.statusBar().showMessage("Ярлык Astra Studio создан или обновлён", 3000)
+            QMessageBox.information(self, "Ярлык", "Ярлык Astra Studio на рабочем столе создан или обновлён.")
+            return True
+        self.write_log("Не удалось создать ярлык: " + (stderr or stdout))
+        QMessageBox.warning(self, "Ярлык", "Не удалось создать ярлык.\n\n" + (stderr or stdout or "Неизвестная ошибка"))
+        return False
 
     def install_toolchain(self, kind: str):
         if self.task_manager.has_active_task():
@@ -13717,7 +12982,6 @@ Astra-Progress 100
             "powershell": "Установка PowerShell 7",
             "all": "Установка основного набора StaffedUp",
             "update_all": "Обновление языков",
-            "shortcut": "Создание ярлыка",
         }
         self.open_installer_tab()
         self.installer_console.clear()

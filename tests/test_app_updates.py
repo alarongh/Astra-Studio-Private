@@ -118,13 +118,13 @@ def test_windows_updater_has_wait_backup_rollback_and_restart_steps():
         assert required in script
 
 
-def test_release_316_bundles_public_github_channel_and_valid_latest_manifest():
+def test_release_317_bundles_public_github_channel_and_valid_latest_manifest():
     channel_url = configured_manifest_url(ROOT / "update_channel.json", {})
     assert channel_url == "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
     manifest = parse_update_manifest((ROOT / "update" / "latest.json").read_bytes())
-    assert manifest.version == "Release 3.16"
-    assert manifest.download_url.endswith("/v3.16/Astra_Studio_Release_3_16.zip")
-    assert manifest.notes_url.endswith("/releases/tag/v3.16")
+    assert manifest.version == "Release 3.17"
+    assert manifest.download_url.endswith("/v3.17/Astra_Studio_Release_3_17.zip")
+    assert manifest.notes_url.endswith("/releases/tag/v3.17")
 
 
 @pytest.mark.skipif(os.name != "nt" or shutil.which("powershell.exe") is None, reason="Windows updater integration")

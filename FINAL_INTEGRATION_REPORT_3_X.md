@@ -211,7 +211,7 @@ The Release 3.14 Windows gate collects **271 tests** and finishes with **269 PAS
 
 Release 3.15 extends the visibility gate beyond the main language selector: LSP rows, new-file filters and project-template choices are now limited to Java, Python and C++, while existing hidden-language files remain openable and their implementations stay in source.
 
-Release 3.16 restores JavaScript, HTML and CSS as focused languages, adds context-aware offline completion for Python/Web code, smart indentation, paired delimiters, function folding and inline diagnostics. Wallpaper rendering is isolated to the editor/console surface and the project panel collapses responsively while tool drawers are open. The updater now retains the previous installation, performs a startup health check and rolls back a failed replacement instead of deleting the last working build.
+Release 3.17 retains the six focused languages and transactional updater from 3.16, simplifies appearance customization into a profile plus shared panel/wallpaper controls, and moves shortcut management from the language installer into Settings. C++ compiler output now becomes exact Problems/line diagnostics; a source error can no longer be misreported as a missing compiler. Synthetic input and duplicate blocking compile paths were removed, while deferred language engines remain preserved for later work.
 
 ## Release 3.9 installer correction
 

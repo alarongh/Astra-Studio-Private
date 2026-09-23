@@ -22,7 +22,7 @@ def test_release_3_5_identity():
         if isinstance(node, ast.Assign)
         and any(isinstance(t, ast.Name) and t.id == "APP_VERSION" for t in node.targets)
     )
-    assert ast.literal_eval(assignment.value) == "Release 3.16"
+    assert ast.literal_eval(assignment.value) == "Release 3.17"
 
 
 def test_settings_are_inline_in_tools_drawer_not_external_dialog():
@@ -32,13 +32,14 @@ def test_settings_are_inline_in_tools_drawer_not_external_dialog():
     assert "settings_dialog" not in source
 
 
-def test_editor_and_console_transparency_are_not_artificially_clamped_opaque():
+def test_editor_and_console_transparency_migrate_to_one_simple_control():
     source = _source()
     assert 'self._panel_rgba(self.theme["editor"], self.editor_bg_transparency_percent, 8)' in source
     assert 'self._panel_rgba(self.theme["console"], self.console_bg_transparency_percent, 8)' in source
-    assert 'editor_blur_percent = data.get("editor_blur_percent")' in source
-    assert '"editor_blur_percent": self.editor_blur_percent' in source
-    assert 'self.editor_blur_slider.valueChanged.connect(lambda value: self.change_secondary_blur("editor", value))' in source
+    assert 'panel_transparency_percent = data.get("panel_transparency_percent")' in source
+    assert '"panel_transparency_percent": self.editor_bg_transparency_percent' in source
+    assert 'self.panel_transparency_slider.valueChanged.connect(self.change_all_panel_transparency)' in source
+    assert "self.editor_blur_slider" not in source
 
 
 def test_integrated_console_replaces_separate_stdin_line_edits():

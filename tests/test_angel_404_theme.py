@@ -27,7 +27,8 @@ def test_angel_404_theme_profile_and_wallpaper_are_wired():
     assert 'ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"' in text
     assert 'ANGEL_404_ACCENT = "Angel 404 неон"' in text
     assert 'ANGEL_404_WALLPAPER: "assets/wallpapers/angel_404.png"' in text
-    assert "self.btn_apply_angel404_profile.clicked.connect(self.apply_angel404_profile)" in text
+    assert "self.design_profile_combo.currentTextChanged.connect(self.change_design_profile)" in text
+    assert 'self.design_profile_combo.addItems(APPEARANCE_PROFILES)' in text
     assert 'self.global_font_name = "Minecraft Rus"' in text
     assert "def apply_angel404_profile(self):" in text
 

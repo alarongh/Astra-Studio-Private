@@ -255,5 +255,6 @@ D3 gate: `compileall` + static smoke pass; full sandbox suite collects **185 tes
 - [x] Release 3.15 complete visibility gate: language combo, new-file dialog, LSP table, installer, file filters and project templates expose only Java, Python and C++.
 - [x] Release 3.16 safe update transaction: keep the previous build, health-check the replacement and automatically roll back an early crash.
 - [x] Release 3.16 editor usability: six focused languages, responsive workspace-only wallpaper, function folding, inline errors, smart indentation and context completion.
+- [x] Release 3.17 simplification: merge appearance controls, move shortcut ownership to Settings, remove synthetic input/dead blocking compilers and report the exact C++ compiler error line without a false installer prompt.
 
-**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.16, which includes all earlier repairs plus transactional update recovery and the focused six-language editor; Release 4.0 planning remains blocked until 3.x owner sign-off.**
+**Final Integration Gate status: PASSED. Release 3.3 remains the frozen functional baseline. Owner acceptance continues on Release 3.17, which includes all earlier repairs plus transactional update recovery, the focused six-language editor and the simplified settings/diagnostics pass; Release 4.0 planning remains blocked until 3.x owner sign-off.**

@@ -193,7 +193,7 @@ class MainStaticTests(unittest.TestCase):
             if isinstance(node, ast.Assign)
             and any(isinstance(target, ast.Name) and target.id == "APP_VERSION" for target in node.targets)
         )
-        self.assertEqual(ast.literal_eval(assignment.value), "Release 3.16")
+        self.assertEqual(ast.literal_eval(assignment.value), "Release 3.17")
 
     def test_jsonc_parser_accepts_comments_urls_and_trailing_commas(self):
         wanted = {"_strip_jsonc_comments", "_strip_jsonc_trailing_commas", "loads_jsonc"}
@@ -249,8 +249,20 @@ class MainStaticTests(unittest.TestCase):
                     key.value for key in node.value.keys
                     if isinstance(key, ast.Constant) and isinstance(key.value, str)
                 )
-        self.assertEqual(loaded, saved)
-        self.assertGreaterEqual(len(saved), 40)
+        legacy_appearance_keys = {
+            "aux_bg_transparency_percent",
+            "console_bg_transparency_percent",
+            "console_blur_percent",
+            "editor_bg_transparency_percent",
+            "editor_blur_percent",
+            "project_bg_transparency_percent",
+            "project_blur_percent",
+            "settings_bg_transparency_percent",
+            "settings_blur_percent",
+        }
+        self.assertLessEqual(saved, loaded)
+        self.assertEqual(loaded - saved, legacy_appearance_keys)
+        self.assertGreaterEqual(len(saved), 35)
 
     def test_all_languages_have_compile_and_run_branches(self):
         cls = next(node for node in self.tree.body if isinstance(node, ast.ClassDef) and node.name == "AstraStudio")
@@ -270,8 +282,12 @@ class MainStaticTests(unittest.TestCase):
 
     def test_embedded_installer_resolves_get_item_paths_and_uses_stable_shortcut_icon(self):
         self.assertIn("function Resolve-ToolPath($tool)", self.source)
-        self.assertIn('$stableIcon = Join-Path $appDir "assets\\astra.ico"', self.source)
-        self.assertIn('$shortcut.IconLocation = $target', self.source)
+        installer_start = self.source.index("    def _installer_script(self, kind: str) -> str:")
+        installer_end = self.source.index("\n    def ", installer_start + 20)
+        installer = self.source[installer_start:installer_end]
+        self.assertNotIn("WScript.Shell", installer)
+        self.assertNotIn("stableIcon", installer)
+        self.assertIn("def create_or_update_desktop_shortcut(self):", self.source)
         for name in ("node", "npm", "uv", "git", "pwsh", "godot", "php"):
             self.assertIn(f"Resolve-ToolPath ${name}", self.source)
 

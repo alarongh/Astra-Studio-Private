@@ -4,8 +4,7 @@ $scripts = @(
     "install_uv.ps1",
     "install_node.ps1",
     "install_cpp.ps1",
-    "install_java.ps1",
-    "create_desktop_shortcut.ps1"
+    "install_java.ps1"
 )
 try {
     foreach ($script in $scripts) {

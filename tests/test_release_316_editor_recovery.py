@@ -67,6 +67,7 @@ def test_wallpaper_scope_and_compact_layout_are_not_full_window():
     assert "self.setMinimumSize(760, 520)" in source
 
 
-def test_experimental_synthetic_input_entry_is_removed_from_ui():
+def test_experimental_synthetic_input_feature_is_removed():
     source = (ROOT / "main.py").read_text(encoding="utf-8")
-    assert "self.btn_enter_typer.setVisible(False)" in source
+    assert "btn_enter_typer" not in source
+    assert "ENTER_TYPER_TEMPLATE" not in source
