@@ -61,7 +61,8 @@ def test_wallpaper_scope_and_compact_layout_are_not_full_window():
     assert 'self.workspace_surface.setObjectName("WorkspaceSurface")' in source
     assert "self.background_label.setParent(self.workspace_surface)" in source
     assert "self.wallpaper_dim_overlay.setParent(self.workspace_surface)" in source
-    assert "compact = self.width() < 1220 and not self.tools_drawer.isHidden()" in source
+    assert "compact = self.width() < 1900 and tools_open" in source
+    assert "drawer_width = max(360" in source
     assert "self.project_panel.setVisible(False)" in source
     assert "self.wallpaper_all_windows = False" in source
     assert "self.setMinimumSize(760, 520)" in source

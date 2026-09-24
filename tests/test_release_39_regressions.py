@@ -17,8 +17,8 @@ JAVA_INSTALLER = ROOT / "scripts" / "install_java.ps1"
 def test_release_39_identity_is_current_runtime_version():
     main_text = MAIN.read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert 'APP_VERSION = "Release 3.18"' in main_text
-    assert "Release 3.18" in readme
+    assert 'APP_VERSION = "Release 3.19"' in main_text
+    assert "Release 3.19" in readme
 
 
 def test_java_installer_uses_stderr_safe_version_probe_everywhere():

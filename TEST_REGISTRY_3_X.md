@@ -41,7 +41,7 @@
 - `tests/test_app_updates.py::test_update_channel_accepts_published_https_url`
 - `tests/test_app_updates.py::test_update_archive_verifies_hash_size_layout_and_rejects_traversal`
 - `tests/test_app_updates.py::test_windows_updater_has_wait_backup_rollback_and_restart_steps`
-- `tests/test_app_updates.py::test_release_318_bundles_public_github_channel_and_valid_latest_manifest`
+- `tests/test_app_updates.py::test_release_319_bundles_public_github_channel_and_valid_latest_manifest`
 - `tests/test_app_updates.py::test_windows_updater_replaces_portable_folder_in_isolated_directory`
 - `tests/test_app_updates.py::test_windows_updater_rolls_back_when_new_executable_exits_during_health_check`
 - `tests/test_release_316_editor_recovery.py::test_context_completion_covers_python_javascript_html_and_css`
@@ -54,6 +54,9 @@
 - `tests/test_release_317_simplification.py::test_removed_synthetic_input_feature_is_not_shipped`
 - `tests/test_release_317_simplification.py::test_settings_page_owns_shortcut_and_simple_appearance_controls`
 - `tests/test_release_317_simplification.py::test_real_cpp_error_marks_line_without_opening_installer`
+- `tests/test_release_319_laptop_regressions.py::test_release_identity_update_fallback_and_shortcut_script_are_packaged`
+- `tests/test_release_319_laptop_regressions.py::test_space_is_not_swallowed_and_commits_tab_selected_completion`
+- `tests/test_release_319_laptop_regressions.py::test_settings_drawer_expands_and_project_tree_yields_on_laptop`
 - `tests/test_language_error_classification.py::test_python_compile_diagnostic_points_to_source_line`
 - `tests/test_language_error_classification.py::test_node_diagnostic_points_to_source_line`
 - `tests/test_language_error_classification.py::test_java_runtime_diagnostic_points_to_source_line`

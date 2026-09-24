@@ -17,7 +17,9 @@ from pathlib import Path
 try:
     from PySide6.QtCore import (
         Qt,
+        QEvent,
         QSize,
+        QPoint,
         QRect,
         QProcess,
         QProcessEnvironment,
@@ -180,9 +182,12 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.18"
+APP_VERSION = "Release 3.19"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
+PUBLIC_UPDATE_MANIFEST_URL = "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
+WALLPAPER_TILE_SIZE = QSize(1100, 620)
+WALLPAPER_TILE_SOURCE_OFFSET = QPoint(280, 0)
 DEFAULT_LANGUAGE = "Python"
 DEFAULT_THEME = "Astra: Корона кода"
 DEFAULT_ACCENT = "Astra красно-синий"
@@ -192,7 +197,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.18 — красно-синий": "assets/astra.ico",
+    "Astra 3.19 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -1753,6 +1758,10 @@ class CodeEditor(QPlainTextEdit):
         self._builtin_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self._builtin_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
         self._builtin_completer.popup().setToolTip("Tab — выбрать следующий · Space — вставить выбранный")
+        # QCompleter installs its own event filter on the popup.  Installing the
+        # editor afterwards lets us keep Space and Tab deterministic even when
+        # the popup, rather than the editor viewport, receives the key event.
+        self._builtin_completer.popup().installEventFilter(self)
         self._builtin_completer.activated.connect(self._insert_builtin_completion)
         self._builtin_completion_timer = QTimer(self)
         self._builtin_completion_timer.setSingleShot(True)
@@ -2568,38 +2577,61 @@ class CodeEditor(QPlainTextEdit):
         self.setTextCursor(cursor)
         return True
 
-    def keyPressEvent(self, event):
+    def _handle_builtin_completion_key(self, event) -> bool:
         popup = self._builtin_completer.popup() if hasattr(self, "_builtin_completer") else None
-        if popup is not None and popup.isVisible():
-            if event.key() == Qt.Key.Key_Escape:
-                self._hide_builtin_completion()
+        if popup is None or not popup.isVisible():
+            return False
+        if event.key() == Qt.Key.Key_Escape:
+            self._hide_builtin_completion()
+            event.accept()
+            return True
+        if event.key() == Qt.Key.Key_Tab and self.completion_accept_tab:
+            if self._cycle_builtin_completion():
                 event.accept()
-                return
-            if event.key() == Qt.Key.Key_Tab and self.completion_accept_tab:
-                if self._cycle_builtin_completion():
-                    event.accept()
-                    return
-            if event.key() in {Qt.Key.Key_Down, Qt.Key.Key_Up}:
-                model = self._builtin_completer.completionModel()
-                count = model.rowCount()
-                if count:
-                    current = popup.currentIndex().row()
-                    next_row = (current + (1 if event.key() == Qt.Key.Key_Down else -1)) % count
-                    index = model.index(next_row, 0)
-                    popup.setCurrentIndex(index)
-                    popup.scrollTo(index)
-                    self._builtin_tab_cycle_active = True
-                    self._builtin_tab_cycle_index = next_row
-                    event.accept()
-                    return
-            if event.key() == Qt.Key.Key_Space and self._builtin_tab_cycle_active:
+                return True
+        if event.key() in {Qt.Key.Key_Down, Qt.Key.Key_Up}:
+            model = self._builtin_completer.completionModel()
+            count = model.rowCount()
+            if count:
+                current = popup.currentIndex().row()
+                next_row = (current + (1 if event.key() == Qt.Key.Key_Down else -1)) % count
+                index = model.index(next_row, 0)
+                popup.setCurrentIndex(index)
+                popup.scrollTo(index)
+                self._builtin_tab_cycle_active = True
+                self._builtin_tab_cycle_index = next_row
+                event.accept()
+                return True
+        if event.key() == Qt.Key.Key_Space:
+            if self._builtin_tab_cycle_active:
                 if self._accept_current_builtin_completion(trailing_space=True):
                     event.accept()
-                    return
-            if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
-                if self._accept_current_builtin_completion():
-                    event.accept()
-                    return
+                    return True
+            # A normal Space must never disappear merely because suggestions
+            # are open.  Close the popup and send it directly to the editor.
+            self._hide_builtin_completion()
+            QPlainTextEdit.keyPressEvent(self, event)
+            event.accept()
+            return True
+        if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter}:
+            if self._accept_current_builtin_completion():
+                event.accept()
+                return True
+        return False
+
+    def eventFilter(self, watched, event):
+        if (
+            hasattr(self, "_builtin_completer")
+            and watched is self._builtin_completer.popup()
+            and event.type() == QEvent.Type.KeyPress
+            and self._handle_builtin_completion_key(event)
+        ):
+            return True
+        return super().eventFilter(watched, event)
+
+    def keyPressEvent(self, event):
+        if self._handle_builtin_completion_key(event):
+            return
         if event.key() == Qt.Key.Key_Escape and self.completion_hint.isVisible():
             self.dismiss_completion_hint()
             event.accept()
@@ -3131,6 +3163,8 @@ class AstraStudio(QMainWindow):
         self.wallpaper_all_windows = False
         self.wallpaper_dim_percent = 55
         self.wallpaper_blur_px = 25
+        self._wallpaper_tile = QPixmap()
+        self._wallpaper_tile_key = ""
         self.disable_console_wallpaper = False
         self.editor_bg_transparency_percent = 15
         self.console_bg_transparency_percent = 15
@@ -3513,7 +3547,7 @@ class AstraStudio(QMainWindow):
         # Keep wallpapers at their native pixel size. Resizing the IDE now only
         # changes the centered crop and never rescales widgets or the image.
         self.background_label.setScaledContents(False)
-        self.background_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.background_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.background_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.background_label.lower()
         self.wallpaper_dim_overlay = QWidget(root)
@@ -4592,6 +4626,7 @@ class AstraStudio(QMainWindow):
         workspace_layout.setSpacing(0)
         self.background_label.setParent(self.workspace_surface)
         self.wallpaper_dim_overlay.setParent(self.workspace_surface)
+        self.workspace_surface.installEventFilter(self)
         workspace_layout.addWidget(self.vertical_splitter)
         self.background_label.lower()
         self.wallpaper_dim_overlay.lower()
@@ -5014,9 +5049,26 @@ class AstraStudio(QMainWindow):
             if hasattr(self, "wallpaper_dim_overlay"):
                 self.wallpaper_dim_overlay.hide()
             return
-        self.background_label.setPixmap(pixmap)
+        # Build one stable logical tile and reuse it at every window size.  The
+        # wallpaper no longer zooms or drifts when splitters/window dimensions
+        # change; resizing only reveals more of the same anchored pattern.
+        scaled = pixmap.scaled(
+            WALLPAPER_TILE_SIZE,
+            Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        crop_x = max(0, (scaled.width() - WALLPAPER_TILE_SIZE.width()) // 2)
+        crop_y = max(0, (scaled.height() - WALLPAPER_TILE_SIZE.height()) // 2)
+        self._wallpaper_tile = scaled.copy(
+            crop_x,
+            crop_y,
+            min(WALLPAPER_TILE_SIZE.width(), scaled.width()),
+            min(WALLPAPER_TILE_SIZE.height(), scaled.height()),
+        )
+        self._wallpaper_tile_key = str(path)
         surface = getattr(self, "workspace_surface", self.root)
         self.background_label.setGeometry(surface.rect())
+        self._render_wallpaper_canvas()
         self.background_label.lower()
         self.background_label.show()
         if hasattr(self, "wallpaper_dim_overlay"):
@@ -5032,6 +5084,25 @@ class AstraStudio(QMainWindow):
             self.background_label.setGraphicsEffect(effect)
         else:
             self.background_label.setGraphicsEffect(None)
+
+    def _render_wallpaper_canvas(self):
+        """Paint the fixed wallpaper tile into the current workspace viewport."""
+        if not hasattr(self, "background_label") or self._wallpaper_tile.isNull():
+            return
+        surface = getattr(self, "workspace_surface", None)
+        if surface is None:
+            return
+        width = max(1, surface.width())
+        height = max(1, surface.height())
+        canvas = QPixmap(width, height)
+        canvas.fill(QColor(FALLBACK_BACKGROUND))
+        painter = QPainter(canvas)
+        # The bundled Angel artwork has its focal point on the right.  A fixed
+        # source offset keeps that subject visible in narrow laptop workspaces
+        # without tying its scale or position to the current pane width.
+        painter.drawTiledPixmap(canvas.rect(), self._wallpaper_tile, WALLPAPER_TILE_SOURCE_OFFSET)
+        painter.end()
+        self.background_label.setPixmap(canvas)
 
     def apply_theme(self):
         self.theme = dict(THEMES[self.current_theme_name])
@@ -12214,7 +12285,7 @@ Write-Host "`nПроверка Java, Python, C++ и Web-инструментов
 
     def check_app_update(self):
         try:
-            manifest_url = configured_manifest_url(resource_path("update_channel.json"))
+            manifest_url = configured_manifest_url(resource_path("update_channel.json")) or PUBLIC_UPDATE_MANIFEST_URL
         except ValueError as exc:
             QMessageBox.warning(self, "Обновления Astra Studio", str(exc))
             return
@@ -12958,9 +13029,19 @@ Astra-Progress 100
             QMessageBox.information(self, "Ярлык", "Создание ярлыка доступно в Windows.")
             return False
         powershell = compiler_path("powershell.exe", "pwsh.exe", "pwsh")
+        if not powershell:
+            system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+            candidates = [
+                system_root / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe",
+                Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "PowerShell" / "7" / "pwsh.exe",
+            ]
+            powershell = next((str(path) for path in candidates if path.is_file()), None)
         script_path = resource_path("scripts/create_desktop_shortcut.ps1")
-        if not powershell or not script_path.is_file():
-            QMessageBox.warning(self, "Ярлык", "Не найден PowerShell или сценарий создания ярлыка.")
+        if not powershell:
+            QMessageBox.warning(self, "Ярлык", "Не найден Windows PowerShell или PowerShell 7.")
+            return False
+        if not script_path.is_file():
+            QMessageBox.warning(self, "Ярлык", "В составе Astra Studio отсутствует сценарий создания ярлыка.")
             return False
         selected_icon = str(self.shortcut_icon_combo.currentData() or "assets/astra.ico")
         icon_style = {
@@ -13180,15 +13261,28 @@ Astra-Progress 100
         surface = getattr(self, "workspace_surface", None)
         if hasattr(self, "background_label") and surface is not None:
             self.background_label.setGeometry(surface.rect())
+            self._render_wallpaper_canvas()
         if hasattr(self, "wallpaper_dim_overlay") and surface is not None:
             self.wallpaper_dim_overlay.setGeometry(surface.rect())
         self._apply_responsive_layout()
 
+    def eventFilter(self, watched, event):
+        if (
+            watched is getattr(self, "workspace_surface", None)
+            and event.type() == QEvent.Type.Resize
+        ):
+            rect = self.workspace_surface.rect()
+            self.background_label.setGeometry(rect)
+            self.wallpaper_dim_overlay.setGeometry(rect)
+            self._render_wallpaper_canvas()
+        return super().eventFilter(watched, event)
+
     def _apply_responsive_layout(self):
-        """Protect the editor width when a tool drawer is open on a laptop."""
+        """Keep drawers readable across common laptop widths and DPI scales."""
         if not all(hasattr(self, name) for name in ("tools_drawer", "project_panel", "main_splitter")):
             return
-        compact = self.width() < 1220 and not self.tools_drawer.isHidden()
+        tools_open = not self.tools_drawer.isHidden()
+        compact = self.width() < 1900 and tools_open
         was_hidden = bool(getattr(self, "_responsive_project_hidden", False))
         if compact and not self.project_panel.isHidden():
             self.project_panel.setVisible(False)
@@ -13199,6 +13293,30 @@ Astra-Progress 100
             self._responsive_project_hidden = False
             total = max(530, self.main_splitter.width())
             self.main_splitter.setSizes([230, max(300, total - 230)])
+        if hasattr(self, "root_splitter") and tools_open:
+            total = max(720, self.root_splitter.width())
+            sidebar_visible = getattr(self, "sidebar_shell", None) is not None and self.sidebar_shell.isVisible()
+            if total < 1080 and sidebar_visible:
+                self.sidebar_shell.setVisible(False)
+                self.btn_restore_sidebar.setVisible(True)
+                self._responsive_sidebar_hidden = True
+                sidebar_visible = False
+            elif total >= 1080 and bool(getattr(self, "_responsive_sidebar_hidden", False)):
+                self.sidebar_shell.setVisible(True)
+                self.btn_restore_sidebar.setVisible(False)
+                self._responsive_sidebar_hidden = False
+                sidebar_visible = True
+            sidebar_width = min(240, max(210, self.root_splitter.sizes()[0] if sidebar_visible else 0)) if sidebar_visible else 0
+            minimum_editor = 520 if total >= 1250 else 360
+            drawer_width = max(360, min(600, int(total * 0.36), total - sidebar_width - minimum_editor))
+            editor_width = max(260, total - sidebar_width - drawer_width)
+            self.tools_drawer.setMinimumWidth(drawer_width)
+            self.root_splitter.setSizes([sidebar_width, drawer_width, editor_width])
+        elif bool(getattr(self, "_responsive_sidebar_hidden", False)):
+            self.sidebar_shell.setVisible(True)
+            self.btn_restore_sidebar.setVisible(False)
+            self._responsive_sidebar_hidden = False
+            self.tools_drawer.setMinimumWidth(310)
         if hasattr(self, "sidebar_scroll"):
             self.sidebar_scroll.horizontalScrollBar().setValue(0)
 
