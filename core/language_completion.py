@@ -84,8 +84,15 @@ JAVA_STANDARD_CLASSES: dict[str, str] = {
     "HashSet": "java.util.HashSet",
     "IOException": "java.io.IOException",
     "InputStreamReader": "java.io.InputStreamReader",
+    "InputStream": "java.io.InputStream",
+    "OutputStream": "java.io.OutputStream",
+    "PrintStream": "java.io.PrintStream",
     "Instant": "java.time.Instant",
     "Iterator": "java.util.Iterator",
+    "Consumer": "java.util.function.Consumer",
+    "Function": "java.util.function.Function",
+    "Predicate": "java.util.function.Predicate",
+    "Supplier": "java.util.function.Supplier",
     "LinkedHashMap": "java.util.LinkedHashMap",
     "LinkedHashSet": "java.util.LinkedHashSet",
     "LinkedList": "java.util.LinkedList",
@@ -114,11 +121,15 @@ JAVA_STANDARD_CLASSES: dict[str, str] = {
     "Files": "java.nio.file.Files",
     "URI": "java.net.URI",
     "URL": "java.net.URL",
+    "HttpClient": "java.net.http.HttpClient",
+    "HttpRequest": "java.net.http.HttpRequest",
+    "HttpResponse": "java.net.http.HttpResponse",
     "Math": "java.lang.Math",
     "Runtime": "java.lang.Runtime",
     "StringBuilder": "java.lang.StringBuilder",
     "System": "java.lang.System",
     "Thread": "java.lang.Thread",
+    "ProcessBuilder": "java.lang.ProcessBuilder",
 }
 
 JAVA_MEMBERS: dict[str, tuple[str, ...]] = {
@@ -135,13 +146,15 @@ JAVA_MEMBERS: dict[str, tuple[str, ...]] = {
     "Map": ("clear()", "compute()", "computeIfAbsent()", "computeIfPresent()", "containsKey()", "containsValue()", "entrySet()", "forEach()", "get()", "getOrDefault()", "isEmpty()", "keySet()", "merge()", "put()", "putAll()", "putIfAbsent()", "remove()", "replace()", "replaceAll()", "size()", "values()"),
     "HashMap": ("clear()", "clone()", "compute()", "computeIfAbsent()", "computeIfPresent()", "containsKey()", "containsValue()", "entrySet()", "forEach()", "get()", "getOrDefault()", "isEmpty()", "keySet()", "merge()", "put()", "putAll()", "putIfAbsent()", "remove()", "replace()", "replaceAll()", "size()", "values()"),
     "Set": ("add()", "addAll()", "clear()", "contains()", "containsAll()", "forEach()", "isEmpty()", "iterator()", "remove()", "removeAll()", "removeIf()", "retainAll()", "size()", "spliterator()", "stream()", "toArray()"),
-    "Scanner": ("close()", "hasNext()", "hasNextDouble()", "hasNextInt()", "next()", "nextBoolean()", "nextDouble()", "nextInt()", "nextLine()", "useDelimiter()"),
-    "StringBuilder": ("append()", "charAt()", "delete()", "insert()", "length()", "replace()", "reverse()", "setCharAt()", "substring()", "toString()"),
+    "Scanner": ("close()", "delimiter()", "findInLine()", "hasNext()", "hasNextBigDecimal()", "hasNextBigInteger()", "hasNextBoolean()", "hasNextDouble()", "hasNextFloat()", "hasNextInt()", "hasNextLine()", "hasNextLong()", "locale()", "next()", "nextBigDecimal()", "nextBigInteger()", "nextBoolean()", "nextDouble()", "nextFloat()", "nextInt()", "nextLine()", "nextLong()", "radix()", "reset()", "skip()", "tokens()", "useDelimiter()", "useLocale()", "useRadix()"),
+    "StringBuilder": ("append()", "appendCodePoint()", "capacity()", "charAt()", "chars()", "codePointAt()", "codePoints()", "delete()", "deleteCharAt()", "ensureCapacity()", "getChars()", "indexOf()", "insert()", "isEmpty()", "lastIndexOf()", "length()", "replace()", "reverse()", "setCharAt()", "setLength()", "substring()", "toString()", "trimToSize()"),
     "Optional": ("filter()", "flatMap()", "get()", "ifPresent()", "isEmpty()", "isPresent()", "map()", "orElse()", "orElseGet()", "orElseThrow()"),
     "Path": ("getFileName()", "getName()", "getParent()", "isAbsolute()", "normalize()", "resolve()", "toAbsolutePath()", "toFile()", "toString()"),
     "LocalDate": ("atStartOfDay()", "compareTo()", "getDayOfMonth()", "getMonth()", "getYear()", "isAfter()", "isBefore()", "minusDays()", "plusDays()"),
     "LocalDateTime": ("format()", "getDayOfMonth()", "getHour()", "getMinute()", "getMonth()", "getYear()", "isAfter()", "isBefore()", "minusDays()", "plusDays()", "toLocalDate()", "toLocalTime()"),
-    "PrintStream": ("append()", "close()", "flush()", "format()", "print()", "printf()", "println()", "write()"),
+    "PrintStream": ("append()", "checkError()", "close()", "flush()", "format()", "print()", "printf()", "println()", "write()", "writeBytes()"),
+    "InputStream": ("available()", "close()", "mark()", "markSupported()", "nullInputStream()", "read()", "readAllBytes()", "readNBytes()", "reset()", "skip()", "skipNBytes()", "transferTo()"),
+    "OutputStream": ("close()", "flush()", "nullOutputStream()", "write()"),
     "Math": ("abs()", "ceil()", "clamp()", "cos()", "floor()", "max()", "min()", "pow()", "random()", "round()", "sin()", "sqrt()"),
     "Arrays": ("asList()", "binarySearch()", "copyOf()", "equals()", "fill()", "sort()", "stream()", "toString()"),
     "Collections": ("binarySearch()", "copy()", "frequency()", "max()", "min()", "reverse()", "shuffle()", "sort()", "unmodifiableList()"),
@@ -153,14 +166,20 @@ JAVA_MEMBERS: dict[str, tuple[str, ...]] = {
     "Matcher": ("appendReplacement()", "appendTail()", "end()", "find()", "group()", "groupCount()", "lookingAt()", "matches()", "replaceAll()", "replaceFirst()", "reset()", "start()"),
     "BigDecimal": ("abs()", "add()", "compareTo()", "divide()", "max()", "min()", "movePointLeft()", "movePointRight()", "multiply()", "negate()", "pow()", "remainder()", "round()", "scale()", "setScale()", "subtract()", "toBigInteger()", "toPlainString()"),
     "Thread": ("getId()", "getName()", "getState()", "interrupt()", "isAlive()", "isInterrupted()", "join()", "run()", "setDaemon()", "setName()", "sleep()", "start()"),
-    "System": ("arraycopy()", "currentTimeMillis()", "exit()", "gc()", "getenv()", "getProperty()", "lineSeparator()", "nanoTime()", "setProperty()"),
+    "System": ("out", "err", "in", "arraycopy()", "clearProperty()", "console()", "currentTimeMillis()", "exit()", "gc()", "getProperties()", "getenv()", "getLogger()", "getProperty()", "identityHashCode()", "lineSeparator()", "load()", "loadLibrary()", "mapLibraryName()", "nanoTime()", "setErr()", "setIn()", "setOut()", "setProperties()", "setProperty()"),
     "Objects": ("checkIndex()", "deepEquals()", "equals()", "hash()", "hashCode()", "isNull()", "nonNull()", "requireNonNull()", "toString()"),
     "Executors": ("newCachedThreadPool()", "newFixedThreadPool()", "newScheduledThreadPool()", "newSingleThreadExecutor()", "newSingleThreadScheduledExecutor()", "newVirtualThreadPerTaskExecutor()"),
+    "Runtime": ("addShutdownHook()", "availableProcessors()", "exec()", "exit()", "freeMemory()", "gc()", "getRuntime()", "halt()", "maxMemory()", "removeShutdownHook()", "totalMemory()", "version()"),
+    "Random": ("doubles()", "ints()", "longs()", "nextBoolean()", "nextBytes()", "nextDouble()", "nextFloat()", "nextGaussian()", "nextInt()", "nextLong()", "setSeed()"),
+    "Iterator": ("forEachRemaining()", "hasNext()", "next()", "remove()"),
+    "Queue": ("add()", "element()", "offer()", "peek()", "poll()", "remove()"),
+    "Deque": ("addFirst()", "addLast()", "descendingIterator()", "getFirst()", "getLast()", "offerFirst()", "offerLast()", "peekFirst()", "peekLast()", "pollFirst()", "pollLast()", "pop()", "push()", "removeFirst()", "removeLast()"),
 }
 
 JAVA_STATIC_RECEIVERS = {
     "System.out": "PrintStream",
     "System.err": "PrintStream",
+    "System.in": "InputStream",
     "Math": "Math",
     "Arrays": "Arrays",
     "Collections": "Collections",
@@ -223,23 +242,68 @@ CPP_STANDARD_SYMBOLS: dict[str, tuple[str, str]] = {
     "lock_guard": ("lock_guard", "mutex"),
     "future": ("future", "future"),
     "async": ("async", "future"),
+    "jthread": ("jthread", "thread"),
+    "scoped_lock": ("scoped_lock", "mutex"),
+    "unique_lock": ("unique_lock", "mutex"),
+    "condition_variable": ("condition_variable", "condition_variable"),
+    "atomic": ("atomic", "atomic"),
+    "span": ("span", "span"),
+    "ranges": ("ranges", "ranges"),
+    "format": ("format", "format"),
+    "print": ("print", "print"),
+    "println": ("println", "print"),
+    "regex": ("regex", "regex"),
+    "smatch": ("smatch", "regex"),
+    "chrono": ("chrono", "chrono"),
+    "any": ("any", "any"),
+    "expected": ("expected", "expected"),
+    "bitset": ("bitset", "bitset"),
+    "numeric_limits": ("numeric_limits", "limits"),
     "sort": ("sort", "algorithm"),
     "stable_sort": ("stable_sort", "algorithm"),
     "find": ("find", "algorithm"),
     "find_if": ("find_if", "algorithm"),
     "transform": ("transform", "algorithm"),
+    "all_of": ("all_of", "algorithm"),
+    "any_of": ("any_of", "algorithm"),
+    "none_of": ("none_of", "algorithm"),
+    "binary_search": ("binary_search", "algorithm"),
+    "lower_bound": ("lower_bound", "algorithm"),
+    "upper_bound": ("upper_bound", "algorithm"),
+    "min_element": ("min_element", "algorithm"),
+    "max_element": ("max_element", "algorithm"),
+    "minmax_element": ("minmax_element", "algorithm"),
+    "remove_if": ("remove_if", "algorithm"),
+    "reverse": ("reverse", "algorithm"),
+    "unique": ("unique", "algorithm"),
+    "count": ("count", "algorithm"),
+    "count_if": ("count_if", "algorithm"),
+    "for_each": ("for_each", "algorithm"),
+    "copy": ("copy", "algorithm"),
+    "fill": ("fill", "algorithm"),
+    "iota": ("iota", "numeric"),
     "accumulate": ("accumulate", "numeric"),
     "move": ("move", "utility"),
     "cout": ("cout", "iostream"),
     "cerr": ("cerr", "iostream"),
     "cin": ("cin", "iostream"),
     "endl": ("endl", "ostream"),
+    "getline": ("getline", "string"),
+    "stoi": ("stoi", "string"),
+    "stol": ("stol", "string"),
+    "stoll": ("stoll", "string"),
+    "stof": ("stof", "string"),
+    "stod": ("stod", "string"),
+    "to_string": ("to_string", "string"),
+    "setw": ("setw", "iomanip"),
+    "setprecision": ("setprecision", "iomanip"),
+    "fixed": ("fixed", "ios"),
 }
 
 CPP_MEMBERS: dict[str, tuple[str, ...]] = {
     "string": ("append()", "at()", "back()", "begin()", "capacity()", "clear()", "compare()", "contains()", "data()", "empty()", "end()", "erase()", "find()", "find_first_of()", "find_last_of()", "front()", "insert()", "length()", "push_back()", "replace()", "reserve()", "resize()", "rfind()", "shrink_to_fit()", "size()", "starts_with()", "substr()", "swap()"),
     "string_view": ("at()", "back()", "begin()", "contains()", "data()", "empty()", "end()", "find()", "front()", "length()", "remove_prefix()", "remove_suffix()", "rfind()", "size()", "starts_with()", "substr()"),
-    "vector": ("at()", "back()", "begin()", "capacity()", "cbegin()", "cend()", "clear()", "data()", "emplace()", "emplace_back()", "empty()", "end()", "erase()", "front()", "insert()", "pop_back()", "push_back()", "reserve()", "resize()", "shrink_to_fit()", "size()", "swap()"),
+    "vector": ("assign()", "at()", "back()", "begin()", "capacity()", "cbegin()", "cend()", "clear()", "crbegin()", "crend()", "data()", "emplace()", "emplace_back()", "empty()", "end()", "erase()", "front()", "get_allocator()", "insert()", "max_size()", "pop_back()", "push_back()", "rbegin()", "rend()", "reserve()", "resize()", "shrink_to_fit()", "size()", "swap()"),
     "array": ("at()", "back()", "begin()", "cbegin()", "cend()", "data()", "empty()", "end()", "fill()", "front()", "size()", "swap()"),
     "deque": ("at()", "back()", "begin()", "clear()", "emplace_back()", "emplace_front()", "empty()", "end()", "erase()", "front()", "insert()", "pop_back()", "pop_front()", "push_back()", "push_front()", "resize()", "size()", "swap()"),
     "list": ("back()", "begin()", "clear()", "emplace_back()", "emplace_front()", "empty()", "end()", "erase()", "front()", "merge()", "pop_back()", "pop_front()", "push_back()", "push_front()", "remove()", "remove_if()", "reverse()", "size()", "sort()", "splice()", "unique()"),
@@ -259,6 +323,13 @@ CPP_MEMBERS: dict[str, tuple[str, ...]] = {
     "future": ("get()", "share()", "valid()", "wait()", "wait_for()", "wait_until()"),
     "ostream": ("flush()", "good()", "put()", "seekp()", "tellp()", "write()"),
     "istream": ("eof()", "fail()", "get()", "getline()", "good()", "ignore()", "peek()", "read()", "seekg()", "tellg()"),
+    "tuple": ("swap()",),
+    "variant": ("emplace()", "index()", "swap()", "valueless_by_exception()"),
+    "regex": ("flags()", "mark_count()"),
+    "thread": ("detach()", "get_id()", "hardware_concurrency()", "join()", "joinable()", "native_handle()", "swap()"),
+    "jthread": ("detach()", "get_id()", "get_stop_source()", "get_stop_token()", "join()", "joinable()", "request_stop()", "swap()"),
+    "atomic": ("compare_exchange_strong()", "compare_exchange_weak()", "exchange()", "fetch_add()", "fetch_and()", "fetch_or()", "fetch_sub()", "fetch_xor()", "is_lock_free()", "load()", "notify_all()", "notify_one()", "store()", "wait()"),
+    "span": ("back()", "begin()", "data()", "empty()", "end()", "first()", "front()", "last()", "size()", "size_bytes()", "subspan()"),
 }
 
 CPP_STATIC_RECEIVERS = {
@@ -578,6 +649,19 @@ PYTHON_MEMBERS: dict[str, tuple[str, ...]] = {
     "json": ("dump()", "dumps()", "load()", "loads()"),
     "re": ("compile()", "escape()", "findall()", "finditer()", "fullmatch()", "match()", "search()", "split()", "sub()"),
     "math": ("ceil()", "cos()", "e", "floor()", "isclose()", "pi", "pow()", "sin()", "sqrt()", "tan()"),
+    "datetime": ("combine()", "fromisoformat()", "fromtimestamp()", "now()", "strptime()", "today()", "utcnow()"),
+    "random": ("choice()", "choices()", "gauss()", "getrandbits()", "randint()", "random()", "randrange()", "sample()", "seed()", "shuffle()", "uniform()"),
+    "itertools": ("accumulate()", "chain()", "combinations()", "combinations_with_replacement()", "compress()", "count()", "cycle()", "dropwhile()", "filterfalse()", "groupby()", "islice()", "pairwise()", "permutations()", "product()", "repeat()", "starmap()", "takewhile()", "tee()", "zip_longest()"),
+    "functools": ("cache()", "cached_property()", "cmp_to_key()", "lru_cache()", "partial()", "reduce()", "singledispatch()", "total_ordering()", "wraps()"),
+    "collections": ("ChainMap", "Counter", "OrderedDict", "defaultdict", "deque", "namedtuple()"),
+    "subprocess": ("DEVNULL", "PIPE", "Popen", "STDOUT", "call()", "check_call()", "check_output()", "run()"),
+    "logging": ("basicConfig()", "critical()", "debug()", "error()", "exception()", "getLogger()", "info()", "warning()"),
+    "asyncio": ("TaskGroup", "create_task()", "gather()", "get_event_loop()", "run()", "sleep()", "to_thread()", "wait()", "wait_for()"),
+    "typing": ("Any", "Callable", "ClassVar", "Final", "Generic", "Iterable", "Iterator", "Literal", "Mapping", "NamedTuple", "Never", "NewType", "NoReturn", "Optional", "Protocol", "Sequence", "TypeAlias", "TypeVar", "TypedDict", "Union", "cast()", "overload()"),
+    "dataclasses": ("Field", "asdict()", "astuple()", "dataclass()", "field()", "fields()", "is_dataclass()", "make_dataclass()", "replace()"),
+    "csv": ("DictReader", "DictWriter", "reader()", "writer()"),
+    "urllib": ("error", "parse", "request", "response", "robotparser"),
+    "sqlite3": ("Binary", "Connection", "Cursor", "Error", "Row", "connect()", "register_adapter()", "register_converter()"),
 }
 
 PYTHON_BUILTINS = tuple(dict.fromkeys((*CATALOG_COMPLETIONS["Python"],
@@ -585,6 +669,14 @@ PYTHON_BUILTINS = tuple(dict.fromkeys((*CATALOG_COMPLETIONS["Python"],
     "compile", "complex", "delattr", "dir", "divmod", "eval", "exec", "format", "frozenset", "getattr", "globals",
     "hasattr", "hash", "help", "hex", "id", "isinstance", "issubclass", "iter", "locals", "memoryview", "next",
     "object", "oct", "ord", "pow", "property", "repr", "round", "slice", "staticmethod", "vars", "__name__",
+    "BaseException", "Exception", "GeneratorExit", "KeyboardInterrupt", "SystemExit", "ArithmeticError",
+    "AssertionError", "AttributeError", "EOFError", "ImportError", "IndexError", "KeyError", "LookupError",
+    "NameError", "NotImplementedError", "OSError", "OverflowError", "RuntimeError", "StopIteration",
+    "SyntaxError", "TypeError", "ValueError", "ZeroDivisionError", "__file__", "__package__", "__debug__",
+    "argparse", "asyncio", "collections", "csv", "dataclasses", "datetime", "functools", "glob", "hashlib",
+    "http", "importlib", "itertools", "json", "logging", "math", "os", "pathlib", "pickle", "platform",
+    "random", "re", "shutil", "sqlite3", "statistics", "subprocess", "sys", "tempfile", "threading", "time",
+    "typing", "unittest", "urllib", "uuid",
 )))
 
 
@@ -661,15 +753,23 @@ class PythonCompletionProvider:
 
 
 JAVASCRIPT_MEMBERS: dict[str, tuple[str, ...]] = {
-    "Array": ("at()", "concat()", "every()", "filter()", "find()", "findIndex()", "flat()", "flatMap()", "forEach()", "includes()", "indexOf()", "join()", "map()", "pop()", "push()", "reduce()", "reverse()", "shift()", "slice()", "some()", "sort()", "splice()", "unshift()"),
-    "String": ("at()", "charAt()", "endsWith()", "includes()", "indexOf()", "match()", "padEnd()", "padStart()", "repeat()", "replace()", "replaceAll()", "slice()", "split()", "startsWith()", "substring()", "toLowerCase()", "toUpperCase()", "trim()"),
+    "Array": ("from()", "isArray()", "of()", "at()", "concat()", "copyWithin()", "entries()", "every()", "fill()", "filter()", "find()", "findIndex()", "findLast()", "findLastIndex()", "flat()", "flatMap()", "forEach()", "includes()", "indexOf()", "join()", "keys()", "lastIndexOf()", "length", "map()", "pop()", "push()", "reduce()", "reduceRight()", "reverse()", "shift()", "slice()", "some()", "sort()", "splice()", "toReversed()", "toSorted()", "toSpliced()", "unshift()", "values()", "with()"),
+    "String": ("at()", "charAt()", "charCodeAt()", "codePointAt()", "concat()", "endsWith()", "includes()", "indexOf()", "isWellFormed()", "lastIndexOf()", "length", "localeCompare()", "match()", "matchAll()", "normalize()", "padEnd()", "padStart()", "repeat()", "replace()", "replaceAll()", "search()", "slice()", "split()", "startsWith()", "substring()", "toLocaleLowerCase()", "toLocaleUpperCase()", "toLowerCase()", "toUpperCase()", "trim()", "trimEnd()", "trimStart()"),
     "Map": ("clear()", "delete()", "entries()", "forEach()", "get()", "has()", "keys()", "set()", "size", "values()"),
     "Set": ("add()", "clear()", "delete()", "entries()", "forEach()", "has()", "keys()", "size", "values()"),
-    "Promise": ("catch()", "finally()", "then()"),
-    "console": ("assert()", "clear()", "debug()", "dir()", "error()", "group()", "groupEnd()", "info()", "log()", "table()", "time()", "timeEnd()", "warn()"),
-    "document": ("addEventListener()", "body", "createElement()", "getElementById()", "querySelector()", "querySelectorAll()", "readyState", "title"),
+    "Promise": ("all()", "allSettled()", "any()", "race()", "reject()", "resolve()", "catch()", "finally()", "then()"),
+    "Date": ("getDate()", "getDay()", "getFullYear()", "getHours()", "getMilliseconds()", "getMinutes()", "getMonth()", "getSeconds()", "getTime()", "getTimezoneOffset()", "getUTCDate()", "setDate()", "setFullYear()", "setHours()", "setMinutes()", "setMonth()", "setSeconds()", "setTime()", "toISOString()", "toJSON()", "toLocaleDateString()", "toLocaleString()"),
+    "RegExp": ("exec()", "flags", "global", "ignoreCase", "lastIndex", "multiline", "source", "sticky", "test()", "unicode"),
+    "Object": ("assign()", "create()", "defineProperties()", "defineProperty()", "entries()", "freeze()", "fromEntries()", "getOwnPropertyDescriptor()", "getOwnPropertyDescriptors()", "getOwnPropertyNames()", "getOwnPropertySymbols()", "getPrototypeOf()", "hasOwn()", "is()", "isExtensible()", "isFrozen()", "isSealed()", "keys()", "preventExtensions()", "seal()", "setPrototypeOf()", "values()", "constructor", "hasOwnProperty()", "isPrototypeOf()", "propertyIsEnumerable()", "toLocaleString()", "toString()", "valueOf()"),
+    "Function": ("apply()", "bind()", "call()", "length", "name", "prototype", "toString()"),
+    "console": ("assert()", "clear()", "count()", "countReset()", "debug()", "dir()", "dirxml()", "error()", "group()", "groupCollapsed()", "groupEnd()", "info()", "log()", "table()", "time()", "timeEnd()", "timeLog()", "trace()", "warn()"),
+    "document": ("activeElement", "addEventListener()", "body", "characterSet", "children", "cookie", "createDocumentFragment()", "createElement()", "createTextNode()", "documentElement", "forms", "getElementById()", "getElementsByClassName()", "getElementsByName()", "getElementsByTagName()", "head", "hidden", "images", "links", "location", "querySelector()", "querySelectorAll()", "readyState", "removeEventListener()", "title", "visibilityState"),
+    "window": ("addEventListener()", "alert()", "cancelAnimationFrame()", "clearInterval()", "clearTimeout()", "close()", "confirm()", "console", "devicePixelRatio", "document", "fetch()", "focus()", "history", "innerHeight", "innerWidth", "localStorage", "location", "matchMedia()", "navigator", "open()", "outerHeight", "outerWidth", "postMessage()", "prompt()", "removeEventListener()", "requestAnimationFrame()", "scrollTo()", "sessionStorage", "setInterval()", "setTimeout()"),
+    "localStorage": ("clear()", "getItem()", "key()", "length", "removeItem()", "setItem()"),
+    "sessionStorage": ("clear()", "getItem()", "key()", "length", "removeItem()", "setItem()"),
     "JSON": ("parse()", "stringify()"),
     "Math": ("abs()", "ceil()", "floor()", "max()", "min()", "pow()", "random()", "round()", "sqrt()"),
+    "Number": ("EPSILON", "MAX_SAFE_INTEGER", "MIN_SAFE_INTEGER", "isFinite()", "isInteger()", "isNaN()", "isSafeInteger()", "parseFloat()", "parseInt()"),
 }
 
 
@@ -682,6 +782,8 @@ def _javascript_symbols_and_types(text: str) -> tuple[set[str], dict[str, str]]:
         value = value.strip()
         if value.startswith("["): types[name] = "Array"
         elif value.startswith(("'", '"', "`")): types[name] = "String"
+        elif value.startswith("{"): types[name] = "Object"
+        elif re.match(r"(?:async\s*)?\(", value): types[name] = "Function"
         else:
             constructor = re.match(r"new\s+([A-Za-z_$][\w$]*)", value)
             if constructor: types[name] = constructor.group(1)
@@ -705,41 +807,118 @@ class JavaScriptCompletionProvider:
         if token_match is None or len(token_match.group(0)) < 2:
             return None
         prefix = token_match.group(0)
-        words = tuple(dict.fromkeys((*symbols, *CATALOG_COMPLETIONS["JavaScript"], "addEventListener", "localStorage", "sessionStorage", "requestAnimationFrame", "URL", "URLSearchParams", "HTMLElement", "Event", "CustomEvent")))
+        words = tuple(dict.fromkeys((*symbols, *CATALOG_COMPLETIONS["JavaScript"], "AbortController", "addEventListener", "atob", "Blob", "btoa", "clearInterval", "clearTimeout", "crypto", "CustomEvent", "Event", "EventTarget", "FormData", "Headers", "HTMLElement", "IntersectionObserver", "localStorage", "MutationObserver", "navigator", "performance", "queueMicrotask", "removeEventListener", "Request", "requestAnimationFrame", "Response", "sessionStorage", "structuredClone", "TextDecoder", "TextEncoder", "URL", "URLSearchParams", "WebSocket", "Worker")))
         items = [CompletionItem(word, word + "()" if word in {"fetch", "setTimeout", "setInterval", "addEventListener", "requestAnimationFrame"} else word, "JavaScript symbol / Web API", "symbol" if word in symbols else "builtin") for word in words if word.casefold().startswith(prefix.casefold()) and word != prefix]
         items.sort(key=lambda item: (item.kind != "symbol", len(item.label), item.label.casefold()))
         return CompletionQuery(token_match.start(), cursor_offset, prefix, tuple(items[:120])) if items else None
 
 
-HTML_TAGS = ("a", "article", "aside", "body", "button", "canvas", "div", "footer", "form", "h1", "h2", "h3", "head", "header", "html", "img", "input", "label", "li", "link", "main", "meta", "nav", "ol", "option", "p", "script", "section", "select", "span", "style", "table", "tbody", "td", "textarea", "th", "thead", "title", "tr", "ul", "video")
-HTML_VOID_TAGS = {"img", "input", "link", "meta"}
-HTML_ATTRIBUTES = ("aria-label", "class", "data-", "disabled", "for", "href", "id", "name", "placeholder", "rel", "role", "src", "style", "target", "title", "type", "value")
+HTML_TAGS = (
+    "a", "abbr", "address", "area", "article", "aside", "audio", "b", "base", "bdi", "bdo", "blockquote",
+    "body", "br", "button", "canvas", "caption", "cite", "code", "col", "colgroup", "data", "datalist",
+    "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption",
+    "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr",
+    "html", "i", "iframe", "img", "input", "ins", "kbd", "label", "legend", "li", "link", "main", "map",
+    "mark", "menu", "meta", "meter", "nav", "noscript", "object", "ol", "optgroup", "option", "output", "p",
+    "picture", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "search", "section",
+    "select", "slot", "small", "source", "span", "strong", "style", "sub", "summary", "sup", "table", "tbody",
+    "td", "template", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "u", "ul", "var",
+    "video", "wbr",
+)
+HTML_VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+HTML_ATTRIBUTES = (
+    "accept", "accept-charset", "accesskey", "action", "alt", "aria-label", "aria-labelledby", "aria-describedby",
+    "async", "autocomplete", "autofocus", "autoplay", "capture", "charset", "checked", "cite", "class", "cols",
+    "colspan", "content", "contenteditable", "controls", "crossorigin", "data-", "datetime", "decoding", "defer",
+    "dir", "disabled", "download", "draggable", "enctype", "enterkeyhint", "for", "form", "headers", "height",
+    "hidden", "href", "hreflang", "http-equiv", "id", "integrity", "lang", "loading", "loop", "max", "maxlength",
+    "media", "method", "min", "minlength", "multiple", "muted", "name", "nonce", "open", "pattern", "placeholder",
+    "playsinline", "poster", "preload", "readonly", "referrerpolicy", "rel", "required", "reversed", "role", "rows",
+    "rowspan", "sandbox", "scope", "selected", "size", "slot", "spellcheck", "src", "srcset", "start", "step",
+    "style", "tabindex", "target", "title", "translate", "type", "value", "width", "wrap",
+)
 
 
 class HtmlCompletionProvider:
     def complete(self, text: str, cursor_offset: int) -> CompletionQuery | None:
         before = text[:cursor_offset]
-        tag_match = re.search(r"<([A-Za-z][\w-]*)$", before)
+        closing_match = re.search(r"</([A-Za-z][\w-]*)?$", before)
+        if closing_match:
+            prefix = (closing_match.group(1) or "").lower()
+            opened = re.findall(r"<([A-Za-z][\w-]*)\b[^>]*>", before)
+            candidates = tuple(dict.fromkeys(reversed([tag.lower() for tag in opened if tag.lower() not in HTML_VOID_TAGS])))
+            items = tuple(CompletionItem(tag, tag + ">", "HTML closing element", "tag") for tag in candidates if tag.startswith(prefix) and tag != prefix)
+            start = closing_match.start(1) if closing_match.group(1) else cursor_offset
+            return CompletionQuery(start, cursor_offset, prefix, items) if items else None
+        tag_match = re.search(r"<([A-Za-z][\w-]*)?$", before)
         if tag_match:
-            prefix = tag_match.group(1)
+            prefix = tag_match.group(1) or ""
             items = []
             for tag in HTML_TAGS:
                 if not tag.startswith(prefix.lower()) or tag == prefix:
                     continue
                 insertion = tag + ">" if tag in HTML_VOID_TAGS else f"{tag}></{tag}>"
                 items.append(CompletionItem(tag, insertion, "HTML element", "tag", cursor_offset=len(tag) + 1))
-            return CompletionQuery(tag_match.start(1), cursor_offset, prefix, tuple(items)) if items else None
+            start = tag_match.start(1) if tag_match.group(1) else cursor_offset
+            return CompletionQuery(start, cursor_offset, prefix, tuple(items)) if items else None
         open_tag = before.rfind("<")
         if open_tag > before.rfind(">"):
-            attr_match = re.search(r"([A-Za-z_:][-\w:]*)$", before)
+            attr_match = re.search(r"(?:\s|^)([A-Za-z_:][-\w:]*)?$", before)
             if attr_match:
-                prefix = attr_match.group(1)
+                prefix = attr_match.group(1) or ""
                 items = [CompletionItem(attr, attr + '=""', "HTML attribute", "attribute", cursor_offset=len(attr) + 2) for attr in HTML_ATTRIBUTES if attr.startswith(prefix.lower()) and attr != prefix]
-                return CompletionQuery(attr_match.start(), cursor_offset, prefix, tuple(items)) if items else None
+                start = attr_match.start(1) if attr_match.group(1) else cursor_offset
+                return CompletionQuery(start, cursor_offset, prefix, tuple(items)) if items else None
         return None
 
 
-CSS_PROPERTIES = tuple(dict.fromkeys((*CATALOG_COMPLETIONS["CSS"], "align-content", "appearance", "aspect-ratio", "backdrop-filter", "background-image", "background-position", "background-size", "border-color", "border-style", "border-width", "bottom", "box-sizing", "column-gap", "content", "flex-basis", "flex-grow", "flex-shrink", "flex-wrap", "grid-area", "grid-auto-flow", "grid-column", "grid-row", "inset", "left", "letter-spacing", "object-fit", "object-position", "outline", "overflow-x", "overflow-y", "pointer-events", "right", "row-gap", "text-overflow", "text-transform", "top", "user-select", "visibility", "white-space")))
+CSS_PROPERTIES = tuple(dict.fromkeys((*CATALOG_COMPLETIONS["CSS"],
+    "accent-color", "align-content", "align-self", "all", "animation-delay", "animation-direction", "animation-duration",
+    "animation-fill-mode", "animation-iteration-count", "animation-name", "animation-play-state", "animation-timing-function",
+    "appearance", "aspect-ratio", "backdrop-filter", "backface-visibility", "background-attachment", "background-blend-mode",
+    "background-clip", "background-image", "background-origin", "background-position", "background-repeat", "background-size",
+    "block-size", "border-block", "border-bottom", "border-collapse", "border-color", "border-image", "border-inline",
+    "border-left", "border-spacing", "border-style", "border-top", "border-width", "bottom", "box-decoration-break",
+    "break-after", "break-before", "break-inside", "caption-side", "caret-color", "clear", "clip-path", "column-count",
+    "column-fill", "column-gap", "column-rule", "column-span", "column-width", "columns", "contain", "contain-intrinsic-size",
+    "container", "container-name", "container-type", "content", "content-visibility", "counter-increment", "counter-reset",
+    "direction", "empty-cells", "filter", "flex-basis", "flex-flow", "flex-grow", "flex-shrink", "flex-wrap", "float",
+    "font-feature-settings", "font-kerning", "font-optical-sizing", "font-stretch", "font-style", "font-variant", "font-variation-settings",
+    "grid-area", "grid-auto-columns", "grid-auto-flow", "grid-auto-rows", "grid-column", "grid-column-end", "grid-column-start",
+    "grid-row", "grid-row-end", "grid-row-start", "grid-template", "grid-template-areas", "grid-template-rows", "hyphens",
+    "image-rendering", "inline-size", "inset", "inset-block", "inset-inline", "isolation", "justify-items", "justify-self",
+    "left", "letter-spacing", "list-style", "list-style-image", "list-style-position", "list-style-type", "margin-block",
+    "margin-bottom", "margin-inline", "margin-left", "margin-right", "margin-top", "mask", "mix-blend-mode", "object-fit",
+    "object-position", "order", "outline", "outline-color", "outline-offset", "outline-style", "outline-width", "overflow-anchor",
+    "overflow-wrap", "overflow-x", "overflow-y", "overscroll-behavior", "padding-block", "padding-bottom", "padding-inline",
+    "padding-left", "padding-right", "padding-top", "perspective", "perspective-origin", "place-content", "place-items",
+    "place-self", "pointer-events", "resize", "right", "rotate", "row-gap", "scale", "scroll-behavior", "scroll-margin",
+    "scroll-padding", "scroll-snap-align", "scroll-snap-type", "shape-outside", "tab-size", "table-layout", "text-indent",
+    "text-overflow", "text-rendering", "text-shadow", "text-transform", "text-underline-offset", "top", "touch-action",
+    "transform-origin", "transform-style", "translate", "unicode-bidi", "user-select", "vertical-align", "visibility",
+    "white-space", "will-change", "word-break", "word-spacing", "writing-mode",
+)))
+
+CSS_VALUES = {
+    "display": ("block", "contents", "flex", "flow-root", "grid", "inline", "inline-block", "inline-flex", "inline-grid", "list-item", "none", "table"),
+    "position": ("absolute", "fixed", "relative", "static", "sticky"),
+    "overflow": ("auto", "clip", "hidden", "scroll", "visible"),
+    "overflow-x": ("auto", "clip", "hidden", "scroll", "visible"),
+    "overflow-y": ("auto", "clip", "hidden", "scroll", "visible"),
+    "align-items": ("baseline", "center", "end", "flex-end", "flex-start", "normal", "safe center", "self-end", "self-start", "start", "stretch"),
+    "justify-content": ("center", "end", "flex-end", "flex-start", "left", "normal", "right", "space-around", "space-between", "space-evenly", "start", "stretch"),
+    "flex-direction": ("column", "column-reverse", "row", "row-reverse"),
+    "flex-wrap": ("nowrap", "wrap", "wrap-reverse"),
+    "cursor": ("auto", "cell", "col-resize", "context-menu", "copy", "crosshair", "default", "grab", "grabbing", "help", "move", "none", "not-allowed", "pointer", "progress", "row-resize", "text", "wait", "zoom-in", "zoom-out"),
+    "object-fit": ("contain", "cover", "fill", "none", "scale-down"),
+    "text-align": ("center", "end", "justify", "left", "right", "start"),
+    "font-weight": ("100", "200", "300", "400", "500", "600", "700", "800", "900", "bold", "bolder", "lighter", "normal"),
+    "visibility": ("collapse", "hidden", "visible"),
+    "white-space": ("break-spaces", "normal", "nowrap", "pre", "pre-line", "pre-wrap"),
+    "box-sizing": ("border-box", "content-box"),
+    "background-repeat": ("no-repeat", "repeat", "repeat-x", "repeat-y", "round", "space"),
+    "background-size": ("auto", "contain", "cover"),
+}
 
 
 class CssCompletionProvider:
@@ -749,6 +928,20 @@ class CssCompletionProvider:
         before = text[:cursor_offset]
         if before.rfind("{") <= before.rfind("}"):
             return CatalogCompletionProvider("CSS", CATALOG_COMPLETIONS["CSS"]).complete(text, cursor_offset)
+        declaration = before[before.rfind("{") + 1:]
+        value_match = re.search(r"([A-Za-z-]+)\s*:\s*([^;{}]*)$", declaration)
+        if value_match:
+            property_name = value_match.group(1).lower()
+            raw_value = value_match.group(2)
+            prefix_match = re.search(r"[-A-Za-z0-9 ]*$", raw_value)
+            prefix = (prefix_match.group(0) if prefix_match else "").lstrip()
+            values = CSS_VALUES.get(property_name, ("inherit", "initial", "revert", "revert-layer", "unset"))
+            items = tuple(
+                CompletionItem(value, value, f"CSS value · {property_name}", "value")
+                for value in values if value.startswith(prefix.lower()) and value != prefix
+            )
+            if items:
+                return CompletionQuery(cursor_offset - len(prefix), cursor_offset, prefix, items)
         token_match = re.search(r"[-A-Za-z]+$", before)
         if token_match is None:
             return None

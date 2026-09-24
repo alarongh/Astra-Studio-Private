@@ -71,7 +71,8 @@ def test_release_312_wallpaper_and_project_tree_are_scale_safe_and_complete():
     source = (ROOT / "main.py").read_text(encoding="utf-8")
     assert "self.background_label.setScaledContents(False)" in source
     assert "self.background_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)" in source
-    assert "painter.drawTiledPixmap(canvas.rect(), self._wallpaper_tile, WALLPAPER_TILE_SOURCE_OFFSET)" in source
+    assert "painter.drawTiledPixmap" not in source
+    assert "painter.drawPixmap(x, y, self._wallpaper_tile)" in source
     assert "self.project_tree.setTextElideMode(Qt.TextElideMode.ElideNone)" in source
     assert "self.project_tree.setUniformRowHeights(False)" in source
     assert "if child.is_dir() and depth < 32:" in source
@@ -119,7 +120,7 @@ def test_shortcut_icon_variants_are_bundled_windows_icons():
     from main import SHORTCUT_ICON_OPTIONS
 
     assert set(SHORTCUT_ICON_OPTIONS) == {
-        "Astra 3.19 — красно-синий",
+        "Astra 3.20 — красно-синий",
         "Angel 404 — фиолетовый неон",
         "Astra Legacy — тёмная корона",
     }

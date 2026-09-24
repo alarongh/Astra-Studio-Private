@@ -20,7 +20,7 @@ def test_release_identity_update_fallback_and_shortcut_script_are_packaged():
     source = (ROOT / "main.py").read_text(encoding="utf-8")
     spec = (ROOT / "astra_studio.spec").read_text(encoding="utf-8")
 
-    assert 'APP_VERSION = "Release 3.19"' in source
+    assert 'APP_VERSION = "Release 3.20"' in source
     assert 'PUBLIC_UPDATE_MANIFEST_URL = "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"' in source
     assert 'configured_manifest_url(resource_path("update_channel.json")) or PUBLIC_UPDATE_MANIFEST_URL' in source
     assert '("scripts/create_desktop_shortcut.ps1", "scripts")' in spec
@@ -125,7 +125,7 @@ def test_space_is_not_swallowed_and_commits_tab_selected_completion():
     editor.close()
 
 
-def test_settings_drawer_expands_and_project_tree_yields_on_laptop(monkeypatch, tmp_path: Path):
+def test_settings_full_page_and_single_wallpaper_are_stable_on_laptop(monkeypatch, tmp_path: Path):
     pytest.importorskip("PySide6")
     from PySide6.QtWidgets import QApplication
     import main
@@ -141,16 +141,16 @@ def test_settings_drawer_expands_and_project_tree_yields_on_laptop(monkeypatch, 
     window.open_settings_page()
     app.processEvents()
 
-    assert window.tools_drawer.width() >= 420
-    assert window.project_panel.isHidden()
-    assert window.workspace_surface.width() >= 500
+    assert window.main_page_stack.currentWidget() is window.settings_page
+    assert not window.tools_drawer.isVisible()
+    assert not window.root_splitter.isVisible()
+    assert window.settings_page.width() >= 1000
     assert window._wallpaper_tile.size() == main.WALLPAPER_TILE_SIZE
     tile_cache_key = window._wallpaper_tile.cacheKey()
 
     window.resize(1600, 900)
     app.processEvents()
-    assert window.tools_drawer.width() >= 500
-    assert window.project_panel.isHidden()
+    assert window.main_page_stack.currentWidget() is window.settings_page
     assert window._wallpaper_tile.cacheKey() == tile_cache_key
     assert window.background_label.pixmap().size() == window.workspace_surface.size()
     window.close()

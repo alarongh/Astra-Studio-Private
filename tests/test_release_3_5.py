@@ -22,13 +22,14 @@ def test_release_3_5_identity():
         if isinstance(node, ast.Assign)
         and any(isinstance(t, ast.Name) and t.id == "APP_VERSION" for t in node.targets)
     )
-    assert ast.literal_eval(assignment.value) == "Release 3.19"
+    assert ast.literal_eval(assignment.value) == "Release 3.20"
 
 
-def test_settings_are_inline_in_tools_drawer_not_external_dialog():
+def test_settings_are_full_page_inside_application_not_external_dialog():
     source = _source()
-    assert "self.tools_stack.addWidget(self.settings_scroll)" in source
-    assert 'self._show_tools_drawer(1, "НАСТРОЙКИ")' in source
+    assert "self.main_page_stack.addWidget(self.settings_page)" in source
+    assert "self.main_page_stack.setCurrentIndex(1)" in source
+    assert "self.settings_scroll.setWidgetResizable(True)" in source
     assert "settings_dialog" not in source
 
 

@@ -41,7 +41,7 @@
 - `tests/test_app_updates.py::test_update_channel_accepts_published_https_url`
 - `tests/test_app_updates.py::test_update_archive_verifies_hash_size_layout_and_rejects_traversal`
 - `tests/test_app_updates.py::test_windows_updater_has_wait_backup_rollback_and_restart_steps`
-- `tests/test_app_updates.py::test_release_319_bundles_public_github_channel_and_valid_latest_manifest`
+- `tests/test_app_updates.py::test_release_320_bundles_public_github_channel_and_valid_latest_manifest`
 - `tests/test_app_updates.py::test_windows_updater_replaces_portable_folder_in_isolated_directory`
 - `tests/test_app_updates.py::test_windows_updater_rolls_back_when_new_executable_exits_during_health_check`
 - `tests/test_release_316_editor_recovery.py::test_context_completion_covers_python_javascript_html_and_css`
@@ -57,7 +57,11 @@
 - `tests/test_release_319_laptop_regressions.py::test_release_identity_update_fallback_and_shortcut_script_are_packaged`
 - `tests/test_release_319_laptop_regressions.py::test_update_button_uses_public_channel_when_bundled_json_is_unavailable`
 - `tests/test_release_319_laptop_regressions.py::test_space_is_not_swallowed_and_commits_tab_selected_completion`
-- `tests/test_release_319_laptop_regressions.py::test_settings_drawer_expands_and_project_tree_yields_on_laptop`
+- `tests/test_release_319_laptop_regressions.py::test_settings_full_page_and_single_wallpaper_are_stable_on_laptop`
+- `tests/test_release_320_fullscreen_and_completion.py::test_java_system_streams_and_common_io_are_reachable`
+- `tests/test_release_320_fullscreen_and_completion.py::test_all_six_release_languages_have_contextual_completion`
+- `tests/test_release_320_fullscreen_and_completion.py::test_wallpaper_is_single_image_and_project_frame_is_stable`
+- `tests/test_release_320_fullscreen_and_completion.py::test_settings_replace_editor_with_full_page`
 - `tests/test_language_error_classification.py::test_python_compile_diagnostic_points_to_source_line`
 - `tests/test_language_error_classification.py::test_node_diagnostic_points_to_source_line`
 - `tests/test_language_error_classification.py::test_java_runtime_diagnostic_points_to_source_line`
@@ -211,7 +215,7 @@
 - `tests/test_release_3_2.py::InstallerStaticTests::test_shortcut_script_uses_stable_app_directory_icon`
 - `tests/test_release_3_2.py::InstallerStaticTests::test_standalone_installers_resolve_source_or_fullname`
 - `tests/test_release_3_5.py::test_release_3_5_identity`
-- `tests/test_release_3_5.py::test_settings_are_inline_in_tools_drawer_not_external_dialog`
+- `tests/test_release_3_5.py::test_settings_are_full_page_inside_application_not_external_dialog`
 - `tests/test_release_3_5.py::test_editor_and_console_transparency_migrate_to_one_simple_control`
 - `tests/test_release_3_5.py::test_integrated_console_replaces_separate_stdin_line_edits`
 - `tests/test_release_3_5.py::test_project_tree_cannot_restore_as_fully_collapsed`

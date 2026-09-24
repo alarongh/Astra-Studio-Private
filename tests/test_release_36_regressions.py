@@ -14,7 +14,7 @@ PYINSTALLER_SPEC = ROOT / "astra_studio.spec"
 
 def test_release_36_version_and_topmost_no_longer_uses_raw_setwindowpos():
     text = MAIN.read_text(encoding="utf-8")
-    assert 'APP_VERSION = "Release 3.19"' in text
+    assert 'APP_VERSION = "Release 3.20"' in text
     assert "ctypes.windll.user32.SetWindowPos" not in text
     assert "def _apply_always_on_top_windows" not in text
     start = text.index("    def _apply_always_on_top_qt(self):")

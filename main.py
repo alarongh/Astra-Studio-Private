@@ -182,12 +182,11 @@ from core.python_library_registry import (
 
 
 APP_NAME = "Astra Studio"
-APP_VERSION = "Release 3.19"
+APP_VERSION = "Release 3.20"
 WINDOWS_APP_USER_MODEL_ID = "Astra.Studio.Alaron"
 APP_DIR_NAME = "AstralStudio"
 PUBLIC_UPDATE_MANIFEST_URL = "https://raw.githubusercontent.com/alarongh/Astra-Studio-Releases/main/update/latest.json"
-WALLPAPER_TILE_SIZE = QSize(1100, 620)
-WALLPAPER_TILE_SOURCE_OFFSET = QPoint(280, 0)
+WALLPAPER_TILE_SIZE = QSize(1600, 900)
 DEFAULT_LANGUAGE = "Python"
 DEFAULT_THEME = "Astra: Корона кода"
 DEFAULT_ACCENT = "Astra красно-синий"
@@ -197,7 +196,7 @@ ANGEL_404_THEME = "Angel 404: Фиолетовый сбой"
 ANGEL_404_ACCENT = "Angel 404 неон"
 ANGEL_404_WALLPAPER = "Angel 404"
 SHORTCUT_ICON_OPTIONS = {
-    "Astra 3.19 — красно-синий": "assets/astra.ico",
+    "Astra 3.20 — красно-синий": "assets/astra.ico",
     "Angel 404 — фиолетовый неон": "assets/astra_angel404.ico",
     "Astra Legacy — тёмная корона": "assets/legacy_astra.ico",
 }
@@ -3878,7 +3877,10 @@ class AstraStudio(QMainWindow):
 
         self.project_panel = QFrame()
         self.project_panel.setObjectName("ProjectPanel")
-        self.project_panel.setMinimumWidth(210)
+        self.project_panel.setMinimumWidth(270)
+        self.project_panel.setMaximumWidth(420)
+        self.project_panel.setFrameShape(QFrame.Shape.StyledPanel)
+        self.project_panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         project_layout = QVBoxLayout(self.project_panel)
         project_layout.setContentsMargins(12, 14, 12, 12)
         project_layout.setSpacing(8)
@@ -4228,7 +4230,8 @@ class AstraStudio(QMainWindow):
         settings_layout.addWidget(self.cpp_using_std_toggle)
         settings_layout.addStretch(1)
 
-        settings_card.setMinimumWidth(0)
+        settings_card.setMinimumWidth(560)
+        settings_card.setMaximumWidth(980)
         settings_card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         for label in settings_card.findChildren(QLabel):
             label.setWordWrap(True)
@@ -4241,7 +4244,15 @@ class AstraStudio(QMainWindow):
         self.settings_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.settings_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.settings_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.settings_scroll.setWidget(settings_card)
+        settings_canvas = QWidget()
+        settings_canvas.setObjectName("SettingsCanvas")
+        settings_canvas_layout = QHBoxLayout(settings_canvas)
+        settings_canvas_layout.setContentsMargins(24, 12, 24, 24)
+        settings_canvas_layout.setSpacing(0)
+        settings_canvas_layout.addStretch(1)
+        settings_canvas_layout.addWidget(settings_card)
+        settings_canvas_layout.addStretch(1)
+        self.settings_scroll.setWidget(settings_canvas)
         self.settings_scroll.setMinimumWidth(0)
 
         python_libs_card = QWidget()
@@ -4632,6 +4643,7 @@ class AstraStudio(QMainWindow):
         self.wallpaper_dim_overlay.lower()
 
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.main_splitter.setObjectName("MainSplitter")
         self.main_splitter.addWidget(self.project_panel)
         self.main_splitter.addWidget(self.workspace_surface)
         self.main_splitter.setCollapsible(0, False)
@@ -4639,7 +4651,7 @@ class AstraStudio(QMainWindow):
         main_sizes[0] = max(260, int(main_sizes[0] or 0))
         main_sizes[1] = max(520, int(main_sizes[1] or 0))
         self.main_splitter.setSizes(main_sizes[:2])
-        self.main_splitter.setHandleWidth(3)
+        self.main_splitter.setHandleWidth(8)
 
         editor_page = QWidget()
         editor_page_layout = QVBoxLayout(editor_page)
@@ -4670,7 +4682,11 @@ class AstraStudio(QMainWindow):
         self.tools_stack = QStackedWidget()
         self.tools_stack.setObjectName("ToolsStack")
         self.tools_stack.addWidget(installer_card)
-        self.tools_stack.addWidget(self.settings_scroll)
+        settings_drawer_placeholder = QWidget()
+        settings_drawer_placeholder_layout = QVBoxLayout(settings_drawer_placeholder)
+        settings_drawer_placeholder_layout.addWidget(QLabel("Настройки открываются на отдельной странице."))
+        settings_drawer_placeholder_layout.addStretch(1)
+        self.tools_stack.addWidget(settings_drawer_placeholder)
         self.tools_stack.addWidget(python_libs_card)
         self.tools_stack.addWidget(lsp_card)
         self.tools_stack.addWidget(developer_card)
@@ -4686,6 +4702,42 @@ class AstraStudio(QMainWindow):
         self.root_splitter.addWidget(self.tools_drawer)
         self.root_splitter.addWidget(editor_page)
         self.root_splitter.setSizes(self.saved_root_splitter_sizes if self.saved_root_splitter_sizes else [306, 0, 1040])
+
+        self.settings_page = QWidget()
+        self.settings_page.setObjectName("SettingsPage")
+        settings_page_layout = QVBoxLayout(self.settings_page)
+        settings_page_layout.setContentsMargins(0, 0, 0, 0)
+        settings_page_layout.setSpacing(10)
+        settings_page_header = QFrame()
+        settings_page_header.setObjectName("SettingsPageHeader")
+        settings_page_header_layout = QHBoxLayout(settings_page_header)
+        settings_page_header_layout.setContentsMargins(18, 10, 18, 10)
+        settings_page_title = QLabel("НАСТРОЙКИ ASTRA STUDIO")
+        settings_page_title.setObjectName("SectionTitle")
+        settings_page_hint = QLabel("Изменения сохраняются автоматически")
+        settings_page_hint.setObjectName("Muted")
+        self.btn_close_settings_page = QPushButton("←  Вернуться в редактор")
+        self.btn_close_settings_page.setObjectName("SettingsBackButton")
+        self.btn_close_settings_page.setMinimumHeight(38)
+        self.btn_close_settings_page.setCursor(Qt.CursorShape.PointingHandCursor)
+        settings_page_header_layout.addWidget(settings_page_title)
+        settings_page_header_layout.addWidget(settings_page_hint)
+        settings_page_header_layout.addStretch(1)
+        settings_page_header_layout.addWidget(self.btn_close_settings_page)
+        settings_page_layout.addWidget(settings_page_header)
+        settings_page_layout.addWidget(self.settings_scroll, 1)
+
+        editor_shell = QWidget()
+        editor_shell_layout = QVBoxLayout(editor_shell)
+        editor_shell_layout.setContentsMargins(0, 0, 0, 0)
+        editor_shell_layout.setSpacing(0)
+        editor_shell_layout.addWidget(self.root_splitter)
+
+        self.main_page_stack = QStackedWidget()
+        self.main_page_stack.setObjectName("MainPageStack")
+        self.main_page_stack.addWidget(editor_shell)
+        self.main_page_stack.addWidget(self.settings_page)
+        self.main_page_stack.setCurrentIndex(0)
         self.btn_restore_sidebar = QPushButton("☰")
         self.btn_restore_sidebar.setObjectName("CloseButton")
         self.btn_restore_sidebar.setFixedWidth(36)
@@ -4694,7 +4746,7 @@ class AstraStudio(QMainWindow):
         self.btn_restore_sidebar.setToolTip("Показать основную боковую панель")
         self.btn_restore_sidebar.setVisible(False)
         root_layout.addWidget(self.btn_restore_sidebar)
-        root_layout.addWidget(self.root_splitter, 1)
+        root_layout.addWidget(self.main_page_stack, 1)
 
         self.setStatusBar(QStatusBar())
         self.statusBar().showMessage("Astra Studio готова")
@@ -4712,6 +4764,7 @@ class AstraStudio(QMainWindow):
         self.btn_lsp_outline_refresh.clicked.connect(self.request_lsp_outline)
         self.lsp_outline_tree.itemDoubleClicked.connect(self._open_lsp_outline_item)
         self.btn_close_tools_drawer.clicked.connect(self.close_tools_drawer)
+        self.btn_close_settings_page.clicked.connect(self.close_settings_page)
         self.btn_restore_sidebar.clicked.connect(self.toggle_main_sidebar)
         self.btn_run.clicked.connect(self.run_code)
         self.btn_compile.clicked.connect(self.compile_code)
@@ -5049,9 +5102,9 @@ class AstraStudio(QMainWindow):
             if hasattr(self, "wallpaper_dim_overlay"):
                 self.wallpaper_dim_overlay.hide()
             return
-        # Build one stable logical tile and reuse it at every window size.  The
-        # wallpaper no longer zooms or drifts when splitters/window dimensions
-        # change; resizing only reveals more of the same anchored pattern.
+        # Build one stable logical canvas. Resizing the IDE only changes which
+        # part is visible; the image is never tiled or independently repeated
+        # behind the editor and console.
         scaled = pixmap.scaled(
             WALLPAPER_TILE_SIZE,
             Qt.AspectRatioMode.KeepAspectRatioByExpanding,
@@ -5086,7 +5139,7 @@ class AstraStudio(QMainWindow):
             self.background_label.setGraphicsEffect(None)
 
     def _render_wallpaper_canvas(self):
-        """Paint the fixed wallpaper tile into the current workspace viewport."""
+        """Paint one fixed wallpaper image into the workspace without tiling."""
         if not hasattr(self, "background_label") or self._wallpaper_tile.isNull():
             return
         surface = getattr(self, "workspace_surface", None)
@@ -5097,10 +5150,9 @@ class AstraStudio(QMainWindow):
         canvas = QPixmap(width, height)
         canvas.fill(QColor(FALLBACK_BACKGROUND))
         painter = QPainter(canvas)
-        # The bundled Angel artwork has its focal point on the right.  A fixed
-        # source offset keeps that subject visible in narrow laptop workspaces
-        # without tying its scale or position to the current pane width.
-        painter.drawTiledPixmap(canvas.rect(), self._wallpaper_tile, WALLPAPER_TILE_SOURCE_OFFSET)
+        x = (width - self._wallpaper_tile.width()) // 2
+        y = (height - self._wallpaper_tile.height()) // 2
+        painter.drawPixmap(x, y, self._wallpaper_tile)
         painter.end()
         self.background_label.setPixmap(canvas)
 
@@ -5115,8 +5167,8 @@ class AstraStudio(QMainWindow):
             panel2_bg = self._panel_rgba(self.theme["panel2"], self.aux_bg_transparency_percent)
             bg2_bg = self._panel_rgba(self.theme["bg2"], self.aux_bg_transparency_percent, 76)
             console_bg = self.theme["console"] if self.disable_console_wallpaper else self._panel_rgba(self.theme["console"], self.console_bg_transparency_percent, 8)
-            project_bg = self._panel_rgba(self.theme["panel"], self.project_bg_transparency_percent)
-            project_tree_bg = self._panel_rgba(self.theme["bg2"], self.project_bg_transparency_percent, 82)
+            project_bg = self._rgba(self.theme["panel"], 98)
+            project_tree_bg = self._rgba(self.theme["bg2"], 98)
             settings_bg = self._panel_rgba(self.theme["panel"], self.settings_bg_transparency_percent)
             aux_bg = self._panel_rgba(self.theme["panel"], self.aux_bg_transparency_percent)
             editor_bg = self._panel_rgba(self.theme["editor"], self.editor_bg_transparency_percent, 8)
@@ -5125,8 +5177,8 @@ class AstraStudio(QMainWindow):
             panel2_bg = self._panel_rgba(self.theme["panel2"], self.aux_bg_transparency_percent)
             bg2_bg = self._panel_rgba(self.theme["bg2"], self.aux_bg_transparency_percent, 76)
             console_bg = self._panel_rgba(self.theme["console"], self.console_bg_transparency_percent, 8)
-            project_bg = self._panel_rgba(FALLBACK_BACKGROUND, self.project_bg_transparency_percent, 86)
-            project_tree_bg = self._panel_rgba(FALLBACK_BACKGROUND, self.project_bg_transparency_percent, 92)
+            project_bg = self._rgba(FALLBACK_BACKGROUND, 98)
+            project_tree_bg = self._rgba(self.theme["bg2"], 98)
             settings_bg = self._panel_rgba(self.theme["panel"], self.settings_bg_transparency_percent)
             aux_bg = self._panel_rgba(self.theme["panel"], self.aux_bg_transparency_percent)
             editor_bg = self._panel_rgba(self.theme["editor"], self.editor_bg_transparency_percent, 8)
@@ -5201,8 +5253,13 @@ class AstraStudio(QMainWindow):
         }}
         QFrame#ProjectPanel {{
             background: {project_bg};
-            border: 1px solid {self.theme['border']};
+            border: 2px solid {self.theme['border']};
             border-radius: 18px;
+        }}
+        QFrame#SettingsPageHeader {{
+            background: {settings_bg};
+            border: 1px solid {self.theme['border']};
+            border-radius: 14px;
         }}
         QWidget#PageCard {{
             background: {settings_bg};
@@ -5468,6 +5525,11 @@ class AstraStudio(QMainWindow):
         }}
         QSplitter::handle {{
             background: {self.theme['bg']};
+        }}
+        QSplitter#MainSplitter::handle:horizontal {{
+            background: transparent;
+            margin: 8px 2px;
+            border-left: 1px solid {self.theme['border']};
         }}
         QStatusBar {{
             background: transparent;
@@ -7384,6 +7446,8 @@ class AstraStudio(QMainWindow):
         self.send_terminal_command_text(self.terminal_console.current_input())
 
     def _show_tools_drawer(self, index: int, title: str):
+        if hasattr(self, "main_page_stack"):
+            self.main_page_stack.setCurrentIndex(0)
         if hasattr(self, "tools_stack"):
             self.tools_stack.setCurrentIndex(index)
         if hasattr(self, "tools_drawer"):
@@ -11980,6 +12044,8 @@ class AstraStudio(QMainWindow):
             QMessageBox.critical(self, "Создать файл", f"Не удалось создать файл:\n{exc}")
 
     def open_editor_page(self):
+        if hasattr(self, "main_page_stack"):
+            self.main_page_stack.setCurrentIndex(0)
         if hasattr(self, "tools_drawer"):
             self.tools_drawer.setVisible(False)
         self._apply_responsive_layout()
@@ -12001,13 +12067,27 @@ class AstraStudio(QMainWindow):
             if hasattr(self, "tools_drawer"):
                 self.tools_drawer.hide()
 
+    def close_settings_page(self):
+        if hasattr(self, "main_page_stack"):
+            self.main_page_stack.setCurrentIndex(0)
+        sidebar_hidden = hasattr(self, "sidebar_shell") and self.sidebar_shell.isHidden()
+        if hasattr(self, "btn_restore_sidebar"):
+            self.btn_restore_sidebar.setVisible(sidebar_hidden)
+        self._apply_responsive_layout()
+        self.statusBar().showMessage("Редактор открыт", 1800)
+
     def open_installer_tab(self):
         self._show_tools_drawer(0, "УСТАНОВЩИК")
         self.statusBar().showMessage("Установщик открыт в боковой панели", 1800)
 
     def open_settings_page(self):
-        self._show_tools_drawer(1, "НАСТРОЙКИ")
-        self.statusBar().showMessage("Настройки открыты внутри Astra Studio", 1800)
+        if hasattr(self, "tools_drawer"):
+            self.tools_drawer.setVisible(False)
+        if hasattr(self, "main_page_stack"):
+            self.main_page_stack.setCurrentIndex(1)
+        if hasattr(self, "btn_restore_sidebar"):
+            self.btn_restore_sidebar.setVisible(False)
+        self.statusBar().showMessage("Настройки открыты на полной странице Astra Studio", 1800)
 
     def open_python_libs_page(self):
         self._show_tools_drawer(2, "БИБЛИОТЕКИ PYTHON")
