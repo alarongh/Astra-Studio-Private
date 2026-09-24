@@ -55,6 +55,7 @@
 - `tests/test_release_317_simplification.py::test_settings_page_owns_shortcut_and_simple_appearance_controls`
 - `tests/test_release_317_simplification.py::test_real_cpp_error_marks_line_without_opening_installer`
 - `tests/test_release_319_laptop_regressions.py::test_release_identity_update_fallback_and_shortcut_script_are_packaged`
+- `tests/test_release_319_laptop_regressions.py::test_update_button_uses_public_channel_when_bundled_json_is_unavailable`
 - `tests/test_release_319_laptop_regressions.py::test_space_is_not_swallowed_and_commits_tab_selected_completion`
 - `tests/test_release_319_laptop_regressions.py::test_settings_drawer_expands_and_project_tree_yields_on_laptop`
 - `tests/test_language_error_classification.py::test_python_compile_diagnostic_points_to_source_line`

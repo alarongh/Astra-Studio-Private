@@ -26,6 +26,43 @@ def test_release_identity_update_fallback_and_shortcut_script_are_packaged():
     assert '("scripts/create_desktop_shortcut.ps1", "scripts")' in spec
 
 
+def test_update_button_uses_public_channel_when_bundled_json_is_unavailable(monkeypatch, tmp_path: Path):
+    pytest.importorskip("PySide6")
+    from PySide6.QtCore import QObject, Signal
+    from PySide6.QtWidgets import QApplication
+    import main
+
+    class PendingReply(QObject):
+        finished = Signal()
+
+        def isFinished(self):
+            return False
+
+    class RecordingNetwork:
+        def __init__(self):
+            self.url = ""
+
+        def get(self, request):
+            self.url = request.url().toString()
+            return PendingReply()
+
+    app = QApplication.instance() or QApplication([])
+    monkeypatch.setattr(main, "app_data_dir", lambda: tmp_path / "data")
+    monkeypatch.setattr(main, "default_builds_dir", lambda: tmp_path / "builds")
+    monkeypatch.setattr(main.AstraStudio, "start_terminal", lambda self: None)
+    monkeypatch.setattr(main, "configured_manifest_url", lambda _path: "")
+    window = main.AstraStudio()
+    network = RecordingNetwork()
+    window.update_network = network
+
+    window.check_app_update()
+
+    assert network.url == main.PUBLIC_UPDATE_MANIFEST_URL
+    assert "проверка обновления" in window.app_update_status.text()
+    window.close()
+    app.processEvents()
+
+
 def test_space_is_not_swallowed_and_commits_tab_selected_completion():
     pytest.importorskip("PySide6")
     from PySide6.QtCore import Qt
